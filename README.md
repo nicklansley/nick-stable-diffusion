@@ -24,7 +24,7 @@ a file in your Windows home directory called <b>.wslconfig</b> and put a 'memory
 [wsl2]
 memory=60GB 
 </pre>
-4. Read docker-compose.yml and adjust the two volumes to your needs - On my S: hard drive I have created a folder 'nick-stable-diffusion-data' and then created three empty sub-folders: cache, model and library.
+4. Read docker-compose.yml and adjust the two volumes to your needs - On my S: hard drive I have created a folder 'nick-stable-diffusion-data' and then created three empty sub-folders: 'cache', 'model' and 'library'.
 Docker will connect these physical locations to the internal volumes of the containers. 
 <pre>
 volumes:
