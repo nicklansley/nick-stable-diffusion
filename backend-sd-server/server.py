@@ -257,7 +257,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e))
+        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), '')
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
@@ -325,7 +325,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e))
+        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), original_image_path)
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
