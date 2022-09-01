@@ -2,7 +2,8 @@
 
 This project is a clone of https://github.com/CompVis/stable-diffusion.git
  
-I've built a docker-based web service around the original project, which incorporates a few extra features:
+I've built a docker-based web service around the original project, which incorporates a few extra features, and assumes you are running Docker Desktop over WSL2 on Windows 10/11.
+
 * Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than model-loading.
 * Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
 * Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
