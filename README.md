@@ -62,9 +62,15 @@ I am happy to accept that right now the backend build is a bit overkill - it eve
 <pre>
 docker compose up -d --build 
 </pre>
-7. At first start the backend will then download another 2.73 GB of data which it will store in the 'cache' folder you set up on your drive and set up in docker compose.
+7. At first start the backend will then download another 2.73 GB of data 
+which it will store in the 'cache' folder you set up on your drive and set up in docker compose. 
+You can't use the application until you see, in the backend server log:
 
-10. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre>
+<pre>
+Backend Server ready for processing on port 8080
+</pre>
+
+11. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's port 8000
 
 
 ## Notes
