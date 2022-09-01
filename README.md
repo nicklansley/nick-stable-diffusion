@@ -20,6 +20,7 @@ I've built a docker-based web service around the original project, which incorpo
 3. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance, 
 but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over 20GB memory at the present time. To overcome the max memory error, open (or create)
 a file in your Windows home directory called <b>.wslconfig</b> and put a 'memory=' property in that file with a memory size of 4GB lower than your PC's memory (mine has 64 GB).
+This does not mean that WSL2 will grab all but 4GB of your PC memory, it's just that you are giving it the 'right' to use that much if it really needs it.
 <pre>
 [wsl2]
 memory=60GB 
