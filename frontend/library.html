@@ -7,8 +7,17 @@
     <script src="library.js"></script>
     <style>
     body {
-        background-color: #f0f0f0;
+      padding: 25px;
+      background-color: white;
+      color: black;
+      font-size: 25px;
     }
+
+    .dark-mode {
+      background-color: black;
+      color: white;
+    }
+
 
     html {
         font-family: "Lucida Sans", sans-serif;
@@ -82,5 +91,7 @@
             </ul>
         </small>
     <div id="output"></div>
+    <p><button onclick="let element = document.body; element.classList.toggle('dark-mode');">dark mode</button> </p>
+
 </body>
 </html>

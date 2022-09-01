@@ -8,7 +8,15 @@
 </head>
 <style>
     body {
-        background-color: #f0f0f0;
+      padding: 25px;
+      background-color: white;
+      color: black;
+      font-size: 25px;
+    }
+
+    .dark-mode {
+      background-color: black;
+      color: white;
     }
 
     html {
@@ -310,6 +318,8 @@
                                 for
                                 your
                                 prompts</a></p>
+                            <p><button onclick="let element = document.body; element.classList.toggle('dark-mode');">dark mode</button> </p>
+
                         </div>
 
                     </div>
