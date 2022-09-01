@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Nick's Stable Diffusion Playground - Advanced Prompting Page</title>
+    <script src="index.js"></script>
+</head>
+<style>
+    body {
+        background-color: #f0f0f0;
+    }
+
+    html {
+        font-family: "Lucida Sans", sans-serif;
+    }
+
+    .container {
+        border-collapse: collapse;
+        width: 70%;
+    }
+
+    img {
+        border: 1px solid #ffffff;
+        padding: 10px;
+        box-shadow: 5px 10px #888888;
+    }
+
+    .label {
+        color: white;
+        padding: 8px;
+        background-color: darkslategray;
+        width: 700px;
+    }
+
+    .button-9 {
+        appearance: auto;
+        backface-visibility: hidden;
+        background-color: #888888;
+        border-radius: 6px;
+        border-width: 0;
+        box-shadow: rgba(50, 50, 93, .1) 0 0 0 1px inset, rgba(50, 50, 93, .1) 0 2px 5px 0, rgba(0, 0, 0, .07) 0 1px 1px 0;
+        box-sizing: border-box;
+        color: #fff;
+        cursor: pointer;
+        font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+        font-size: 100%;
+        height: 44px;
+        line-height: 1.15;
+        margin: 12px 0 0;
+        outline: none;
+        overflow: hidden;
+        padding: 0 25px;
+        position: relative;
+        text-align: center;
+        text-transform: none;
+        transform: translateZ(0);
+        transition: all .2s, box-shadow .08s ease-in;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        width: 100%;
+    }
+
+    .button-9:disabled {
+        cursor: default;
+    }
+
+    .button-9:focus {
+        box-shadow: rgba(50, 50, 93, .1) 0 0 0 1px inset, rgba(50, 50, 93, .2) 0 6px 15px 0, rgba(0, 0, 0, .1) 0 2px 2px 0, rgba(50, 151, 211, .3) 0 0 0 4px;
+    }
+
+    .slidecontainer {
+        width: 100%; /* Width of the outside container */
+    }
+
+    /* The slider itself */
+    .slider {
+        -webkit-appearance: none; /* Override default CSS styles */
+        appearance: none;
+        width: 100%; /* Full-width */
+        height: 25px; /* Specified height */
+        background: #d3d3d3; /* Grey background */
+        outline: none; /* Remove outline */
+        opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+        -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+        transition: opacity .2s;
+    }
+
+    /* Mouse-over effects */
+    .slider:hover {
+        opacity: 1; /* Fully shown on mouse-over */
+    }
+
+    /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #04AA6D; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+    }
+
+    .slider::-moz-range-thumb {
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #04AA6D; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+    }
+
+    .input_div {
+        width: 700px;
+        border: 1px solid #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+</style>
+<body>
+<h1>Nick's Advanced Stable Diffusion Playground</h1>
+<p class="label" id="status"></p>
+
+<div class="input_div">
+
+    <div>
+        <div>Enter a prompt:</div>
+        <div><textarea cols="50" id="prompt" rows="4" type="text"/></textarea></div>
+    </div>
+    <div>
+        <div><hr>Enter an optional input image URL:
+            <div><input id="original_image_path" type="text" size="100"/></div>
+            <hr>If an image is provided, choose how much percentage it can be changed by the AI:
+            <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"
+                                               oninput="document.getElementById('strength_value').innerText = `${this.value}%`"
+                                               step="0.1" type="range"
+                                               value="75">
+            </div>
+            <div id="strength_value">75%</div>
+        </div>
+        <div>
+            <div>
+
+                <div>
+                    <hr>Choose number of images to create:
+                    <div class="slidecontainer"><input class="slider" id="num_images" max="30" min="3"
+                                                       oninput="calculateEstimatedTime(this.value)"
+                                                       step="3" type="range"
+                                                       value="3">
+                    </div>
+                    <div id="estimated_time"><i>3 images - estimated time: <b>12</b> seconds</i></div>
+                    <div>
+                        <hr>
+                        Enter an optional seed value:
+                    </div>
+                    <div class="slidecontainer"><input class="slider" id="seed" max="4294967296"
+                                                       min="0"
+                                                       oninput="document.getElementById('seed_value').innerText = this.value"
+                                                       type="number"
+                                                       value="0">
+                    </div>
+                    <div id="seed_value">0</div>
+                    (leave at zero for random seed)
+                    <div>
+                        <hr>
+                        Height:
+                    </div>
+                    <div>
+                        <div class="slidecontainer"><input class="slider"
+                                                           id="height" max="1024"
+                                                           min="256"
+                                                           oninput="document.getElementById('height_value').innerText = this.value"
+                                                           step="32"
+                                                           type="range"
+                                                           value="512">
+                        </div>
+                        <div id="height_value">512</div>
+                        (pixels between 256 and 1024)
+                        <div>
+                            <hr>
+                            Width:
+                        </div>
+                        <div class="slidecontainer"><input
+                                class="slider" id="width"
+                                max="1024" min="256"
+                                oninput="document.getElementById('width_value').innerText = this.value"
+                                step="32" type="range"
+                                value="512">
+                        </div>
+                        <div id="width_value">512</div>
+                        (pixels between 256 and 1024)
+                        <div>
+                            <hr>
+                            DDIM Steps:
+                        </div>
+                        <!-- Careful with changing 'DDIM Steps:' as index.js line 33 uses this literal to detect it has been called from the advanced.html page -->
+                        <div class="slidecontainer">
+                            <input class="slider"
+                                   id="ddim_steps"
+                                   max="250"
+                                   min="1"
+                                   oninput="document.getElementById('ddim_steps_value').innerText = this.value"
+                                   step="1"
+                                   type="range"
+                                   value="50">
+                        </div>
+                        <div id="ddim_steps_value">
+                            50
+                        </div>
+                        Number of steps to
+                        diffuse the image from 1
+                        to 250
+
+                        <div>
+                            <hr>
+                            Scale:
+                        </div>
+
+                        <div class="slidecontainer">
+                            <input class="slider"
+                                   id="scale"
+                                   max="20.0"
+                                   min="1.0"
+                                   oninput="document.getElementById('range_value').innerText = this.value"
+                                   step="0.1"
+                                   type="range"
+                                   value="7.5">
+                        </div>
+                        <div id="range_value">
+                            7.5
+                        </div>
+                        1.0 to
+                        20.0 -
+                        7.5 for
+                        recommended
+                        default
+
+                        <div>
+                            <hr>
+                            Downsampling
+                            Factor:
+                        </div>
+                        <div>
+                            <input id="ds2"
+                                   name="downsampling_factor"
+                                   type="radio"
+                                   value="2">2
+                            <input id="ds4"
+                                   name="downsampling_factor"
+                                   type="radio"
+                                   value="4">4
+                            <input checked
+                                   id="ds8"
+                                   name="downsampling_factor"
+                                   type="radio"
+                                   value="8">8
+                            <input id="ds16"
+                                   name="downsampling_factor"
+                                   type="radio"
+                                   value="16">16
+                        </div>
+
+                        <div>
+                            <button class="button-9"
+                                    id="buttonGo"
+                                    onclick="go()"
+                                    role="button">
+                                Click
+                                to
+                                send
+                                request
+                            </button>
+                        </div>
+
+                        <div class="container" id="output">
+                        </div>
+                        <div class="container"
+                             id="queue">
+                            Current
+                            queue:
+                        </div>
+                        <div>
+                            <hr>
+                        </div>
+                        <div>
+                            <p>
+                                <a class="label"
+                                   href="library.html"
+                                   rel="noopener noreferrer"
+                                   target="_blank">See
+                                    library
+                                    of
+                                    images
+                                    created
+                                    so
+                                    far</a></p>
+                            <p><a class="label"
+                                  href="index.html"
+                                  rel="noopener noreferrer"
+                                  target="_blank">Prompt
+                                with
+                                simple
+                                control</a></p>
+
+                            <p><a class="label"
+                                  href="inspiration.html"
+                                  rel="noopener noreferrer"
+                                  target="_blank">Get
+                                inspired
+                                for
+                                your
+                                prompts</a></p>
+                        </div>
+
+                    </div>
+                    &nbsp;
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
