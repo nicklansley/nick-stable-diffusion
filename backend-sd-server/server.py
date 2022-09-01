@@ -371,7 +371,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             prompt = data['prompt']
             queue_id = data['queue_id']
             num_images = data['num_images']
-            original_file_path = ''
+            original_image_path = ''
 
             options = {
                 'seed': random.randint(1, 2147483647),
@@ -416,9 +416,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             if 'original_image_path' in data:
                 original_image_path = data['original_image_path'].strip()
                 if not original_image_path.startswith('http'):
+                    original_image_path = ''
                     print(
                         'Warning: {} is not a valid URL - processing continues as if no file present'.format(original_image_path))
-                    original_file_path = ''
 
             # process!
             if original_image_path != '':
