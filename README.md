@@ -92,7 +92,7 @@ The API is a simple RESTful API that can be used by the UI to send requests to t
 I will document it here but for a quick glance, look at the go() function in the frontend's index.js file and see its fetch() call.
 Good luck setting this up on your PC - let me know how you get on.
 
-## NSFW
+## Safety Catch
 Note that I have disabled the safety catch and allow this project to create any image it desires. But doing so comes with great responsibility and you must
 not forget what you agreed to in step 5 above. I only disabled the safety catch because Rick Astley (the NSFW replacement image) was appearing too often on innocent prompts! 
 If you prefer to avoid NSFW content, re-enable the safety catch in the backend code by changing server.py line 237 from calling check_safety() to calling orig_check_safety()
