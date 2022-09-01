@@ -73,10 +73,10 @@ I've written the scheduler and frontend web server in Python. The Scheduler uses
 
 
 ### Library Page
-The UI includes a library page where you can view the images created so far. If you want to empty the library, simply go to the directory storing 'library.json' and set of directories with UUID names, and delete them.
+The UI includes a library page where you can view the images created so far. If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete everything in it.
 If you want to delete a specific image, double-click it on the library page, and select 'OK' to the alert prompt.
 
-The library page is useful for observing how many seconds it took to generate each image, as it is displayed above each group of images. My PC always has it at around 8 secs/image. If yours is different, 
+The library page is useful for observing how many seconds it took to generate each image, as it is displayed above each group of images. My PC always has it at around 4 secs/image. If yours is different, 
 you can adjust the value in the JavaScript at the top of index.js - change the very first line - const SECS_PER_IMAGE = 4; - to the number of seconds per image you are experiencing.
 This will make the countdown on the UI more accurate when waiting for your prompt to be processed.
 
