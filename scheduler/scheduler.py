@@ -1,10 +1,15 @@
 import os
 import sys
 import json
+import copy
 import time
 import redis
 import signal
 import requests
+
+METADATA_START = b'##STARTMETADATA##'
+METADATA_END = b'##ENDMETADATA##'
+ADD_METADATA_TO_FILES = True
 
 
 def get_next_queue_request():
@@ -56,55 +61,107 @@ def send_request_to_sd_engine(prompt_info):
 def update_library_catalogue():
     print('\nSCHEDULER: Updating library catalogue')
     library = []
-    library_entry = {
-        "text_prompt": "",
-        "queue_id": "",
-        "generated_images": []
-    }
+    library_entry = {}
+
+    # read the library catalogue
     for root, dirs, files in os.walk("/app/library", topdown=False):
+        # for each file in the library catalogue
         for idx_name in files:
+            # get the file name
             if idx_name == 'index.json':
                 idx_file_name = os.path.join(root, idx_name)
                 unix_time = os.path.getmtime(idx_file_name)
                 try:
+                    # read the file
                     with open(idx_file_name, "r", encoding="utf8") as infile:
                         metadata = json.loads(infile.read())
-                        if type(metadata) is dict:
-                            library_entry["text_prompt"] = metadata["text_prompt"]
-                            library_entry["queue_id"] = metadata["queue_id"]
-                            library_entry["seed"] = metadata["seed"]
-                            library_entry["creation_unixtime"] = unix_time
-                            library_entry["process_time_secs"] = metadata["time_taken"]
-                            library_entry["generated_images"] = []
-                            library_entry['height'] = metadata['height']
-                            library_entry['width'] = metadata['width']
-                            library_entry['ddim_steps'] = metadata['ddim_steps']
-                            library_entry['ddim_eta'] = metadata['ddim_eta']
-                            library_entry['scale'] = metadata['scale']
-                            library_entry['downsampling_factor'] = metadata['downsampling_factor']
-                            library_entry['error'] = metadata['error']
 
+                        # copy the metadata to the library entry
+                        if type(metadata) is dict:
+                            library_entry = copy.deepcopy(metadata)
+                            library_entry["creation_unixtime"] = unix_time
+                            library_entry["generated_images"] = []
+
+                            # add the library entry to the library catalogue
                             library.append(json.loads(json.dumps(library_entry)))
+
                 except json.decoder.JSONDecodeError as jde:
                     print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
 
+    # add the images file paths to the library catalogue
     for root, dirs, files in os.walk("/app/library", topdown=False):
         for image_name in files:
             if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
+
+                # if the image has a metadata section then add it to the
+                # end of the image file if ADD_METADATA_TO_FILES is enabled
+                if ADD_METADATA_TO_FILES:
+                    update_file_metadata(os.path.join(root, image_name), library_entry)
+
+                # add the image file path to the library entry
                 for library_entry in library:
                     if library_entry["queue_id"] in root:
                         image_file_path = os.path.join(root, image_name).replace('/app/', '')
+
                         if image_file_path not in library_entry["generated_images"]:
                             library_entry["generated_images"].append(image_file_path)
 
-    for library_entry in library:
-        if len(library_entry["generated_images"]) == 0:
-            library.remove(library_entry)
-
+    # write the library catalogue
     with open("/app/library/library.json", "w", encoding="utf8") as outfile:
         outfile.write(json.dumps(library, indent=4, sort_keys=True))
 
     print('\nSCHEDULER: Update of library catalogue completed')
+
+
+def update_file_metadata(img_path, library_entry):
+    # make a copy of the library entry so we don't modify the original
+    library_metadata = copy.deepcopy(library_entry)
+
+    # remove the generated_images list from the library metadata
+    del library_metadata['generated_images']
+
+    # prepare the metadata to be added to the image file
+    text = json.dumps(library_metadata)
+    binary_text = METADATA_START + text.encode('utf-8') + METADATA_END
+
+    # read the image file ready to insert the metadata
+    with open(img_path, 'rb') as image_file:
+        image_binary = image_file.read()
+
+    # see if an existing metadata section exists
+    prompt_location_start = image_binary.find(METADATA_START)
+
+    if prompt_location_start > -1:
+        # replace an existing metadata entry with new metadata entry
+        image_binary = image_binary[:prompt_location_start] + binary_text
+    else:
+        # add new metadata entry to end of image file
+        image_binary = image_binary + binary_text
+
+    # write the image file with the new metadata
+    with open(img_path, 'wb') as new_image_file:
+        new_image_file.write(image_binary)
+
+    # confirm the metadata was added to the image file
+    return read_file_prompt(img_path) == text
+
+
+def read_file_prompt(img_path):
+    # read the image file ready to extract the metadata
+    with open(img_path, 'rb') as image_file:
+        image_binary = image_file.read()
+
+    # see if an existing metadata section exists
+    prompt_location_start = image_binary.find(METADATA_START)
+    if prompt_location_start > 0:
+        prompt_location_end = image_binary.find(METADATA_END)
+        if prompt_location_end > 0:
+            # extract the metadata from the image file
+            prompt_section = image_binary[prompt_location_start + len(METADATA_START):prompt_location_end]
+            return prompt_section.decode('utf-8')
+
+    # no metadata found
+    return ''
 
 
 def exit_signal_handler(self, sig):

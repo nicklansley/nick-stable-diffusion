@@ -68,7 +68,7 @@ const retrieveImages = async () =>
                 {
                     h3.innerHTML += `<small>Error: <b>${libraryItem['error']}</b></small><br>`;
                 }
-                h3.innerHTML += `<small>processing took ${libraryItem['process_time_secs'].toFixed(2)} seconds (${(libraryItem['process_time_secs'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)</small>`;
+                h3.innerHTML += `<small>processing took ${libraryItem['time_taken'].toFixed(2)} seconds (${(libraryItem['time_taken'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)</small>`;
                 document.getElementById("output").appendChild(h3);
 
                 for (const image_entry of libraryItem['generated_images'])

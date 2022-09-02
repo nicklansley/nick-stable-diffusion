@@ -10,60 +10,6 @@ import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
-def update_library_catalogue():
-    print('\nFROMTEND: Updating library catalogue')
-    library = []
-    library_entry = {
-        "text_prompt": "",
-        "queue_id": "",
-        "generated_images": []
-    }
-    for root, dirs, files in os.walk("/app/library", topdown=False):
-        for idx_name in files:
-            if idx_name.endswith('.json'):
-                idx_file_name = os.path.join(root, idx_name)
-                unix_time = os.path.getmtime(idx_file_name)
-                try:
-                    with open(idx_file_name, "r", encoding="utf8") as infile:
-                        metadata = json.loads(infile.read())
-                        if type(metadata) is dict:
-                            library_entry["text_prompt"] = metadata["text_prompt"]
-                            library_entry["queue_id"] = metadata["queue_id"]
-                            library_entry["seed"] = metadata["seed"]
-                            library_entry["creation_unixtime"] = unix_time
-                            library_entry["process_time_secs"] = metadata["time_taken"]
-                            library_entry["generated_images"] = []
-                            library_entry['height'] = metadata['height']
-                            library_entry['width'] = metadata['width']
-                            library_entry['ddim_steps'] = metadata['ddim_steps']
-                            library_entry['ddim_eta'] = metadata['ddim_eta']
-                            library_entry['scale'] = metadata['scale']
-                            library_entry['downsampling_factor'] = metadata['downsampling_factor']
-                            library_entry['error'] = metadata['error']
-
-                            library.append(json.loads(json.dumps(library_entry)))
-                except json.decoder.JSONDecodeError as jde:
-                    print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
-
-    for root, dirs, files in os.walk("/app/library", topdown=False):
-        for image_name in files:
-            if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
-                for library_entry in library:
-                    if library_entry["queue_id"] in root:
-                        image_file_path = os.path.join(root, image_name).replace('/app/', '')
-                        if image_file_path not in library_entry["generated_images"]:
-                            library_entry["generated_images"].append(image_file_path)
-
-    for library_entry in library:
-        if len(library_entry["generated_images"]) == 0:
-            library.remove(library_entry)
-
-    with open("/app/library/library.json", "w", encoding="utf8") as outfile:
-        outfile.write(json.dumps(library, indent=4, sort_keys=True))
-
-    print('\nSCHEDULER: Update of library catalogue completed')
-
-
 class RelayServer(BaseHTTPRequestHandler):
     def do_GET(self):
         api_command = unquote(self.path)
@@ -188,7 +134,7 @@ class RelayServer(BaseHTTPRequestHandler):
         try:
             os.remove('/app/' + data['path'])
             print('\nFRONTEND: /app/' + data['path'] + " deleted")
-            update_library_catalogue()
+
         except FileNotFoundError as fnfe:
             print("\nFRONTEND: process_deleteimage FileNotFoundError:", fnfe)
             return False
