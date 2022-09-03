@@ -103,7 +103,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def load_img(path):
+def load_and_format_image(path):
     # load an image from a URL
     if path.startswith("http"):
         # get image name from URL
@@ -112,9 +112,12 @@ def load_img(path):
         urllib.request.urlretrieve(path, image_name)
         image = Image.open(image_name).convert("RGB")
     # load an image from a file
+    elif path.startswith('library'):
+        print(f"Loading image from volume path {path}")
+        image = Image.open('/' + path).convert("RGB")
     else:
         print(f"Loading image from volume path {path}")
-        image = Image.open(path).convert("RGB")
+        image = Image.open('/' + path).convert("RGB")
 
     # make sure both width and height of the image are <= 512:
     w, h = image.size
@@ -274,7 +277,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         assert text_prompt is not None
         data = [N_SAMPLES * [text_prompt]]
 
-        init_image = load_img(original_image_path).to(device)
+        # load the image
+        init_image = load_and_format_image(original_image_path).to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
@@ -359,96 +363,105 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         api_command = unquote(self.path)
         print("\nPOST >> API command =", api_command)
+
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
-        # print("\nbody=", body)
         data = json.loads(body.decode('utf-8'))
+
         if type(data) is not dict:
             data = json.loads(data)
-        print("\nIncoming request data =", data)
+
+        print("\nIncoming POST request data =", data)
 
         if api_command == '/prompt':
-            prompt = data['prompt']
-            queue_id = data['queue_id']
-            num_images = data['num_images']
-            original_image_path = ''
+            self.process_prompt(data)
 
-            options = {
-                'seed': random.randint(1, 2147483647),
-                'height': HEIGHT,
-                'width': WIDTH,
-                'ddim_steps': DDIM_STEPS,
-                'ddim_eta': DDIM_ETA,
-                'scale': SCALE,
-                'downsampling_factor': DOWNSAMPLING_FACTOR,
-                'strength': STRENGTH
-            }
+    def process_prompt(self, data):
+        # Get the mandatory prompt data from the request
+        prompt = data['prompt']
+        queue_id = data['queue_id']
+        num_images = data['num_images']
+        original_image_path = ''
 
-            if 'seed' in data and int(data['seed']) > 0:
-                options['seed'] = int(data['seed'])
-            # else use the randomly generated seed above
+        # Set up defaults for the optional extra properties which will
+        # be overwritten should they be in the request
+        options = {
+            'seed': random.randint(1, 2147483647),
+            'height': HEIGHT,
+            'width': WIDTH,
+            'ddim_steps': DDIM_STEPS,
+            'ddim_eta': DDIM_ETA,
+            'scale': SCALE,
+            'downsampling_factor': DOWNSAMPLING_FACTOR,
+            'strength': STRENGTH
+        }
 
-            if 'height' in data:
-                options['height'] = int(data['height'])
+        # Override the default options with any in the request:
+        if 'seed' in data and int(data['seed']) > 0:
+            options['seed'] = int(data['seed'])
+        # else use the randomly generated seed above
 
-            if 'width' in data:
-                options['width'] = int(data['width'])
+        if 'height' in data:
+            options['height'] = int(data['height'])
+        if 'width' in data:
+            options['width'] = int(data['width'])
+        if 'ddim_steps' in data:
+            options['ddim_steps'] = int(data['ddim_steps'])
+        if 'ddim_eta' in data:
+            options['ddim_eta'] = float(data['ddim_eta'])
+        if 'scale' in data:
+            options['scale'] = float(data['scale'])
+        if 'downsampling_factor' in data:
+            options['downsampling_factor'] = int(data['downsampling_factor'])
+        if 'strength' in data:
+            options['strength'] = float(data['strength'])
+            if options['strength'] >= 1.0:
+                options['strength'] = 0.999
+            elif options['strength'] < 0.0:
+                options['strength'] = 0.001
+        if 'original_image_path' in data:
+            original_image_path = data['original_image_path'].strip()
 
-            if 'ddim_steps' in data:
-                options['ddim_steps'] = int(data['ddim_steps'])
+            # only image paths which are wither URLs or are sourced from the library are allowed
+            if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
+                original_image_path = ''
+                print(
+                    'Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
+                        original_image_path))
+        # process!
+        if original_image_path != '':
+            result = process_image(original_image_path, prompt, global_device, global_model,
+                                   global_wm_encoder, queue_id,
+                                   num_images, options)
+        else:
+            result = process(prompt, global_device, global_model, global_wm_encoder, queue_id,
+                             num_images, options)
 
-            if 'ddim_eta' in data:
-                options['ddim_eta'] = float(data['ddim_eta'])
-
-            if 'scale' in data:
-                options['scale'] = float(data['scale'])
-
-            if 'downsampling_factor' in data:
-                options['downsampling_factor'] = int(data['downsampling_factor'])
-
-            if 'strength' in data:
-                options['strength'] = float(data['strength'])
-                if options['strength'] >= 1.0:
-                    options['strength'] = 0.999
-                elif options['strength'] < 0.0:
-                    options['strength'] = 0.001
-
-            if 'original_image_path' in data:
-                original_image_path = data['original_image_path'].strip()
-                if not original_image_path.startswith('http'):
-                    original_image_path = ''
-                    print(
-                        'Warning: {} is not a valid URL - processing continues as if no file present'.format(original_image_path))
-
-            # process!
-            if original_image_path != '':
-                result = process_image(original_image_path, prompt, global_device, global_model,
-                                       global_wm_encoder, queue_id,
-                                       num_images, options)
-            else:
-                result = process(prompt, global_device, global_model, global_wm_encoder, queue_id,
-                                 num_images, options)
-
-            if result == 'X':
-                self.send_response(500)
-                self.end_headers()
-            else:
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                response_body = json.dumps(result)
-                self.wfile.write(response_body.encode())
+        # Send the response back to the calling request
+        if result == 'X':
+            self.send_response(500)
+            self.end_headers()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            response_body = json.dumps(result)
+            self.wfile.write(response_body.encode())
 
 
 def exit_signal_handler(self, sig):
+    # Shutdown the server gracefully when Docker requests it
     sys.stderr.write('\nBackend-Server: Shutting down...\n')
     sys.stderr.flush()
     quit()
 
 
 if __name__ == "__main__":
+    # Set up the exit signal handler
     signal.signal(signal.SIGTERM, exit_signal_handler)
     signal.signal(signal.SIGINT, exit_signal_handler)
+
+    # Set up the server
     print('------------------------------------------')
     print('Starting backend server, please wait...')
     print('------------------------------------------\n\n')

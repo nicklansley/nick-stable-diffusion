@@ -78,7 +78,7 @@ const go = async () =>
     }
     else
     {
-        document.getElementById('status').innerText = `DALL-E Engine Status: Sorry, an HTTP error ${rawResponse.status} occurred - have another go!`;
+        document.getElementById('status').innerText = `Stable Diffusion Engine Status: Sorry, an HTTP error ${rawResponse.status} occurred - have another go!`;
     }
     document.getElementById('buttonGo').innerText = "Click to send request";
     document.getElementById('buttonGo').enabled = true;
