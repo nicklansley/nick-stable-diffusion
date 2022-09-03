@@ -120,20 +120,28 @@ def load_and_format_image(path):
         image = Image.open(path).convert("RGB")
 
     # make sure both width and height of the image are <= 512:
+    print(f"loaded input image from {path}")
+
     w, h = image.size
-    print(f"loaded input image of size ({w}, {h}) from {path}")
-    if w > h:
-        image = image.resize((512, int(512 * h / w)))
-    else:
-        image = image.resize((int(512 * w / h), 512))
+    print(f"image size ({w}, {h})")
 
-    w, h = map(lambda x: x - x % 32, (w, h))  # resize to integer multiple of 32
+    old_size = image.size  # old_size[0] is in (width, height) format
 
-    image = image.resize((w, h), resample=PIL.Image.LANCZOS)
+    ratio = float(512) / max(old_size)
+    new_size = tuple([int(x * ratio) for x in old_size])
+
+    image.thumbnail(new_size, Image.Resampling.LANCZOS)
+    new_image = Image.new("RGB", (512, 512))
+    new_image.paste(image, ((512 - new_size[0]) // 2,
+                            (512 - new_size[1]) // 2))
+
+    w, h = new_image.size
     print(f"Image resized to size ({w}, {h}) ")
-    image = np.array(image).astype(np.float32) / 255.0
+
+    image = np.array(new_image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
+
     return 2. * image - 1.
 
 

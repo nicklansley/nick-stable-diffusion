@@ -16,8 +16,10 @@ class RelayServer(BaseHTTPRequestHandler):
         print("\nFRONTEND: GET >> API command =", api_command)
         if api_command.endswith('/'):
             self.process_ui('/index.html')
+
         elif api_command.endswith('/getlibrary'):
             self.process_ui('/library/library.json')
+
         elif api_command.endswith('.html') or \
                 api_command.endswith('.js') or \
                 api_command.endswith('.css') or \
@@ -25,8 +27,11 @@ class RelayServer(BaseHTTPRequestHandler):
                 api_command.endswith('.gif') or \
                 api_command.endswith('.png') or \
                 api_command.endswith('.jpeg') or \
+                api_command.endswith('.map') or \
+                api_command.endswith('.webmanifest') or \
                 api_command.endswith('.jpg'):
             self.process_ui(api_command)
+
         elif api_command == '/queue_status':
             queue_data = self.check_queue_request()
             self.send_response(200)
@@ -34,6 +39,7 @@ class RelayServer(BaseHTTPRequestHandler):
             self.end_headers()
             response_body = json.dumps(queue_data)
             self.wfile.write(response_body.encode())
+
         return
 
     def do_POST(self):
@@ -155,6 +161,8 @@ class RelayServer(BaseHTTPRequestHandler):
             response_content_type = 'image/png'
         elif path.endswith('.jpg'):
             response_content_type = 'image/jpeg'
+        elif path.endswith('.map'):
+            response_content_type = 'application/json'
         else:
             response_content_type = 'text/plain'
 
