@@ -117,7 +117,7 @@ def load_and_format_image(path):
         image = Image.open('/' + path).convert("RGB")
     else:
         print(f"Loading image from volume path {path}")
-        image = Image.open('/' + path).convert("RGB")
+        image = Image.open(path).convert("RGB")
 
     # make sure both width and height of the image are <= 512:
     w, h = image.size
