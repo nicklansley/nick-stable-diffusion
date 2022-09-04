@@ -208,14 +208,11 @@ If you prefer to avoid the possibility of NSFW content (for example, you are dem
 work), re-enable the safety catch in the backend code by changing server.py line 250 from
 calling check_safety() to calling orig_check_safety()
 
-The reputation of this project, and that of
-Stable Diffusion as an open-source AI is at stake. Please be responsible. 
 I only disabled the safety catch because Rick Astley (the NSFW
 replacement image) was appearing too often on innocent prompts.
 
 But have no illusion: Without the safety catch enabled, the AI will create any image it desires even on apparently 
 innocent prompts, and it has no moral compass to help you unsee what it has created. 
-This may sound like a joke, but it is not. I have seen some of the images.
 
 
 ## Licenses
