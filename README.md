@@ -24,6 +24,7 @@ I've built a docker-based web service around the original project, which incorpo
 but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over 20GB memory at the present time. To overcome the max memory error, open (or create)
 a file in your Windows home directory called   <b>.wslconfig</b> for example on my PC: <pre>C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a memory size of 4GB lower than your PC's memory (mine has 64 GB).
 This does not mean that WSL2 will grab all but 4GB of your PC memory, it's just that you are giving it the 'right' to use that much if it really needs it.
+Why 4GB? I am guessing Windows can just about keep running on 4GB of memory, but I have not tested it...! The file should look like this:
 <pre>
 [wsl2]
 memory=60GB 
