@@ -433,6 +433,22 @@ const populateControlsFromHref = () =>
     }
 }
 
+const toggleDarkMode = () =>
+{
+    let element = document.body;
+    element.classList.toggle('dark-mode');
+    localStorage.setItem("dark-mode", element.classList.contains('dark-mode') ? "Y" : "N");
+}
+
+
+const setDarkModeFromLocalStorage = () =>
+{
+    if(localStorage.getItem("dark-mode") === "Y")
+    {
+        document.body.classList.add('dark-mode');
+    }
+}
+
 
 /**
  * Set a timer to go and get the queued prompt requests from the server every 2 seconds

@@ -14,15 +14,15 @@
 </head>
 <style>
     body {
-      padding: 25px;
-      background-color: white;
-      color: black;
-      font-size: 25px;
+        padding: 25px;
+        background-color: white;
+        color: black;
+        font-size: 25px;
     }
 
     .dark-mode {
-      background-color: black;
-      color: white;
+        background-color: black;
+        color: white;
     }
 
     html {
@@ -131,7 +131,7 @@
         margin-top: 10px;
     }
 </style>
-<body>
+<body onload="setDarkModeFromLocalStorage()">
 <h1>Nick's Stable Diffusion Playground</h1>
 <p class="label" id="status"></p>
 
@@ -181,39 +181,20 @@
             </div>
             <div>
                 <p>
-                    <a class="label"
-                       href="library.html"
-                       rel="noopener noreferrer"
-                       target="_blank">See
-                        library
-                        of
-                        images
-                        created
-                        so
-                        far</a></p>
-                <p><a class="label"
-                      href="advanced.html"
-                      rel="noopener noreferrer"
-                      target="_blank">Prompt
-                    with
-                    advanced
-                    input
-                    controls</a></p>
-
-                <p><a class="label"
-                      href="inspiration.html"
-                      rel="noopener noreferrer"
-                      target="_blank">Get
-                    inspired
-                    for
-                    your
-                    prompts</a></p>
-
-                <p><button onclick="let element = document.body; element.classList.toggle('dark-mode');">dark mode</button> </p>
+                    <button onclick="window.open('library.html', '_blank')">Library of images created so far</button>
+                </p>
+                <p>
+                    <button onclick="window.open('index.html', '_blank')">Prompt with simple controls</button>
+                </p>
+                <p>
+                    <button onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts</button>
+                </p>
+                <p>
+                    <button onclick="toggleDarkMode()">Toggle dark mode</button>
+                </p>
             </div>
 
         </div>
-        &nbsp;
     </div>
 </div>
 </div>

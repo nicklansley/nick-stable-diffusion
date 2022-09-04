@@ -8,15 +8,15 @@
 </head>
 <style>
     body {
-      padding: 25px;
-      background-color: white;
-      color: black;
-      font-size: 25px;
+        padding: 25px;
+        background-color: white;
+        color: black;
+        font-size: 25px;
     }
 
     .dark-mode {
-      background-color: black;
-      color: white;
+        background-color: black;
+        color: white;
     }
 
     html {
@@ -125,7 +125,7 @@
         margin-top: 10px;
     }
 </style>
-<body onload="populateControlsFromHref()">
+<body onload="populateControlsFromHref();setDarkModeFromLocalStorage()">
 <h1>Nick's Advanced Stable Diffusion Playground</h1>
 <p class="label" id="status"></p>
 
@@ -136,9 +136,13 @@
         <div><textarea cols="50" id="prompt" rows="4" type="text"/></textarea></div>
     </div>
     <div>
-        <div><hr>Optional input image<br><small>Enter URL directly to the image on the web, or choose one from the library folder using 'library/&lt;path-to-file&gt;'</small>:
+        <div>
+            <hr>
+            Optional input image<br><small>Enter URL directly to the image on the web, or choose one from the library
+            folder using 'library/&lt;path-to-file&gt;'</small>:
             <div><input id="original_image_path" type="text" size="100"/></div>
-            <hr>If an image is provided, choose how much percentage it can be changed by the AI:
+            <hr>
+            If an image is provided, choose how much percentage it can be changed by the AI:
             <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"
                                                oninput="document.getElementById('strength_value').innerText = `${this.value}%`"
                                                step="0.1" type="range"
@@ -150,7 +154,8 @@
             <div>
 
                 <div>
-                    <hr>Choose number of images to create:
+                    <hr>
+                    Choose number of images to create:
                     <div class="slidecontainer"><input class="slider" id="num_images" max="30" min="3"
                                                        oninput="calculateEstimatedTime(this.value)"
                                                        step="3" type="range"
@@ -292,34 +297,22 @@
                         </div>
                         <div>
                             <p>
-                                <a class="label"
-                                   href="library.html"
-                                   rel="noopener noreferrer"
-                                   target="_blank">See
-                                    library
-                                    of
-                                    images
-                                    created
-                                    so
-                                    far</a></p>
-                            <p><a class="label"
-                                  href="index.html"
-                                  rel="noopener noreferrer"
-                                  target="_blank">Prompt
-                                with
-                                simple
-                                control</a></p>
-
-                            <p><a class="label"
-                                  href="inspiration.html"
-                                  rel="noopener noreferrer"
-                                  target="_blank">Get
-                                inspired
-                                for
-                                your
-                                prompts</a></p>
-                            <p><button onclick="let element = document.body; element.classList.toggle('dark-mode');">dark mode</button> </p>
-
+                                <button onclick="window.open('library.html', '_blank')">Library of images created so
+                                    far
+                                </button>
+                            </p>
+                            <p>
+                                <button onclick="window.open('index.html', '_blank')">Prompt with simple controls
+                                </button>
+                            </p>
+                            <p>
+                                <button onclick="window.open('inspiration.html', '_blank')">Get inspired for your
+                                    prompts
+                                </button>
+                            </p>
+                            <p>
+                                <button onclick="toggleDarkMode()">Toggle dark mode</button>
+                            </p>
                         </div>
 
                     </div>
