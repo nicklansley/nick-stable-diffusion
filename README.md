@@ -202,7 +202,13 @@ Good luck setting this up on your PC - let me know how you get on.
 
 Note that I have disabled the safety catch and allow this project to create any image it desires. But doing so comes
 with great responsibility and you must
-not forget what you agreed to when downloading the model in step 5 above. The reputation of this project, and that of
+not forget what you agreed to when downloading the model in step 5 above. 
+
+If you prefer to avoid the possibility of NSFW content (for example, you are demonstrating this as a show & tell at 
+work), re-enable the safety catch in the backend code by changing server.py line 250 from
+calling check_safety() to calling orig_check_safety()
+
+The reputation of this project, and that of
 Stable Diffusion as an open-source AI is at stake. Please be responsible. 
 I only disabled the safety catch because Rick Astley (the NSFW
 replacement image) was appearing too often on innocent prompts.
@@ -211,9 +217,6 @@ But have no illusion: Without the safety catch enabled, the AI will create any i
 innocent prompts, and it has no moral compass to help you unsee what it has created. 
 This may sound like a joke, but it is not. I have seen some of the images.
 
-If you prefer to avoid the possibility of NSFW content (for example, you are demonstrating this as a show & tell at 
-work), re-enable the safety catch in the backend code by changing server.py line 250 from
-calling check_safety() to calling orig_check_safety()
 
 ## Licenses
 
