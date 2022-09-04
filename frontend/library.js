@@ -136,14 +136,17 @@ const authorParametersListForWeb = (libraryItem) =>
     let text = `Images created ${creationDate.toLocaleString()},<br>`;
     text += `Processing took ${libraryItem['time_taken'].toFixed(2)} seconds (${(libraryItem['time_taken'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)`;
     text += `<br>parameters:`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Seed: ${libraryItem['seed']},`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;height: ${libraryItem['height']}px,`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;width: ${libraryItem['width']}px,`
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;DDIM Steps: ${libraryItem['ddim_steps']},`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;scale: ${libraryItem['scale']},`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;downsampling factor: ${libraryItem['downsampling_factor']},`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image source: ${libraryItem['original_image_path']},`;
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image strength: ${libraryItem['strength']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Seed: ${libraryItem['seed']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;height: ${libraryItem['height']}px`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;width: ${libraryItem['width']}px`
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;DDIM Steps: ${libraryItem['ddim_steps']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;scale: ${libraryItem['scale']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;downsampling factor: ${libraryItem['downsampling_factor']}`;
+    if(libraryItem['original_image_path'] !== '')
+    {
+        text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image source: ${libraryItem['original_image_path']},`;
+        text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image strength: ${libraryItem['strength']}`;
+    }
     if(libraryItem['error'] !== '')
     {
         text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>Error: ${libraryItem['error']}</b>`;
