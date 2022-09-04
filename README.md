@@ -4,16 +4,17 @@ This project is a clone of https://github.com/CompVis/stable-diffusion.git
  
 I've built a docker-based web service around the original project, which incorporates a few extra features, and assumes you are running Docker Desktop over WSL2 on Windows 10/11.
 
-* Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than model-loading.
-* Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
-* Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
-* A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of results
-* docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a disk outside of Docker.
-* Click on an image in the library and a new advanced page will open in a new tab with all the settings (seed, ddim_stape, mage link etc) used to create that image, so you can easily make variations by adjusting the controls.
-* The 'advanced.html' page gives you creative access to use input images, lock in the seed value, image size, DDIM Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend server logs should your request disappear from the queue almost immediately with no results.
-* The backend is written in Python and the UI is written in JavaScript.
-* Output images are in PNG format.
-* A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
+- Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than model-loading.
+- Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
+- Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
+- A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of results.
+- docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a disk outside of Docker.
+- NEW: Manipulate images you have already created that reside in the library. Click on an image in the library and a new advanced page will open in a new tab with all the settings (seed, ddim_steps, scale, image link etc) used to create that image, so you can easily make variations by adjusting the controls.
+- NEW: (Advanced Page) Link to any image on the web and use that for the input image to the AI. You can adjust how much the image can be changed from 0.01% (no change) to 100% (no original image). You can also choose any image in the library folder on your machine (just move it there if necessary). The only condition is that the image can be retrieved without login and the website at the far end won't mind Python's urllib library pulling the image. Images are resized internally to 512x512px without affecting the original image's aspect ratio (black bands will appear on the top/bottom or left/right side of the longer edge to make it square). This aids the AI as it is finicky about sizes and size ratios.
+- The 'advanced.html' page gives you creative access to use input images, lock in the seed value, image size, DDIM Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend server logs should your request disappear from the queue almost immediately with no results.
+- The backend is written in Python and the UI is written in JavaScript.
+- Output images are in PNG format so don't suffer from JPEG artifacts.
+- A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
 
 ## 8 steps to Fast-start
 1. Make sure you have an NVidia graphics card and a NVidia's GPU driver installed. This is how the backend will render the images.
