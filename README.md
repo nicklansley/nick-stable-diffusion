@@ -9,9 +9,10 @@ I've built a docker-based web service around the original project, which incorpo
 * Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
 * A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of results
 * docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a disk outside of Docker.
+* Click on an image in the library and a new advanced page will open in a new tab with all the settings (seed, ddim_stape, mage link etc) used to create that image, so you can easily make variations by adjusting the controls.
+* The 'advanced.html' page gives you creative access to use input images, lock in the seed value, image size, DDIM Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend server logs should your request disappear from the queue almost immediately with no results.
 * The backend is written in Python and the UI is written in JavaScript.
 * Output images are in PNG format.
-* New '/advanced.html' with access to use input images, lock in the seed value, image size, DDIM Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend server logs should your request disappear from the queue almost immediately with no results.
 * A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
 
 ## 8 steps to Fast-start
