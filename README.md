@@ -89,7 +89,11 @@ This page enables you to type in a prompt, choose the number of images you wish 
 It's designed to be simple to use, with a random seed value generated for you. 
 
 Type in a prompt, set the number of images (from 3 to 30 in steps of 3) and 'click to send request'.
-The request will be queued and the scheduler will pick it up and process it. The scheduler will then send the results back to the frontend web server which will then send the results back to the UI.
+The request will be queued and the scheduler will pick it up and process it. The scheduler will then send the results back to the frontend web server which will then send the results back to the web page.
+
+Once the images appear, hover over them with your mouse to make them much bigger. You can drag them onto your desktop with your mouse to save them outside the library.
+
+These images belong to you. They are your copyright. You can use them for whatever you wish.   
 
 If you don't want to wait, you can send several requests - just keep clicking the 'click to send request' button.
 Your requests will be added to the queue. Note that only the last request you sent will result in images appearing on the page,
