@@ -66,6 +66,8 @@ docker compose up -d --build
 </pre>
 7. At first start the backend will then download another 2.73 GB of data 
 which it will store in the 'cache' folder you set up on your drive and set up in docker compose. 
+THis will only happen the first time - it doesn't do this every time you start the backend.
+The second and subsequent times you start the backend it will be live within about 30 seconds, sometimes sooner.
 You can't use the application until you see, in the backend server log:
 
 <pre>
