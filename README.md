@@ -14,6 +14,7 @@ I've built a docker-based web service around the original project, which incorpo
 - The 'advanced.html' page gives you creative access to use input images, lock in the seed value, image size, DDIM Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend server logs should your request disappear from the queue almost immediately with no results.
 - The backend is written in Python and the UI is written in JavaScript.
 - Output images are in PNG format so don't suffer from JPEG artifacts.
+- NEW: 'dark mode' button for all the web pages, for those late-night creative AI sessions without being blasted by light!
 - A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
 
 ## 8 steps to Fast-start
