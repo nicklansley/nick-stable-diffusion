@@ -61,15 +61,14 @@ const retrieveImages = async () =>
 
                 const h3 = document.createElement("h3");
                 let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
-                h3.innerHTML = `<i>${libraryItem['text_prompt']}</i><br>`;
-                h3.innerHTML += `<small>${creationDate.toLocaleString()}</small><br>`;
-                h3.innerHTML += `<small>parameters: Seed: ${libraryItem['seed']}, height: ${libraryItem['height']}px, width ${libraryItem['width']}px, DDIM Steps: ${libraryItem['ddim_steps']}, DDIM ETA: ${libraryItem['ddim_eta']}, scale: ${libraryItem['scale']}, downsampling factor: ${libraryItem['downsampling_factor']}</small><br>`;
-                if(libraryItem['error'] !== '')
-                {
-                    h3.innerHTML += `<small>Error: <b>${libraryItem['error']}</b></small><br>`;
-                }
-                h3.innerHTML += `<small>processing took ${libraryItem['time_taken'].toFixed(2)} seconds (${(libraryItem['time_taken'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)</small>`;
+                h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
                 document.getElementById("output").appendChild(h3);
+
+                const p = document.createElement("p");
+                p.classList.add('parameters-display');
+                p.innerHTML =  authorParametersListForWeb(libraryItem);
+                document.getElementById("output").appendChild(p);
+
 
                 for (const image_entry of libraryItem['generated_images'])
                 {
@@ -131,7 +130,27 @@ const retrieveImages = async () =>
     document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${imageCount} images within ${libraryEntryCount} library entries`;
 }
 
+const authorParametersListForWeb = (libraryItem) =>
+{
+    let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
+    let text = `Images created ${creationDate.toLocaleString()},<br>`;
+    text += `Processing took ${libraryItem['time_taken'].toFixed(2)} seconds (${(libraryItem['time_taken'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)`;
+    text += `<br>parameters:`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Seed: ${libraryItem['seed']},`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;height: ${libraryItem['height']}px,`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;width: ${libraryItem['width']}px,`
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;DDIM Steps: ${libraryItem['ddim_steps']},`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;scale: ${libraryItem['scale']},`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;downsampling factor: ${libraryItem['downsampling_factor']},`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image source: ${libraryItem['original_image_path']},`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image strength: ${libraryItem['strength']}`;
+    if(libraryItem['error'] !== '')
+    {
+        text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>Error: ${libraryItem['error']}</b>`;
+    }
+    return text;
 
+}
 const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     const urlencoded_image_src = encodeURIComponent(image_src);

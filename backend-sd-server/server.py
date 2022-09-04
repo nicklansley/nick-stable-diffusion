@@ -364,9 +364,10 @@ def save_metadata_file(base_count, library_dir_name, options, queue_id, text_pro
             "scale": options['scale'],
             "downsampling_factor": options['downsampling_factor'],
             "error": error,
-            "original_image_path": original_image_path
+            "original_image_path": original_image_path,
+            "strength": options['strength'] if "strength" in options else -1 # -1 means not applicable
         }
-        outfile.write(json.dumps(metadata))
+        json.dump(metadata, outfile, indent=4, ensure_ascii=False)
 
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
