@@ -88,7 +88,18 @@ I've written the scheduler and frontend web server in Python. The Scheduler uses
 This page enables you to type in a prompt, choose the number of images you wish to create in groups of 3 from 3 to 30, and set the AI processing!
 It's designed to be simple to use, with a random seed value generated for you. 
 
-The ddim_steps is set to 50, scale is set to 7.5, image size is 512x512px and the downsampling factor is 8.
+Type in a prompt, set the number of images (from 3 to 30 in steps of 3) and 'click to send request'.
+The request will be queued and the scheduler will pick it up and process it. The scheduler will then send the results back to the frontend web server which will then send the results back to the UI.
+
+If you don't want to wait, you can send several requests - just keep clicking the 'click to send request' button.
+Your requests will be added to the queue. Note that only the last request you sent will result in images appearing on the page,
+but you can see all the requests as each completes on the library page (see below).
+
+If you wish, you can use a service such as ngrok to get your computer a temporary web address on the internet, then your friends and you can
+all submit images using the same page, they will just get added to the queue and processed in turn. Indeed, the whole application is designed for multi-user operation.
+
+
+Behind the scenes for this simple prompting page, the ddim_steps is set to 50, scale is set to 7.5, image size is 512x512px and the downsampling factor is 8.
 These defaults can be altered using the capital-letter variables at the top of script file  backend-sd-server/server.py if you wish to change them,
  but these seem to work best and are suggested by the authors of the model. Use the advanced page to override them for moe control in a session.
 

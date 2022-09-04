@@ -292,36 +292,27 @@ const displayImages = async (library, output) =>
                 const image = document.createElement("img");
                 image.src = image_entry;
                 image.alt = libraryItem['text_prompt'];
-                image.height = 512;
-                image.width = 512;
-
-                image.onclick = function ()
+                image.height = 150;
+                image.width = 150;
+                image.style.zIndex = "0";
+                image.style.position = "relative";
+                image.onmouseover = function ()
                     {
-                        if(this.nodeName === "IMG")
-                        {
-                            if(this.style.transform.includes("scale(3)"))
-                            {
-                                this.style.transform = "scale(1)";
-                                this.style.transform += "translate(0px,0px)";
-                                this.style.transition = "transform 0.25s ease";
-                                this.style.zIndex = this.getAttribute('old_z');
-                            }
-                            else
-                            {
-                                this.style.transform = "scale(3)";
-                                this.style.transform += "translate(50px,0px)";
-                                this.style.transition = "transform 0.25s ease";
-                                this.setAttribute('old_z', this.style.zIndex);
-                                this.style.zIndex = "-1";
-                            }
-                        }
+                        console.log(this.style.zIndex);
+                        this.style.transform = "scale(4)";
+                        this.style.transform += "translate(50px,0px)";
+                        this.style.transition = "transform 0.25s ease";
+                        this.style.zIndex = "100";
+                    };
+                image.onmouseleave = function ()
+                    {
+                        this.style.transform = "scale(1)";
+                        this.style.transform += "translate(0px,0px)";
+                        this.style.transition = "transform 0.25s ease";
+                        this.style.zIndex = "0";
                     };
                 output.appendChild(image);
                 imageCount += 1;
-                if(imageCount % 3 === 0)
-                {
-                    output.appendChild(document.createElement("br"));
-                }
             }
         }
     }
