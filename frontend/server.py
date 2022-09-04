@@ -21,6 +21,9 @@ class RelayServer(BaseHTTPRequestHandler):
             self.process_ui('/library/library.json')
 
         elif api_command.endswith('.html') or \
+                'advanced.html?' in api_command or \
+                'index.html?' in api_command  or \
+                api_command.endswith('.js') or \
                 api_command.endswith('.js') or \
                 api_command.endswith('.css') or \
                 api_command.endswith('.ico') or \
@@ -147,6 +150,11 @@ class RelayServer(BaseHTTPRequestHandler):
         return True
 
     def process_ui(self, path):
+        # if the file path includes query parameters, remove them to get the file from the drive:
+        query_string = self.path.split('?')
+        if len(query_string) > 1:
+            path = path.split('?')[0]
+
         if path.endswith('.html'):
             response_content_type = 'text/html'
         elif path.endswith('.js'):
@@ -167,6 +175,7 @@ class RelayServer(BaseHTTPRequestHandler):
             response_content_type = 'text/plain'
 
         file_path = '/app' + path
+
 
         try:
             with open(file_path, 'rb') as data_file:

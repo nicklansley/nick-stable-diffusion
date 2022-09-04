@@ -75,6 +75,11 @@ const retrieveImages = async () =>
                 {
                     imageCount += 1;
                     const imageName = image_entry.split("/")[2];
+
+                    const anchorElement = document.createElement("a");
+                    anchorElement.setAttribute("href", `${createLinkToAdvancedPage(image_entry, libraryItem)}`);
+                    anchorElement.setAttribute("target", "_blank");
+
                     const image = document.createElement("img");
                     image.src = image_entry;
                     image.id = imageName.split('.')[0];
@@ -89,41 +94,55 @@ const retrieveImages = async () =>
                     delete dataImageDetails['generated_images'];
                     dataImageDetails.path = image_entry;
                     image.setAttribute('data-image-details', JSON.stringify(dataImageDetails));
-                    image.onclick = function ()
+                    image.onfocus = function ()
                     {
                         if(this.nodeName === "IMG")
                         {
-                            if(this.style.transform.includes("scale(3)"))
-                            {
-                                this.style.transform = "scale(1)";
-                                this.style.transform += "translate(0px,0px)";
-                                this.style.transition = "transform 0.25s ease";
-                                this.style.zIndex = this.getAttribute('old_z');
-                            }
-                            else
-                            {
-                                this.style.transform = "scale(3)";
-                                this.style.transform += "translate(50px,0px)";
-                                this.style.transition = "transform 0.25s ease";
-                                this.setAttribute('old_z', this.style.zIndex);
-                                this.style.zIndex = "-1";
-                            }
+                            this.style.transform = "scale(3)";
+                            this.style.transform += "translate(50px,0px)";
+                            this.style.transition = "transform 0.25s ease";
+                            this.setAttribute('old_z', this.style.zIndex);
+                            this.style.zIndex = "-1";
                         }
                     };
+                    image.onblur = function ()
+                    {
+                        if(this.nodeName === "IMG")
+                        {
+                            this.style.transform = "scale(1)";
+                            this.style.transform += "translate(0px,0px)";
+                            this.style.transition = "transform 0.25s ease";
+                            this.style.zIndex = this.getAttribute('old_z');
+                        }
+                    };
+
                     image.ondblclick = function ()
                     {
                         deleteImage(this);
                     };
-                    output.appendChild(image);
+
+                    anchorElement.appendChild(image);
+                    output.appendChild(anchorElement);
+
                     if(imageCount % 6 === 0)
                     {
                         output.appendChild(document.createElement("br"));
-                    }                }
+                    }
+                }
             }
         }
     }
     const dateNow = new Date();
     document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${imageCount} images within ${libraryEntryCount} library entries`;
+}
+
+
+const createLinkToAdvancedPage = (image_src, libraryItem) =>
+{
+    const urlencoded_image_src = encodeURIComponent(image_src);
+    const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
+    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${libraryItem['seed']}&height=${libraryItem['height']}&width=${libraryItem['width']}&ddim_steps=${libraryItem['ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
+    return link;
 }
 
 

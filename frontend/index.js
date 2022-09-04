@@ -375,11 +375,68 @@ const stopCountDown = () =>
     global_countdownRunning = false;
 }
 
+
+const populateControlsFromHref = () =>
+{
+    if(window.location.href.includes("?"))
+    {
+        const params = new URLSearchParams(window.location.search);
+        if(params.has('prompt'))
+        {
+            document.getElementById('prompt').value = params.get('prompt');
+        }
+        if(params.has('original_image_path'))
+        {
+            document.getElementById('original_image_path').value = params.get('original_image_path');
+        }
+        if(params.has('strength'))
+        {
+            document.getElementById('strength').value = params.get('strength');
+            document.getElementById('strength_value').innerText = params.get('strength');
+        }
+        if(params.has('seed'))
+        {
+            document.getElementById('seed').value = params.get('seed');
+            document.getElementById('seed_value').innerText = params.get('seed');
+        }
+        if(params.has('width'))
+        {
+            document.getElementById('width').value = params.get('width');
+            document.getElementById('width_value').innerText = params.get('width');
+        }
+        if(params.has('height'))
+        {
+            document.getElementById('height').value = params.get('height');
+            document.getElementById('height_value').innerText = params.get('height');
+        }
+        if(params.has('ddim_steps'))
+        {
+            document.getElementById('ddim_steps').value = params.get('ddim_steps');
+            document.getElementById('ddim_steps_value').innerText = params.get('ddim_steps');
+        }
+        if(params.has('scale'))
+        {
+            document.getElementById('scale').value = params.get('scale');
+            document.getElementById('scale_value').innerText = params.get('scale');
+        }
+        if(params.has('downsampling_factor'))
+        {
+            if(params.get('downsampling_factor') === "2")
+                document.getElementById('ds2').checked = true;
+            else if(params.get('downsampling_factor') === "4")
+                document.getElementById('ds4').checked = true;
+            else if(params.get('downsampling_factor') === "8")
+                document.getElementById('ds8').checked = true;
+            else if(params.get('downsampling_factor') === "16")
+                document.getElementById('ds16').checked = true;
+        }
+    }
+}
+
+
 /**
  * Set a timer to go and get the queued prompt requests from the server every 2 seconds
  * NB: Ths does not put a strain on the (python) web server as turnaround is only 10-20 milliseconds
  * so evn if a lot of people are using the service simultaneously it easily copes (I used apache AB to test!)
  */
 setInterval(retrieveAndDisplayCurrentQueue, 2000);
-
-// sets an initial value for estimated time

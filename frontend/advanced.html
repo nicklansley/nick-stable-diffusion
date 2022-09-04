@@ -125,7 +125,7 @@
         margin-top: 10px;
     }
 </style>
-<body>
+<body onload="populateControlsFromHref()">
 <h1>Nick's Advanced Stable Diffusion Playground</h1>
 <p class="label" id="status"></p>
 
@@ -229,12 +229,12 @@
                                    id="scale"
                                    max="20.0"
                                    min="1.0"
-                                   oninput="document.getElementById('range_value').innerText = this.value"
+                                   oninput="document.getElementById('scale_value').innerText = this.value"
                                    step="0.1"
                                    type="range"
                                    value="7.5">
                         </div>
-                        <div id="range_value">
+                        <div id="scale_value">
                             7.5
                         </div>
                         1.0 to
