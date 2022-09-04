@@ -82,34 +82,33 @@ const retrieveImages = async () =>
                     image.alt = libraryItem['text_prompt'];
                     image.height = 150;
                     image.width = 150;
-
+                    image.style.zIndex = "0";
+                    image.style.position = "relative";
 
                     // Add data-image-details attribute to image using the
                     // libraryItem object with generated_images list deleted.
                     const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
                     delete dataImageDetails['generated_images'];
                     dataImageDetails.path = image_entry;
-                    image.setAttribute('data-image-details', JSON.stringify(dataImageDetails));
+                    // image.style.zIndex = "0";
                     image.onclick = function ()
                     {
                         window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
                     }
                     image.onmouseover = function ()
                     {
-                        console.log('focus');
-                        this.style.transform = "scale(3)";
-                        this.style.transform += "translate(50px,0px)";
+                        console.log(this.style.zIndex);
+                        this.style.transform = "scale(4)";
+                        this.style.transform += "translate(50px,-50px)";
                         this.style.transition = "transform 0.25s ease";
-                        this.setAttribute('old_z', this.style.zIndex);
-                        this.style.zIndex = "-1";
+                        this.style.zIndex = "100";
                     };
                     image.onmouseleave = function ()
                     {
-                        console.log('blur');
                         this.style.transform = "scale(1)";
                         this.style.transform += "translate(0px,0px)";
                         this.style.transition = "transform 0.25s ease";
-                        this.style.zIndex = this.getAttribute('old_z');
+                        this.style.zIndex = "0";
                     };
 
                     image.oncontextmenu = function (ev)
