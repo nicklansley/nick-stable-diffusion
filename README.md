@@ -22,7 +22,7 @@ I've built a docker-based web service around the original project, which incorpo
 2. The graphics card needs to have at least 10 GB of GPU memory in total. I use an RTX 3090 Ti but should work on 3080s and 2080s.
 3. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance, 
 but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over 20GB memory at the present time. To overcome the max memory error, open (or create)
-a file in your Windows home directory called <pre>C:\Users\your-user-name\\.wslconfig</pre> and put a 'memory=' property in that file with a memory size of 4GB lower than your PC's memory (mine has 64 GB).
+a file in your Windows home directory called   <b>.wslconfig</b> for example on my PC: <pre>C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a memory size of 4GB lower than your PC's memory (mine has 64 GB).
 This does not mean that WSL2 will grab all but 4GB of your PC memory, it's just that you are giving it the 'right' to use that much if it really needs it.
 <pre>
 [wsl2]
