@@ -106,7 +106,7 @@ The library page has been updated to improve the user experience with images:
 * Right-click to delete the image from the library (agree 'OK' to confirm).
 
 If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete everything in it.
-If you want to delete a specific image, double-click it on the library page, and select 'OK' to the alert prompt.
+If you want to delete a specific image, right-click it in the library page, and select 'OK' to the alert prompt.
 
 The library page is also useful for observing how many seconds it took to generate each image, as it is displayed above each group of images. My PC always has it at around 4 secs/image. If yours is different, 
 you can adjust the value in the JavaScript at the top of index.js - change the very first line - const SECS_PER_IMAGE = 4; - to the number of seconds per image you are experiencing.
