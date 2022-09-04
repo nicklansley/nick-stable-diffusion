@@ -158,10 +158,10 @@ const displayQueue = async (queueList) =>
 
 
         // The first item in the queue is the one that the AI is currently processing:
-        queueUI.innerHTML = `<p><b>Now creating ${queueList[0].num_images} images for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
+        queueUI.innerHTML = `<p><b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
 
         const processingDiv = document.createElement("div");
-        processingDiv.innerHTML = `<b>Now creating ${queueList[0].num_images} images for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+        processingDiv.innerHTML = `<b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
 
         // If we are the first in the queue, our prompt is the one currently being processed by the AI
         // so highlight it:
@@ -183,7 +183,7 @@ const displayQueue = async (queueList) =>
             {
                 let queueItem = queueList[queueIndex];
                 const listItem = document.createElement("li");
-                listItem.innerText = `${queueItem.prompt} - (${queueItem.num_images} images)`;
+                listItem.innerText = `${queueItem.prompt} - (${queueItem.num_images} image${queueItem.num_images > 1 ? "s" : ""})`;
                 imageCount += queueItem.num_images;
 
                 // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
@@ -270,7 +270,7 @@ const calculateEstimatedTime = (imageCount) =>
     {
         estimatedTime = estimatedTime * Math.round(parseInt(document.getElementById('ddim_steps').value) / 50);
     }
-    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} images - estimated time: <b>${estimatedTime}</b> seconds</i>`;
+    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} - estimated time: <b>${estimatedTime}</b> seconds</i>`;
 }
 
 /**
@@ -334,7 +334,7 @@ const startCountDown = async (imageCount) =>
             global_countdownValue = global_countdownValue * Math.round(parseInt(document.getElementById('ddim_steps').value) / 50);
         }
         const output = document.getElementById("output");
-        output.innerHTML = `<i>Images available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
+        output.innerHTML = `<i>Results available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
 
         global_countdownTimerIntervalId = setInterval(() =>
         {
@@ -346,7 +346,7 @@ const startCountDown = async (imageCount) =>
             else
             {
                 global_countdownValue -= 1;
-                output.innerHTML = `<i>Images available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
+                output.innerHTML = `<i>Results available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
             }
         }, 1000); // the countdown will trigger every 1 second
 
