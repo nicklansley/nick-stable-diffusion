@@ -131,18 +131,18 @@ def load_and_format_image(path):
     new_size = tuple([int(x * ratio) for x in old_size])
 
     image.thumbnail(new_size, Image.Resampling.LANCZOS)
-    new_image = Image.new("RGB", (512, 512))
-    new_image.paste(image, ((512 - new_size[0]) // 2,
+    resized_image = Image.new("RGB", (512, 512))
+    resized_image.paste(image, ((512 - new_size[0]) // 2,
                             (512 - new_size[1]) // 2))
 
-    w, h = new_image.size
+    w, h = resized_image.size
     print(f"Image resized to size ({w}, {h}) ")
 
-    image = np.array(new_image).astype(np.float32) / 255.0
+    image = np.array(resized_image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
-
-    return 2. * image - 1.
+    processed_image = 2. * image - 1.
+    return resized_image, processed_image
 
 
 def put_watermark(img, wm_encoder=None):
@@ -286,7 +286,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         data = [N_SAMPLES * [text_prompt]]
 
         # load the image
-        init_image = load_and_format_image(original_image_path).to(device)
+        resized_image, init_image = load_and_format_image(original_image_path)
+        init_image = init_image.to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
@@ -318,12 +319,16 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                             x_samples = model.decode_first_stage(samples)
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
+                            # save the newly created images
                             for x_sample in x_samples:
                                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                                 img = Image.fromarray(x_sample.astype(np.uint8))
                                 img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(library_dir_name, f"{str(uuid.uuid4())}.png"))
+                                img.save(os.path.join(library_dir_name, f"{base_count+1:02d}-{str(uuid.uuid4())[:8]}.png"))
                                 base_count += 1
+
+                            # save the resized original image
+                            resized_image.save(os.path.join(library_dir_name, '00-original.png'))
 
                             end = time.time()
                             time_taken = end - start

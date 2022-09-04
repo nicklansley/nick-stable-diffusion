@@ -114,7 +114,11 @@ This will make the countdown on the UI more accurate when waiting for your promp
 
 ### Advanced Page
 The Advanced page allows you to set the parameters for the AI to use when generating the image.
-You can use this page to link to a source image on the web, or in your library folder.
+You can use this page to link to a source image on the web, or in your library folder. 
+
+If you specify an image, it will be included as the first image '00-original.png' in the output.
+<i>Note that you do not have copyright over the original image, only the AI-created images.</i>
+
 If you click an image in the library, it will open a new advanced page with the settings that made that image already preset so you can maipulate it further.
 
 
