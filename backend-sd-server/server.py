@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from omegaconf import OmegaConf
 import PIL
-from PIL import Image
+from PIL import Image, ImageDraw
 from tqdm import tqdm, trange
 from imwatermark import WatermarkEncoder
 from itertools import islice
@@ -142,6 +142,8 @@ def load_and_format_image(path):
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
     processed_image = 2. * image - 1.
+
+    ImageDraw.Draw(resized_image).text((10, 10), "Original Image", fill=(255, 255, 255))
     return resized_image, processed_image
 
 
