@@ -124,11 +124,11 @@ from the UI.
 
 ### Home page
 
-This page enables you to type in a prompt, choose the number of images you wish to create in groups of 3 from 3 to 30,
+This page enables you to type in a prompt, choose the number of images you wish to create from 1 to 30,
 and set the AI processing!
 It's designed to be simple to use, with a random seed value generated for you.
 
-Type in a prompt, set the number of images (from 3 to 30 in steps of 3) and 'click to send request'.
+Type in a prompt, set the number of images (from 1 to 30) and 'click to send request'.
 The request will be queued and the scheduler will pick it up and process it. The scheduler will then send the results
 back to the frontend web server which will then send the results back to the web page.
 
