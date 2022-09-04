@@ -25,7 +25,7 @@ but by default WSL2 does not have the 'right' to use maximum memory, and Docker 
 a file in your Windows home directory called   <b>.wslconfig</b> for example on my PC: <pre>C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a memory size of 4GB lower than your PC's memory (mine has 64 GB).
 This does not mean that WSL2 will grab all but 4GB of your PC memory, it's just that you are giving it the 'right' to use that much if it really needs it.
 Why 4GB? I am guessing Windows can just about keep running on 4GB of memory, but I have not tested it...! The file should look like this:
-<pre>
+<pre>   
 [wsl2]
 memory=60GB 
 </pre>
@@ -76,7 +76,7 @@ You can't use the application until you see, in the backend server log:
 Backend Server ready for processing on port 8080
 </pre>
 
-11. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's port 8000
+8. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's port 8000
 
 
 ## Notes
@@ -84,14 +84,39 @@ The UI is super-simple and is designed to be easily adapted to your needs. I've 
 
 I've written the scheduler and frontend web server in Python. The Scheduler uses a simple FIFO queue to manage the prompts with Redis as the queuing database. I've used a class based on BaseHTTPRequestHandler to handle the requests from the UI.
 
+### Home page
+This page enables you to type in a prompt, choose the number of images you wish to create in groups of 3 from 3 to 30, and set the AI processing!
+It's designed to be simple to use, with a random seed value generated for you. 
+
+The ddim_steps is set to 50, scale is set to 7.5, image size is 512x512px and the downsampling factor is 8.
+These defaults can be altered using the capital-letter variables at the top of script file  backend-sd-server/server.py if you wish to change them,
+ but these seem to work best and are suggested by the authors of the model. Use the advanced page to override them for moe control in a session.
 
 ### Library Page
-The UI includes a library page where you can view the images created so far. If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete everything in it.
+The UI includes a library page where you can view the images created so far. 
+Images are grouped by prompt and date/time with the latest at the top of the page.
+The group header also displays the various settings that either the AI used, or you used if you prompted vi the advanced page.
+
+Check a box at the top of the page to allow it to refresh itself every 10 seconds.
+
+The library page has been updated to improve the user experience with images:
+* Hover over an image to enlarge it.
+* Drag image to your desktop to save it outside the libray folders.
+* Click to open a new advanced page with the settings that made this image already preset so you can maipulate it further.
+* Right-click to delete the image from the library (agree 'OK' to confirm).
+
+If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete everything in it.
 If you want to delete a specific image, double-click it on the library page, and select 'OK' to the alert prompt.
 
-The library page is useful for observing how many seconds it took to generate each image, as it is displayed above each group of images. My PC always has it at around 4 secs/image. If yours is different, 
+The library page is also useful for observing how many seconds it took to generate each image, as it is displayed above each group of images. My PC always has it at around 4 secs/image. If yours is different, 
 you can adjust the value in the JavaScript at the top of index.js - change the very first line - const SECS_PER_IMAGE = 4; - to the number of seconds per image you are experiencing.
 This will make the countdown on the UI more accurate when waiting for your prompt to be processed.
+
+### Advanced Page
+The Advanced page allows you to set the parameters for the AI to use when generating the image.
+You can use this page to link to a source image on the web, or in your library folder.
+If you click an image in the library, it will open a new advanced page with the settings that made that image already preset so you can maipulate it further.
+
 
 ## API
 The API is a simple RESTful API that can be used by the UI to send requests to the backend.
