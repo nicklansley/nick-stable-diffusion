@@ -76,10 +76,6 @@ const retrieveImages = async () =>
                     imageCount += 1;
                     const imageName = image_entry.split("/")[2];
 
-                    const anchorElement = document.createElement("a");
-                    anchorElement.setAttribute("href", `${createLinkToAdvancedPage(image_entry, libraryItem)}`);
-                    anchorElement.setAttribute("target", "_blank");
-
                     const image = document.createElement("img");
                     image.src = image_entry;
                     image.id = imageName.split('.')[0];
@@ -94,35 +90,35 @@ const retrieveImages = async () =>
                     delete dataImageDetails['generated_images'];
                     dataImageDetails.path = image_entry;
                     image.setAttribute('data-image-details', JSON.stringify(dataImageDetails));
-                    image.onfocus = function ()
+                    image.onclick = function ()
                     {
-                        if(this.nodeName === "IMG")
-                        {
-                            this.style.transform = "scale(3)";
-                            this.style.transform += "translate(50px,0px)";
-                            this.style.transition = "transform 0.25s ease";
-                            this.setAttribute('old_z', this.style.zIndex);
-                            this.style.zIndex = "-1";
-                        }
+                        window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
+                    }
+                    image.onmouseover = function ()
+                    {
+                        console.log('focus');
+                        this.style.transform = "scale(3)";
+                        this.style.transform += "translate(50px,0px)";
+                        this.style.transition = "transform 0.25s ease";
+                        this.setAttribute('old_z', this.style.zIndex);
+                        this.style.zIndex = "-1";
                     };
-                    image.onblur = function ()
+                    image.onmouseleave = function ()
                     {
-                        if(this.nodeName === "IMG")
-                        {
-                            this.style.transform = "scale(1)";
-                            this.style.transform += "translate(0px,0px)";
-                            this.style.transition = "transform 0.25s ease";
-                            this.style.zIndex = this.getAttribute('old_z');
-                        }
+                        console.log('blur');
+                        this.style.transform = "scale(1)";
+                        this.style.transform += "translate(0px,0px)";
+                        this.style.transition = "transform 0.25s ease";
+                        this.style.zIndex = this.getAttribute('old_z');
                     };
 
-                    image.ondblclick = function ()
+                    image.oncontextmenu = function (ev)
                     {
+                        ev.preventDefault();
                         deleteImage(this);
                     };
 
-                    anchorElement.appendChild(image);
-                    output.appendChild(anchorElement);
+                    output.appendChild(image);
 
                     if(imageCount % 6 === 0)
                     {
