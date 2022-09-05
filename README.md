@@ -140,9 +140,8 @@ volumes:
    page to accept the terms.
    Then go here https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/blob/main/sd-v1-4.ckpt
    and download this file.
-3. Copy the downloaded file to the 'model' folder you have setup in step 4. Note how I use 'S:
-   \nick-stable-diffusion-data\model'.
-   You will need to place the .ckpt file there and rename it to <pre>model.ckpt</pre> 
+3. Copy the downloaded file to the 'model' folder you have setup in step 4. 
+   You will need to place the .ckpt file there and rename it from <b>sd-v1-4.ckpt</b> to <b>model.ckpt</b> - so in my case I now have:<pre>S:\nick-stable-diffusion-data\model\model.ckpt</pre> 
 
 4. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
    images is a one-time operation but takes time and several GB of download. If you ran the 'Test your computer' section
