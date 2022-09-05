@@ -286,17 +286,23 @@ const displayImages = async (library, output) =>
     {
         if(libraryItem.queue_id === global_currentQueueId)
         {
-            let imageCount = 0;
-            for (const image_entry of libraryItem.generated_images)
+            if (libraryItem.error)
             {
-                const image = document.createElement("img");
-                image.src = image_entry;
-                image.alt = libraryItem['text_prompt'];
-                image.height = 150;
-                image.width = 150;
-                image.style.zIndex = "0";
-                image.style.position = "relative";
-                image.onmouseover = function ()
+                output.innerHTML = `<p><b>Sorry, an error occurred: ${libraryItem.error}</b></p>`;
+            }
+            else
+            {
+                let imageCount = 0;
+                for(const image_entry of libraryItem.generated_images)
+                {
+                    const image = document.createElement("img");
+                    image.src = image_entry;
+                    image.alt = libraryItem['text_prompt'];
+                    image.height = 150;
+                    image.width = 150;
+                    image.style.zIndex = "0";
+                    image.style.position = "relative";
+                    image.onmouseover = function ()
                     {
                         console.log(this.style.zIndex);
                         this.style.transform = "scale(4)";
@@ -304,15 +310,16 @@ const displayImages = async (library, output) =>
                         this.style.transition = "transform 0.25s ease";
                         this.style.zIndex = "100";
                     };
-                image.onmouseleave = function ()
+                    image.onmouseleave = function ()
                     {
                         this.style.transform = "scale(1)";
                         this.style.transform += "translate(0px,0px)";
                         this.style.transition = "transform 0.25s ease";
                         this.style.zIndex = "0";
                     };
-                output.appendChild(image);
-                imageCount += 1;
+                    output.appendChild(image);
+                    imageCount += 1;
+                }
             }
         }
     }

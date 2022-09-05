@@ -442,12 +442,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         if 'original_image_path' in data:
             original_image_path = data['original_image_path'].strip()
 
-            # only image paths which are wither URLs or are sourced from the library are allowed
+            # only image paths which are wither URLs or are sourced from the library are allowed.
             if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
+                if original_image_path != '':
+                    print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(original_image_path))
                 original_image_path = ''
-                print(
-                    'Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
-                        original_image_path))
         # process!
         if original_image_path != '':
             result = process_image(original_image_path, prompt, global_device, global_model,

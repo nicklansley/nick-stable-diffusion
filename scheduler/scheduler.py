@@ -63,54 +63,58 @@ def update_library_catalogue():
     library = []
     library_entry = {}
 
-    # read the library catalogue
-    for root, dirs, files in os.walk("/app/library", topdown=False):
-        # for each file in the library catalogue
-        for idx_name in files:
-            # get the file name
-            if idx_name == 'index.json':
-                idx_file_name = os.path.join(root, idx_name)
-                unix_time = os.path.getmtime(idx_file_name)
-                try:
-                    # read the file
-                    with open(idx_file_name, "r", encoding="utf8") as infile:
-                        metadata = json.loads(infile.read())
+    try:
+        # read the library catalogue
+        for root, dirs, files in os.walk("/app/library", topdown=False):
+            # for each file in the library catalogue
+            for idx_name in files:
+                # get the file name
+                if idx_name == 'index.json':
+                    idx_file_name = os.path.join(root, idx_name)
+                    unix_time = os.path.getmtime(idx_file_name)
+                    try:
+                        # read the file
+                        with open(idx_file_name, "r", encoding="utf8") as infile:
+                            metadata = json.loads(infile.read())
 
-                        # copy the metadata to the library entry
-                        if type(metadata) is dict:
-                            library_entry = copy.deepcopy(metadata)
-                            library_entry["creation_unixtime"] = unix_time
-                            library_entry["generated_images"] = []
+                            # copy the metadata to the library entry
+                            if type(metadata) is dict:
+                                library_entry = copy.deepcopy(metadata)
+                                library_entry["creation_unixtime"] = unix_time
+                                library_entry["generated_images"] = []
 
-                            # add the library entry to the library catalogue
-                            library.append(json.loads(json.dumps(library_entry)))
+                                # add the library entry to the library catalogue
+                                library.append(json.loads(json.dumps(library_entry)))
 
-                except json.decoder.JSONDecodeError as jde:
-                    print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
+                    except json.decoder.JSONDecodeError as jde:
+                        print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
 
-    # add the images file paths to the library catalogue
-    for root, dirs, files in os.walk("/app/library", topdown=False):
-        for image_name in files:
-            if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
+        # add the images file paths to the library catalogue
+        for root, dirs, files in os.walk("/app/library", topdown=False):
+            for image_name in files:
+                if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
 
-                # if the image has a metadata section then add it to the
-                # end of the image file if ADD_METADATA_TO_FILES is enabled
-                if ADD_METADATA_TO_FILES:
-                    update_file_metadata(os.path.join(root, image_name), library_entry)
+                    # if the image has a metadata section then add it to the
+                    # end of the image file if ADD_METADATA_TO_FILES is enabled
+                    if ADD_METADATA_TO_FILES:
+                        update_file_metadata(os.path.join(root, image_name), library_entry)
 
-                # add the image file path to the library entry
-                for library_entry in library:
-                    if library_entry["queue_id"] in root:
-                        image_file_path = os.path.join(root, image_name).replace('/app/', '')
+                    # add the image file path to the library entry
+                    for library_entry in library:
+                        if library_entry["queue_id"] in root:
+                            image_file_path = os.path.join(root, image_name).replace('/app/', '')
 
-                        if image_file_path not in library_entry["generated_images"]:
-                            library_entry["generated_images"].append(image_file_path)
+                            if image_file_path not in library_entry["generated_images"]:
+                                library_entry["generated_images"].append(image_file_path)
 
-    # write the library catalogue
-    with open("/app/library/library.json", "w", encoding="utf8") as outfile:
-        outfile.write(json.dumps(library, indent=4, sort_keys=True))
+        # write the library catalogue
+        with open("/app/library/library.json", "w", encoding="utf8") as outfile:
+            outfile.write(json.dumps(library, indent=4, sort_keys=True))
 
-    print('\nSCHEDULER: Update of library catalogue completed')
+        print('\nSCHEDULER: Update of library catalogue completed')
+
+    except Exception as e:
+        print('\nSCHEDULER: Update of library catalogue failed', e)
 
 
 def update_file_metadata(img_path, library_entry):

@@ -22,7 +22,7 @@ const listLibrary = async () =>
         return false;
     }
 
-    if(rawResponse.status === 200)
+    if (rawResponse.status === 200)
     {
         return await rawResponse.json();
     }
@@ -49,81 +49,79 @@ const retrieveImages = async () =>
     const output = document.getElementById("output");
     output.innerHTML = "";
 
-    for (const libraryItem of library)
+    for(const libraryItem of library)
     {
-        if(searchText.length === 0 || libraryItem['text_prompt'].includes(searchText))
+        if (searchText.length === 0 || libraryItem['text_prompt'].includes(searchText))
         {
-            if(libraryItem['generated_images'].length > 0)
+            libraryEntryCount += 1;
+            const hr = document.createElement("hr");
+            document.getElementById("output").appendChild(hr);
+
+            const h3 = document.createElement("h3");
+            let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
+            h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
+            document.getElementById("output").appendChild(h3);
+
+            const p = document.createElement("p");
+            p.classList.add('parameters-display');
+            p.innerHTML = authorParametersListForWeb(libraryItem);
+            document.getElementById("output").appendChild(p);
+
+
+            for(const image_entry of libraryItem['generated_images'])
             {
-                libraryEntryCount += 1;
-                const hr = document.createElement("hr");
-                document.getElementById("output").appendChild(hr);
+                imageCount += 1;
+                const imageName = image_entry.split("/")[2];
 
-                const h3 = document.createElement("h3");
-                let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
-                h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
-                document.getElementById("output").appendChild(h3);
+                const image = document.createElement("img");
+                image.src = image_entry;
+                image.id = imageName.split('.')[0];
+                image.alt = libraryItem['text_prompt'];
+                image.height = 150;
+                image.width = 150;
+                image.style.zIndex = "0";
+                image.style.position = "relative";
 
-                const p = document.createElement("p");
-                p.classList.add('parameters-display');
-                p.innerHTML =  authorParametersListForWeb(libraryItem);
-                document.getElementById("output").appendChild(p);
-
-
-                for (const image_entry of libraryItem['generated_images'])
+                // Add data-image-details attribute to image using the
+                // libraryItem object with generated_images list deleted.
+                const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
+                delete dataImageDetails['generated_images'];
+                dataImageDetails.path = image_entry;
+                // image.style.zIndex = "0";
+                image.onclick = function ()
                 {
-                    imageCount += 1;
-                    const imageName = image_entry.split("/")[2];
+                    window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
+                }
+                image.onmouseover = function ()
+                {
+                    console.log(this.style.zIndex);
+                    this.style.transform = "scale(4)";
+                    this.style.transform += "translate(50px,-50px)";
+                    this.style.transition = "transform 0.25s ease";
+                    this.style.zIndex = "100";
+                };
+                image.onmouseleave = function ()
+                {
+                    this.style.transform = "scale(1)";
+                    this.style.transform += "translate(0px,0px)";
+                    this.style.transition = "transform 0.25s ease";
+                    this.style.zIndex = "0";
+                };
 
-                    const image = document.createElement("img");
-                    image.src = image_entry;
-                    image.id = imageName.split('.')[0];
-                    image.alt = libraryItem['text_prompt'];
-                    image.height = 150;
-                    image.width = 150;
-                    image.style.zIndex = "0";
-                    image.style.position = "relative";
+                image.oncontextmenu = function (ev)
+                {
+                    ev.preventDefault();
+                    deleteImage(this);
+                };
 
-                    // Add data-image-details attribute to image using the
-                    // libraryItem object with generated_images list deleted.
-                    const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
-                    delete dataImageDetails['generated_images'];
-                    dataImageDetails.path = image_entry;
-                    // image.style.zIndex = "0";
-                    image.onclick = function ()
-                    {
-                        window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
-                    }
-                    image.onmouseover = function ()
-                    {
-                        console.log(this.style.zIndex);
-                        this.style.transform = "scale(4)";
-                        this.style.transform += "translate(50px,-50px)";
-                        this.style.transition = "transform 0.25s ease";
-                        this.style.zIndex = "100";
-                    };
-                    image.onmouseleave = function ()
-                    {
-                        this.style.transform = "scale(1)";
-                        this.style.transform += "translate(0px,0px)";
-                        this.style.transition = "transform 0.25s ease";
-                        this.style.zIndex = "0";
-                    };
+                output.appendChild(image);
 
-                    image.oncontextmenu = function (ev)
-                    {
-                        ev.preventDefault();
-                        deleteImage(this);
-                    };
-
-                    output.appendChild(image);
-
-                    if(imageCount % 6 === 0)
-                    {
-                        output.appendChild(document.createElement("br"));
-                    }
+                if (imageCount % 6 === 0)
+                {
+                    output.appendChild(document.createElement("br"));
                 }
             }
+
         }
     }
     const dateNow = new Date();
@@ -142,12 +140,12 @@ const authorParametersListForWeb = (libraryItem) =>
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;DDIM Steps: ${libraryItem['ddim_steps']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;scale: ${libraryItem['scale']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;downsampling factor: ${libraryItem['downsampling_factor']}`;
-    if(libraryItem['original_image_path'] !== '')
+    if (libraryItem['original_image_path'] !== '')
     {
         text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image source: ${libraryItem['original_image_path']},`;
         text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;image strength: ${libraryItem['strength']}`;
     }
-    if(libraryItem['error'] !== '')
+    if (libraryItem['error'] !== '')
     {
         text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;<b>Error: ${libraryItem['error']}</b>`;
     }
@@ -168,7 +166,7 @@ const deleteImage = async (img) =>
     const jsonData = img.getAttribute('data-image-details');
     const data = JSON.parse(jsonData.replaceAll("&quot;", "\""));
 
-    if(window.confirm(`Are you sure you want to delete image "${data.text_prompt}"?`))
+    if (window.confirm(`Are you sure you want to delete image "${data.text_prompt}"?`))
     {
         const rawResponse = await fetch('/deleteimage', {
             method: 'POST',
@@ -181,10 +179,10 @@ const deleteImage = async (img) =>
             })
         });
 
-        if(rawResponse.status === 200)
+        if (rawResponse.status === 200)
         {
             const jsonResult = await rawResponse.json();
-            if(jsonResult.success)
+            if (jsonResult.success)
             {
                 document.getElementById('status').innerText = "Image deleted";
                 document.getElementById(`${img.id}`).remove();
@@ -193,7 +191,8 @@ const deleteImage = async (img) =>
             {
                 document.getElementById('status').innerText = "Image not deleted";
             }
-        } else
+        }
+        else
         {
             document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred - check again shortly!`;
         }
@@ -203,14 +202,15 @@ const deleteImage = async (img) =>
 const setAutoRefresh = async () =>
 {
     const checkBox = document.getElementById('autoRefresh');
-    if(checkBox.checked)
+    if (checkBox.checked)
     {
         await listLibrary();
         autoRefreshId = setInterval(function ()
         {
             retrieveImages().then();
         }, 10000);
-    } else
+    }
+    else
     {
         clearInterval(autoRefreshId);
     }
@@ -227,7 +227,7 @@ const toggleDarkMode = () =>
 
 const setDarkModeFromLocalStorage = () =>
 {
-    if(localStorage.getItem("dark-mode") === "Y")
+    if (localStorage.getItem("dark-mode") === "Y")
     {
         document.body.classList.add('dark-mode');
     }
