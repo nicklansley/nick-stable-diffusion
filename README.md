@@ -39,7 +39,7 @@ DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of th
 
 
 ## Make sure your computer has everything ready
-This section enables you to check that your computer has everything you need to run the application
+This section enables you to check that your computer has everything you need to run the application.
 1. Make sure you have an NVidia graphics card and a NVidia's GPU driver installed. This is how the backend will render
    the images.
 2. The graphics card needs to have at least 8 GB of GPU memory of contiguous memory. I use an RTX 3090 Ti but should work on 3080s, 3070s
@@ -56,54 +56,56 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
    use that much if it really needs it.
    Why 4GB? I am guessing Windows can just about keep running on 4GB of memory, but I have not tested it...! The file
    should look like this:
-<pre>   
-[wsl2]
-memory=60GB 
-</pre> 
+    <pre>[wsl2]
+   memory=60GB</pre> 
    If you had to make this change, reboot your PC at this point.
 
-
+<hr>
 
 ## Test your computer
 1. Open a terminal (bash) window in WSL2 and type the following command:
-2. <pre>nvidia-smi</pre>
+    <pre>nvidia-smi</pre>
     You should see a list of your graphics cards and their memory usage. If you don't see this, or the 'nvidia-smi' command
-    cannot be found, you have a problem with your graphics card or driver.
-<pre>nick@FARSPACE:/mnt/s/Projects/nick-stable-diffusion$ nvidia-smi
-Mon Sep  5 07:38:22 2022       
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 515.65.01    Driver Version: 516.94       CUDA Version: 11.7     |
-|-------------------------------+----------------------+----------------------+
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
-|                               |                      |               MIG M. |
-|===============================+======================+======================|
-|   0  NVIDIA GeForce ...  On   | 00000000:0A:00.0  On |                  Off |
-| 40%   30C    P8    21W / 480W |   1492MiB / 24564MiB |      6%      Default |
-|                               |                      |                  N/A |
-+-------------------------------+----------------------+----------------------+
+    cannot be found, you have a problem with your graphics card or driver:
+    
+    <pre>nick@FARSPACE:/mnt/s/Projects/nick-stable-diffusion$ nvidia-smi
+    Mon Sep  5 07:38:22 2022       
+    +-----------------------------------------------------------------------------+
+    | NVIDIA-SMI 515.65.01    Driver Version: 516.94       CUDA Version: 11.7     |
+    |-------------------------------+----------------------+----------------------+
+    | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+    | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+    |                               |                      |               MIG M. |
+    |===============================+======================+======================|
+    |   0  NVIDIA GeForce ...  On   | 00000000:0A:00.0  On |                  Off |
+    | 40%   30C    P8    21W / 480W |   1492MiB / 24564MiB |      6%      Default |
+    |                               |                      |                  N/A |
+    +-------------------------------+----------------------+----------------------+
+    
+    +-----------------------------------------------------------------------------+
+    | Processes:                                                                  |
+    |  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+    |        ID   ID                                                   Usage      |
+    |=============================================================================|
+    |  No running processes found                                                 |
+    +-----------------------------------------------------------------------------+
+    </pre>
+    If you saw some similar output to mine above, it means that WSL2 can see your graphics card and the driver is working.
+    You can now close the WSL2/bash window.
 
-+-----------------------------------------------------------------------------+
-| Processes:                                                                  |
-|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
-|        ID   ID                                                   Usage      |
-|=============================================================================|
-|  No running processes found                                                 |
-+-----------------------------------------------------------------------------+
-</pre>
-If you saw some similar output to mine above, it means that WSL2 can se your graphics card and the driver is working.
-You can now close the WSL2/bash window.
 
-3. Now open PowerShell and type this command which will download and set running NVidia's official docker container for CUDA 11.7, which
+2. Now open PowerShell and run this command which will download and set running NVidia's official docker container for CUDA 11.7, which
    is the version of CUDA that the backend uses. This is a big download, so it may take a while but it will save
-   docker compose doing this during <i>Fast Start</i> later:
-<pre>
-docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
-</pre>
-This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
+   'docker compose' time doing this during <i>Fast Start</i> later:
+    <pre>
+    docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
+    </pre>
+    This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
 
-If all has worked OK in this test section, you're all set and your dreams of becoming an AI creative prompt-craft wizard can come true!
+    
+<b><i>If all has worked OK in this test section, you're all set.</i></b>
 
+<hr>
 
 ## FAST START
 1. Read docker-compose.yml and adjust the three volumes to those suitable for your PC. On my S: hard drive I have created a folder '
@@ -140,27 +142,26 @@ volumes:
    and download this file.
 3. Copy the downloaded file to the 'model' folder you have setup in step 4. Note how I use 'S:
    \nick-stable-diffusion-data\model'.
-   You will need to place the .ckpt file there and rename it to <pre>model.ckpt</pre> .
+   You will need to place the .ckpt file there and rename it to <pre>model.ckpt</pre> 
 
 4. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
-   images is a one-time operation but takes time and several GB of download!
-   I am happy to accept that right now the backend build is a bit overkill - it even downloads the Rust language 
-compiler, downloads some framework sources and then compiles some of the required libraries using it while you wait! 
-Talk about freshly compiled code! Well at least it's a one-time thing; I'll clean it up later.
-
-<pre>
-docker compose up -d --build 
-</pre>
+   images is a one-time operation but takes time and several GB of download. If you ran the 'Test your computer' section
+   above then the backend container image is already downloaded which will speed things up.
+  I am happy to accept that right now the backend build is a bit overkill - I'm even having it download the Rust language 
+   compiler, framework sources and then compile some of the required libraries using it while you wait. 
+   Talk about freshly compiled code! Well at least it's a one-time thing; I'll clean it up later.
+    
+   <pre>docker compose up -d --build</pre>
 
 5. At first start the backend will then download another 2.73 GB of data
    which it will store in the 'cache' folder you set up on your drive and set up in docker compose.
-   THis will only happen the first time - it doesn't do this every time you start the backend.
+   This will only happen the first time - it doesn't do this every time you start the backend.
    The second and subsequent times you start the backend it will be live within about 30 seconds, sometimes sooner.
    You can't use the application until you see, in the backend server log:
 
-<pre>
-Backend Server ready for processing on port 8080
-</pre>
+    <pre>
+    Backend Server ready for processing on port 8080
+    </pre>
 
 6. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's
    port 8000
