@@ -62,7 +62,9 @@ memory=60GB
 </pre> 
    If you had to make this change, reboot your PC at this point.
 
-## Test your computer is ready
+
+
+## Test your computer
 1. Open a terminal (bash) window in WSL2 and type the following command:
 2. <pre>nvidia-smi</pre>
     You should see a list of your graphics cards and their memory usage. If you don't see this, or the 'nvidia-smi' command
@@ -100,6 +102,7 @@ docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
 This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
 
 If all has worked OK in this test section, you're all set and your dreams of becoming an AI creative prompt-craft wizard can come true!
+
 
 ## FAST START
 1. Read docker-compose.yml and adjust the three volumes to those suitable for your PC. On my S: hard drive I have created a folder '
