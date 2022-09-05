@@ -1,6 +1,7 @@
 # Nick's Stable Diffusion Playground
 
 This project is a clone of https://github.com/CompVis/stable-diffusion.git
+I place this link here so that nobody forgets that I have simply stood on the shoulder of giants in making this interactive web version of Stable Diffusion.
 
 I've built a docker-based web service around the original project, which incorporates a few extra features, and assumes
 you are running Docker Desktop over WSL2 on Windows 10/11.
@@ -31,6 +32,9 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - NEW: 'dark mode' button for all the web pages, for those late-night creative AI sessions without being blasted by
   light!
 - A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
+- UPDATE: Nick's Stable Diffusion Playground renamed 'Stable Diffusion Web Playground' in deference to the act that most 
+people are not called 'Nick' and it's a bit more descriptive. The original name came from the fact it was personal, 
+private project which I have only later realised may be of help to others.
 
 ## 8 steps to Fast-start
 
