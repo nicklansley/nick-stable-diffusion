@@ -398,10 +398,17 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def process_prompt(self, data):
         # Get the mandatory prompt data from the request
-        prompt = data['prompt']
-        queue_id = data['queue_id']
-        num_images = data['num_images']
-        original_image_path = ''
+        try:
+            prompt = data['prompt'].strip()
+            queue_id = data['queue_id']
+            num_images = data['num_images']
+        except KeyError as e:
+            print(e)
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Bad request: missing prompt, queue_id or num_images"}')
+            return
+
 
         # Set up defaults for the optional extra properties which will
         # be overwritten should they be in the request
@@ -417,9 +424,15 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         }
 
         # Override the default options with any in the request:
-        if 'seed' in data and int(data['seed']) > 0:
-            options['seed'] = int(data['seed'])
-        # else use the randomly generated seed above
+        try:
+            if 'seed' in data and len(str(data['seed']).strip()) > 0 and int(data['seed']) > 0:
+                options['seed'] = int(data['seed'])
+            # else use the seed generated when options was initialised
+
+        except ValueError:
+            # use the seed generated when options was initialised
+            pass
+
 
         if 'height' in data:
             options['height'] = int(data['height'])
@@ -439,6 +452,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 options['strength'] = 0.999
             elif options['strength'] < 0.0:
                 options['strength'] = 0.001
+
+        original_image_path = ''
         if 'original_image_path' in data:
             original_image_path = data['original_image_path'].strip()
 

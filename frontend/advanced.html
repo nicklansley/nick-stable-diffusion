@@ -140,7 +140,7 @@
             folder using 'library/&lt;path-to-file&gt;'</small>:
             <div><input id="original_image_path" type="text" size="100"/></div>
             <hr>
-            If an image is provided, choose how much percentage it can be changed by the AI:
+            If an image is provided, choose by what percentage it can be changed by the AI:
             <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"
                                                oninput="document.getElementById('strength_value').innerText = `${this.value}%`"
                                                step="0.1" type="range"
@@ -167,6 +167,7 @@
                     <div class="slidecontainer"><input class="slider" id="seed" max="4294967296"
                                                        min="0"
                                                        oninput="document.getElementById('seed_value').innerText = this.value"
+                                                       onblur="this.value = parseInt(this.value) || 0;"
                                                        type="number"
                                                        value="0">
                     </div>

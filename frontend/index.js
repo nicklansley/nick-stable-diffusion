@@ -40,7 +40,8 @@ const go = async () =>
 
         data['original_image_path'] = document.getElementById("original_image_path").value;
 
-        // Note that the strength slider reprents a value form 0.01 - 99.9% whereas strength is a float from 0.0 to 0.999
+        // Note that the strength slider represents a value fomo 0.01 - 99.9% whereas strength is a float from 0.0 to 0.999
+        // I used percentage because it is easier to understand for the user.
         data['strength'] = parseFloat(document.getElementById("strength").value) / 100;
         if(data['strength'] === '') data['strength'] = 0.75;
 
