@@ -104,6 +104,7 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
 
     
 <b><i>If all has worked OK in this test section, you're all set.</i></b>
+If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follow the instructions there to get your graphics card and driver working with WSL2.
 
 <hr>
 
