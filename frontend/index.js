@@ -120,7 +120,7 @@ const retrieveAndDisplayCurrentQueue = async () =>
         //So, if no images are being displayed, go get them!
         //However, do not this if the prompt has no value (i.e. when the page is first loaded)
         if(!foundQueueId
-            && (output.innerText === 'Retrieving images...' || output.innerHTML === '' || output.innerText.startsWith('Images available in'))
+            && (output.innerText === 'Retrieving images...' || output.innerHTML === '' || output.innerText.startsWith('Results available in'))
             && document.getElementById("prompt").value.length > 0)
         {
             document.getElementById('status').innerText = `Image creation completed`;
