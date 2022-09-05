@@ -143,7 +143,9 @@ def load_and_format_image(path):
     image = torch.from_numpy(image)
     processed_image = 2. * image - 1.
 
-    ImageDraw.Draw(resized_image).text((10, 10), "Original Image", fill=(255, 255, 255))
+    # Commented out because burning the words "Original Image" into the image was disrupting the 'advanced' workflow
+    # where I take an image form the libray to manipulate it further. You should know the original image!
+    # ImageDraw.Draw(resized_image).text((10, 10), "Original Image", fill=(255, 255, 255))
     return resized_image, processed_image
 
 
@@ -247,6 +249,8 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
                             x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
 
+                            # REPLACE WITH orig_check_safety() to re-enable the safety check
+                            # x_checked_image, has_nsfw_concept = orig_check_safety(x_samples_ddim)
                             x_checked_image, has_nsfw_concept = check_safety(x_samples_ddim)
 
                             x_checked_image_torch = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)

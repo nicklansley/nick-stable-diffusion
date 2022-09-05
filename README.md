@@ -261,7 +261,7 @@ with great responsibility and you must
 not forget what you agreed to when downloading the model in <i>Fast Start</i>> above. 
 
 If you prefer to avoid the possibility of NSFW content (for example, you are allowing minors to use the application or you are demonstrating this as a show & tell at 
-work), re-enable the safety catch in the backend code by changing server.py line 250 from
+work), re-enable the safety catch in the backend code by changing server.py line 254 from
 calling check_safety() to calling orig_check_safety()
 
 I only disabled the safety catch because Rick Astley (the NSFW
