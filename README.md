@@ -37,13 +37,16 @@ people are not called 'Nick' and it's a bit more descriptive. The original name 
 private project which I have only later realised may be of help to others. I should have thought of a decent name like
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
-## 8 steps to Fast-start
 
+## Make sure your computer has everything ready
+This section enables you to check that your computer has everything you need to run the application
 1. Make sure you have an NVidia graphics card and a NVidia's GPU driver installed. This is how the backend will render
    the images.
-2. The graphics card needs to have at least 10 GB of GPU memory in total. I use an RTX 3090 Ti but should work on 3080s
+2. The graphics card needs to have at least 8 GB of GPU memory of contiguous memory. I use an RTX 3090 Ti but should work on 3080s, 3070s
    and 2080s.
-3. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance,
+3. You have both WSL2 and a repo such as Ubuntu installed. I use Ubuntu 20.04 LTS with 'bash' as the default shell. 
+4. You have the latest edition of Docker Desktop installed, and it is running in WSL2 mode (in 'Settings' -> 'General', the 'Use the WSL 2 based engine' option is ticked).
+5. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance,
    but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over
    20GB memory at the present time. To overcome the max memory error, open (or create)
    a file in your Windows home directory called   <b>.wslconfig</b> - for example on my PC: <pre>
@@ -53,13 +56,53 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
    use that much if it really needs it.
    Why 4GB? I am guessing Windows can just about keep running on 4GB of memory, but I have not tested it...! The file
    should look like this:
-
 <pre>   
 [wsl2]
 memory=60GB 
-</pre>
+</pre> 
+   If you had to make this change, reboot your PC at this point.
 
-4. Read docker-compose.yml and adjust the three volumes to those suitable for your PC. On my S: hard drive I have created a folder '
+## Test your computer is ready
+1. Open a terminal (bash) window in WSL2 and type the following command:
+2. <pre>nvidia-smi</pre>
+    You should see a list of your graphics cards and their memory usage. If you don't see this, or the 'nvidia-smi' command
+    cannot be found, you have a problem with your graphics card or driver.
+<pre>nick@FARSPACE:/mnt/s/Projects/nick-stable-diffusion$ nvidia-smi
+Mon Sep  5 07:38:22 2022       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 515.65.01    Driver Version: 516.94       CUDA Version: 11.7     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA GeForce ...  On   | 00000000:0A:00.0  On |                  Off |
+| 40%   30C    P8    21W / 480W |   1492MiB / 24564MiB |      6%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+</pre>
+If you saw some similar output to mine above, it means that WSL2 can se your graphics card and the driver is working.
+You can now close the WSL2/bash window.
+3. Now open PowerShell and type this command which will download and set running NVidia's official docker container for CUDA 11.7, which
+   is the version of CUDA that the backend uses. This is a big download, so it may take a while but it will save
+   docker compose doing this during <i>Fast Start</i> later:
+<pre>
+docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
+</pre>
+This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
+
+If all has worked OK in this test section, you're all set and your dreams of becoming an AI creative prompt-craft wizard can come true!
+
+## FAST START
+1. Read docker-compose.yml and adjust the three volumes to those suitable for your PC. On my S: hard drive I have created a folder '
    nick-stable-diffusion-data' and then created three empty sub-folders: 'cache', 'model' and 'library'.
    Docker will connect these physical locations to the internal volumes of the containers. You can change the 'device:'
    values to folders on your PC you would prefer the containers to use.
@@ -86,16 +129,16 @@ volumes:
       device: S:\nick-stable-diffusion-data\library
 </pre>
 
-5. You will need to download the Stable Diffusion model - at the time of writing I am using v1.4 of the model.
+2. You will need to download the Stable Diffusion model - at the time of writing I am using v1.4 of the model.
    Go here https://huggingface.co/CompVis/stable-diffusion-v-1-4-original and create an account. Then go back to this
    page to accept the terms.
    Then go here https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/blob/main/sd-v1-4.ckpt
    and download this file.
-6. Copy the downloaded file to the 'model' folder you have setup in step 4. Note how I use 'S:
+3. Copy the downloaded file to the 'model' folder you have setup in step 4. Note how I use 'S:
    \nick-stable-diffusion-data\model'.
    You will need to place the .ckpt file there and rename it to <pre>model.ckpt</pre> .
 
-6. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
+4. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
    images is a one-time operation but takes time and several GB of download!
    I am happy to accept that right now the backend build is a bit overkill - it even downloads the Rust language 
 compiler, downloads some framework sources and then compiles some of the required libraries using it while you wait! 
@@ -105,7 +148,7 @@ Talk about freshly compiled code! Well at least it's a one-time thing; I'll clea
 docker compose up -d --build 
 </pre>
 
-7. At first start the backend will then download another 2.73 GB of data
+5. At first start the backend will then download another 2.73 GB of data
    which it will store in the 'cache' folder you set up on your drive and set up in docker compose.
    THis will only happen the first time - it doesn't do this every time you start the backend.
    The second and subsequent times you start the backend it will be live within about 30 seconds, sometimes sooner.
@@ -115,7 +158,7 @@ docker compose up -d --build
 Backend Server ready for processing on port 8080
 </pre>
 
-8. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's
+6. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's
    port 8000
 
 ## Notes
@@ -207,7 +250,7 @@ Good luck setting this up on your PC - let me know how you get on.
 
 Note that I have disabled the safety catch and allow this project to create any image it desires. But doing so comes
 with great responsibility and you must
-not forget what you agreed to when downloading the model in step 5 above. 
+not forget what you agreed to when downloading the model in <i>Fast Start</i>> above. 
 
 If you prefer to avoid the possibility of NSFW content (for example, you are demonstrating this as a show & tell at 
 work), re-enable the safety catch in the backend code by changing server.py line 250 from
