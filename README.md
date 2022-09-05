@@ -93,6 +93,7 @@ Mon Sep  5 07:38:22 2022
 </pre>
 If you saw some similar output to mine above, it means that WSL2 can se your graphics card and the driver is working.
 You can now close the WSL2/bash window.
+
 3. Now open PowerShell and type this command which will download and set running NVidia's official docker container for CUDA 11.7, which
    is the version of CUDA that the backend uses. This is a big download, so it may take a while but it will save
    docker compose doing this during <i>Fast Start</i> later:
