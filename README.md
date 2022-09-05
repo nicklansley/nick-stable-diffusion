@@ -32,9 +32,10 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - NEW: 'dark mode' button for all the web pages, for those late-night creative AI sessions without being blasted by
   light!
 - A stupid prompt inspiration page generating random and daft prompts. A good idea at the time.
-- UPDATE: Nick's Stable Diffusion Playground renamed 'Stable Diffusion Web Playground' in deference to the act that most 
+- UPDATE: "Nick's Stable Diffusion Playground" web pages renamed "Stable Diffusion Web Playground" in deference to the fact that most 
 people are not called 'Nick' and it's a bit more descriptive. The original name came from the fact it was personal, 
-private project which I have only later realised may be of help to others.
+private project which I have only later realised may be of help to others. I should have thought of a decent name like
+DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
 ## 8 steps to Fast-start
 
