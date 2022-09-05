@@ -1,4 +1,4 @@
-# Nick's Stable Diffusion Playground
+# Stable Diffusion Web Playground
 
 This project is a clone of https://github.com/CompVis/stable-diffusion.git
 I place this link here so that nobody forgets that I have simply stood on the shoulder of giants in making this interactive web version of Stable Diffusion.
@@ -8,6 +8,8 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
+- Designed as a multi-user web application - get your family trying it on your home network, or set up your workstation
+  as a internet-accessible server using ngrok or similar tunneling tool for your friends to try.
 - Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
 - Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
 - A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of
@@ -204,7 +206,7 @@ Behind the scenes for this simple prompting page, the ddim_steps is set to 50, s
 These defaults can be altered using the capital-letter variables at the top of script file backend-sd-server/server.py
 if you wish to change them,
 but these seem to work best and are suggested by the authors of the model. Use the advanced page to override them for
-moe control in a session.
+more control in a session.
 
 ### Library Page
 
@@ -239,7 +241,8 @@ The Advanced page allows you to set the parameters for the AI to use when genera
 You can use this page to link to a source image on the web, or in your library folder.
 
 If you specify an image, it will be included as the first image '00-original.png' in the output.
-<i>Note that you do not have copyright over the original image, only the AI-created images.</i>
+<i>Note that you do not have copyright over the original image, only the AI-created images as long as they 
+are 'substantially' different to the original.</i>
 
 If you click an image in the library, it will open a new advanced page with the settings that made that image already
 preset so you can manipulate it further.
@@ -257,12 +260,13 @@ Note that I have disabled the safety catch and allow this project to create any 
 with great responsibility and you must
 not forget what you agreed to when downloading the model in <i>Fast Start</i>> above. 
 
-If you prefer to avoid the possibility of NSFW content (for example, you are demonstrating this as a show & tell at 
+If you prefer to avoid the possibility of NSFW content (for example, you are allowing minors to use the application or you are demonstrating this as a show & tell at 
 work), re-enable the safety catch in the backend code by changing server.py line 250 from
 calling check_safety() to calling orig_check_safety()
 
 I only disabled the safety catch because Rick Astley (the NSFW
-replacement image) was appearing too often on innocent prompts.
+replacement image) was appearing too often on innocent prompts, notwithstanding the fact that my definition of 'innocent'
+may be different to the developers of the safety catch...!
 
 But have no illusion: Without the safety catch enabled, the AI will create any image it desires even on apparently 
 innocent prompts, and it has no moral compass to help you unsee what it has created. 
