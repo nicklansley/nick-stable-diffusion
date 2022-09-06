@@ -122,7 +122,7 @@
     }
 
     .input_div {
-        width: 700px;
+        width: 1036px;
         border: 1px solid #f0f0f0;
         border-radius: 5px;
         padding: 10px;
@@ -132,12 +132,20 @@
 <body onload="setDarkModeFromLocalStorage()">
 <h1>Stable Diffusion Web Playground</h1>
 <p class="label" id="status"></p>
+<div class="input_div">
+    <p>
+        <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far</button>
+        <button class="button-9" onclick="window.open('advanced.html', '_blank')">Prompt with advanced controls</button>
+        <button class="button-9" onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts</button>
+        <button class="button-9" onclick="toggleDarkMode()">Toggle dark mode</button>
+    </p>
+</div>
 
 <div class="input_div">
 
     <div>
         <div>Enter a prompt:</div>
-        <div><textarea cols="50" id="prompt" rows="4" type="text"/></textarea></div>
+        <div><textarea cols="132" id="prompt" rows="6" type="text"/></textarea></div>
     </div>
 
     <div>
@@ -160,7 +168,7 @@
                         id="buttonGo"
                         onclick="go()"
                         role="button">
-                    Click
+                    <Click></Click>
                     to
                     send
                     request
@@ -177,20 +185,7 @@
             <div>
                 <hr>
             </div>
-            <div>
-                <p>
-                    <button onclick="window.open('library.html', '_blank')">Library of images created so far</button>
-                </p>
-                <p>
-                    <button onclick="window.open('advanced.html', '_blank')">Prompt with advanced controls</button>
-                </p>
-                <p>
-                    <button onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts</button>
-                </p>
-                <p>
-                    <button onclick="toggleDarkMode()">Toggle dark mode</button>
-                </p>
-            </div>
+
 
         </div>
     </div>

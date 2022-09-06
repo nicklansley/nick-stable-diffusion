@@ -58,7 +58,6 @@ const retrieveImages = async () =>
             document.getElementById("output").appendChild(hr);
 
             const h3 = document.createElement("h3");
-            let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
             h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
             document.getElementById("output").appendChild(h3);
 
@@ -96,15 +95,15 @@ const retrieveImages = async () =>
                 const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
                 delete dataImageDetails['generated_images'];
                 dataImageDetails.path = image_entry;
-                // image.style.zIndex = "0";
+
                 image.onclick = function ()
                 {
                     window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
                 }
+
                 image.onmouseover = function ()
                 {
                     this.style.transform = `scale(1.5)`;
-                    this.style.transform = `translate(50px,0px)`;
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "100";
                     const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
@@ -113,7 +112,6 @@ const retrieveImages = async () =>
                 image.onmouseleave = function ()
                 {
                     this.style.transform = "scale(1)";
-                    this.style.transform += "translate(0px,0px)";
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "0";
                 };

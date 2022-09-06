@@ -39,6 +39,10 @@ people are not called 'Nick' and it's a bit more descriptive. The original name 
 private project which I have only later realised may be of help to others. I should have thought of a decent name like
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
+## Daily updates!
+This project is being improved daily throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
+the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
+
 
 ## Make sure your computer has everything ready
 This section enables you to check that your computer has everything you need to run the application.
