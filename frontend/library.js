@@ -68,22 +68,25 @@ const retrieveImages = async () =>
 
             const masterImage = document.createElement("img");
 
-            if(libraryItem['generated_images'][0].endsWith('00-original.png'))
+            if (libraryItem['generated_images'].length > 0)
             {
-                masterImage.src =  libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
-            }
-            else
-            {
-                masterImage.src =  libraryItem['generated_images'][0]; // the first image is the first generated image
-            }
+                if (libraryItem['generated_images'][0].endsWith('00-original.png'))
+                {
+                    masterImage.src = libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
+                }
+                else
+                {
+                    masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
+                }
 
-            masterImage.id = `master_image_${libraryItem['queue_id']}`;
-            masterImage.alt = libraryItem['text_prompt'];
-            masterImage.height = libraryItem['height'];
-            masterImage.width = libraryItem['width'];
-            masterImage.style.zIndex = "0";
-            document.getElementById("output").appendChild(masterImage);
-            document.getElementById("output").appendChild(document.createElement("br"));
+                masterImage.id = `master_image_${libraryItem['queue_id']}`;
+                masterImage.alt = libraryItem['text_prompt'];
+                masterImage.height = libraryItem['height'];
+                masterImage.width = libraryItem['width'];
+                masterImage.style.zIndex = "0";
+                document.getElementById("output").appendChild(masterImage);
+                document.getElementById("output").appendChild(document.createElement("br"));
+            }
 
             for(const image_entry of libraryItem['generated_images'])
             {

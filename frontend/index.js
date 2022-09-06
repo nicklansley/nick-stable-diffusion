@@ -20,35 +20,53 @@ const go = async () =>
         seed: 0
     }
 
-    if(document.body.innerText.includes("DDIM Steps:"))
+    if (document.body.innerText.includes("DDIM Steps:"))
     {
         //We have the advanced options incoming for the request from advanced.html
         data['seed'] = parseInt(document.getElementById("seed").value);
-        if(data['seed'] === '') data['seed'] = 0;
+        if (data['seed'] === '')
+        {
+            data['seed'] = 0;
+        }
 
         data['height'] = parseInt(document.getElementById("height").value);
-        if(data['height'] === '') data['height'] = 512;
+        if (data['height'] === '')
+        {
+            data['height'] = 512;
+        }
 
         data['width'] = parseInt(document.getElementById("width").value);
-        if(data['width'] === '') data['width'] = 512;
+        if (data['width'] === '')
+        {
+            data['width'] = 512;
+        }
 
         data['ddim_steps'] = parseInt(document.getElementById("ddim_steps").value);
-        if(data['ddim_steps'] === '') data['ddim_steps'] = 50;
+        if (data['ddim_steps'] === '')
+        {
+            data['ddim_steps'] = 50;
+        }
 
         data['scale'] = parseFloat(document.getElementById("scale").value);
-        if(data['scale'] === '') data['scale'] = 7.5;
+        if (data['scale'] === '')
+        {
+            data['scale'] = 7.5;
+        }
 
         data['original_image_path'] = document.getElementById("original_image_path").value;
 
         // Note that the strength slider represents a value fomo 0.01 - 99.9% whereas strength is a float from 0.0 to 0.999
         // I used percentage because it is easier to understand for the user.
         data['strength'] = parseFloat(document.getElementById("strength").value) / 100;
-        if(data['strength'] === '') data['strength'] = 0.75;
+        if (data['strength'] === '')
+        {
+            data['strength'] = 0.75;
+        }
 
 
         let downsamplingFactor = 0;
         const dsfRadioGroup = document.getElementsByName("downsampling_factor");
-        for (let i = 0; i < dsfRadioGroup.length; i++)
+        for(let i = 0; i < dsfRadioGroup.length; i++)
         {
             if (dsfRadioGroup[i].checked)
             {
@@ -71,7 +89,7 @@ const go = async () =>
         body: JSON.stringify(data)
     });
 
-    if(rawResponse.status === 200)
+    if (rawResponse.status === 200)
     {
         const queueConfirmation = await rawResponse.json();
         global_currentQueueId = queueConfirmation.queue_id;
@@ -84,7 +102,6 @@ const go = async () =>
     document.getElementById('buttonGo').innerText = "Click to send request";
     document.getElementById('buttonGo').enabled = true;
 }
-
 
 
 /**
@@ -102,7 +119,7 @@ const retrieveAndDisplayCurrentQueue = async () =>
         },
     });
 
-    if(queueResponse.status === 200)
+    if (queueResponse.status === 200)
     {
         const queueData = await queueResponse.json();
         await displayQueue(queueData);
@@ -111,23 +128,23 @@ const retrieveAndDisplayCurrentQueue = async () =>
         let foundQueueId = false;
         for(const queueItem of queueData)
         {
-            if(queueItem.queue_id === global_currentQueueId)
+            if (queueItem.queue_id === global_currentQueueId)
             {
-               foundQueueId = true;
-               break;
+                foundQueueId = true;
+                break;
             }
         }
         //If we did not find our queue_id then processing of our request must be completed.
         //So, if no images are being displayed, go get them!
         //However, do not this if the prompt has no value (i.e. when the page is first loaded)
-        if(!foundQueueId
+        if (!foundQueueId
             && (output.innerText === 'Retrieving images...' || output.innerHTML === '' || output.innerText.startsWith('Results available in'))
             && document.getElementById("prompt").value.length > 0)
         {
             document.getElementById('status').innerText = `Image creation completed`;
             stopCountDown();
             const library = await getLibrary();
-            if(library)
+            if (library)
             {
                 await displayImages(library, output);
             }
@@ -148,7 +165,7 @@ const displayQueue = async (queueList) =>
     let myQueueIdIsCurrentlyBeingProcessedFlag = false;
 
     const queueUI = document.getElementById("queue");
-    if(queueList.length === 0)
+    if (queueList.length === 0)
     {
         queueUI.innerHTML = "Current queue: Empty<br>You'll be first if you submit a request!";
     }
@@ -166,7 +183,7 @@ const displayQueue = async (queueList) =>
 
         // If we are the first in the queue, our prompt is the one currently being processed by the AI
         // so highlight it:
-        if(myQueueIdIsCurrentlyBeingProcessedFlag && document.getElementById("output").innerText !== "Retrieving images...")
+        if (myQueueIdIsCurrentlyBeingProcessedFlag && document.getElementById("output").innerText !== "Retrieving images...")
         {
             // Mention this in the status message:
             document.getElementById('status').innerText = `Your request is being processed right now...`;
@@ -177,10 +194,10 @@ const displayQueue = async (queueList) =>
 
         let queuePosition = 1;
         let imageCount = 0;
-        if(queueList.length > 1)
+        if (queueList.length > 1)
         {
             const orderedList = document.createElement("ol");
-            for (let queueIndex = 1; queueIndex < queueList.length; queueIndex += 1)
+            for(let queueIndex = 1; queueIndex < queueList.length; queueIndex += 1)
             {
                 let queueItem = queueList[queueIndex];
                 const listItem = document.createElement("li");
@@ -188,7 +205,7 @@ const displayQueue = async (queueList) =>
                 imageCount += queueItem.num_images;
 
                 // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
-                if(queueItem.queue_id === global_currentQueueId)
+                if (queueItem.queue_id === global_currentQueueId)
                 {
                     listItem.style.fontWeight = "bold";
                     listItem.style.backgroundColor = "lightgreen";
@@ -202,7 +219,8 @@ const displayQueue = async (queueList) =>
                 queuePosition += 1;
             }
             queueUI.appendChild(orderedList);
-        } else
+        }
+        else
         {
             queueUI.innerHTML += " >> Queue is Empty!"
         }
@@ -238,23 +256,26 @@ const getLibrary = async () =>
         return false;
     }
 
-    if(rawResponse.status === 200)
+    if (rawResponse.status === 200)
     {
         document.getElementById('status').innerText = "Ready";
         return await rawResponse.json();
-    } else
+    }
+    else
     {
-        if(rawResponse.status === 502)
+        if (rawResponse.status === 502)
         {
             document.getElementById('status').innerText = `AI currently powering up and will start work on queued requests soon.`;
             return [];
-        } else
+        }
+        else
         {
-            if(rawResponse.status === 404)
+            if (rawResponse.status === 404)
             {
                 document.getElementById('status').innerText = "DALL-E Engine Status: Online and ready";
                 return [];
-            } else
+            }
+            else
             {
                 document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred - check again shortly!`;
                 return [];
@@ -268,16 +289,16 @@ const calculateEstimatedTime = () =>
 {
     const imageCount = parseInt(document.getElementById('num_images').value);
     let estimatedTime = imageCount * SECS_PER_IMAGE;
-    if(document.body.innerText.includes("DDIM Steps:"))
+    if (document.body.innerText.includes("DDIM Steps:"))
     {
         estimatedTime = estimatedTime * (parseInt(document.getElementById('ddim_steps').value) / 50);
     }
-    if(document.body.innerText.includes("Height:"))
+    if (document.body.innerText.includes("Height:"))
     {
         const height = parseInt(document.getElementById('height').value);
         estimatedTime = estimatedTime * Math.pow(height / 512, 2);
     }
-    if(document.body.innerText.includes("Width:"))
+    if (document.body.innerText.includes("Width:"))
     {
         const width = parseInt(document.getElementById('width').value);
         estimatedTime = estimatedTime * Math.pow(width / 512, 2);
@@ -294,9 +315,9 @@ const calculateEstimatedTime = () =>
 const displayImages = async (library, output) =>
 {
     output.innerHTML = ""; //Empty of all child HTML ready for new images to be added.
-    for (const libraryItem of library)
+    for(const libraryItem of library)
     {
-        if(libraryItem.queue_id === global_currentQueueId)
+        if (libraryItem.queue_id === global_currentQueueId)
         {
             if (libraryItem.error)
             {
@@ -305,22 +326,25 @@ const displayImages = async (library, output) =>
             else
             {
                 const masterImage = document.createElement("img");
-                if(libraryItem['generated_images'][0].endsWith('00-original.png'))
+                if (libraryItem['generated_images'].length > 0)
                 {
-                    masterImage.src =  libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
-                }
-                else
-                {
-                    masterImage.src =  libraryItem['generated_images'][0]; // the first image is the first generated image
-                }
+                    if (libraryItem['generated_images'][0].endsWith('00-original.png'))
+                    {
+                        masterImage.src = libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
+                    }
+                    else
+                    {
+                        masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
+                    }
 
-                masterImage.id = `master_image_${libraryItem['queue_id']}`;
-                masterImage.alt = libraryItem['text_prompt'];
-                masterImage.height = libraryItem['height'];
-                masterImage.width = libraryItem['width'];
-                masterImage.style.zIndex = "0";
-                output.appendChild(masterImage);
-                output.appendChild(document.createElement("br"));
+                    masterImage.id = `master_image_${libraryItem['queue_id']}`;
+                    masterImage.alt = libraryItem['text_prompt'];
+                    masterImage.height = libraryItem['height'];
+                    masterImage.width = libraryItem['width'];
+                    masterImage.style.zIndex = "0";
+                    output.appendChild(masterImage);
+                    output.appendChild(document.createElement("br"));
+                }
 
                 let imageCount = 0;
                 for(const image_entry of libraryItem['generated_images'])
@@ -365,20 +389,20 @@ const displayImages = async (library, output) =>
  */
 const startCountDown = async (imageCount) =>
 {
-    if(!global_countdownRunning)
+    if (!global_countdownRunning)
     {
         global_countdownValue = imageCount * SECS_PER_IMAGE;
 
-        if(document.body.innerText.includes("DDIM Steps:"))
+        if (document.body.innerText.includes("DDIM Steps:"))
         {
             global_countdownValue = global_countdownValue * parseInt(document.getElementById('ddim_steps').value) / 50;
         }
-        if(document.body.innerText.includes("Height:"))
+        if (document.body.innerText.includes("Height:"))
         {
             const height = parseInt(document.getElementById('height').value);
             global_countdownValue = global_countdownValue * Math.pow(height / 512, 2);
         }
-        if(document.body.innerText.includes("Width:"))
+        if (document.body.innerText.includes("Width:"))
         {
             const width = parseInt(document.getElementById('width').value);
             global_countdownValue = global_countdownValue * Math.pow(width / 512, 2);
@@ -422,57 +446,65 @@ const stopCountDown = () =>
 
 const populateControlsFromHref = () =>
 {
-    if(window.location.href.includes("?"))
+    if (window.location.href.includes("?"))
     {
         const params = new URLSearchParams(window.location.search);
-        if(params.has('prompt'))
+        if (params.has('prompt'))
         {
             document.getElementById('prompt').value = params.get('prompt');
         }
-        if(params.has('original_image_path'))
+        if (params.has('original_image_path'))
         {
             document.getElementById('original_image_path').value = params.get('original_image_path');
         }
-        if(params.has('strength'))
+        if (params.has('strength'))
         {
             document.getElementById('strength').value = params.get('strength');
             document.getElementById('strength_value').innerText = params.get('strength');
         }
-        if(params.has('seed'))
+        if (params.has('seed'))
         {
             document.getElementById('seed').value = params.get('seed');
             document.getElementById('seed_value').innerText = params.get('seed');
         }
-        if(params.has('width'))
+        if (params.has('width'))
         {
             document.getElementById('width').value = params.get('width');
             document.getElementById('width_value').innerText = params.get('width');
         }
-        if(params.has('height'))
+        if (params.has('height'))
         {
             document.getElementById('height').value = params.get('height');
             document.getElementById('height_value').innerText = params.get('height');
         }
-        if(params.has('ddim_steps'))
+        if (params.has('ddim_steps'))
         {
             document.getElementById('ddim_steps').value = params.get('ddim_steps');
             document.getElementById('ddim_steps_value').innerText = params.get('ddim_steps');
         }
-        if(params.has('scale'))
+        if (params.has('scale'))
         {
             document.getElementById('scale').value = params.get('scale');
             document.getElementById('scale_value').innerText = params.get('scale');
         }
-        if(params.has('downsampling_factor'))
+        if (params.has('downsampling_factor'))
         {
-            if(params.get('downsampling_factor') === "2")
+            if (params.get('downsampling_factor') === "2")
+            {
                 document.getElementById('ds2').checked = true;
-            else if(params.get('downsampling_factor') === "4")
+            }
+            else if (params.get('downsampling_factor') === "4")
+            {
                 document.getElementById('ds4').checked = true;
-            else if(params.get('downsampling_factor') === "8")
+            }
+            else if (params.get('downsampling_factor') === "8")
+            {
                 document.getElementById('ds8').checked = true;
-            else if(params.get('downsampling_factor') === "16")
+            }
+            else if (params.get('downsampling_factor') === "16")
+            {
                 document.getElementById('ds16').checked = true;
+            }
         }
     }
 }
@@ -487,7 +519,7 @@ const toggleDarkMode = () =>
 
 const setDarkModeFromLocalStorage = () =>
 {
-    if(localStorage.getItem("dark-mode") === "Y")
+    if (localStorage.getItem("dark-mode") === "Y")
     {
         document.body.classList.add('dark-mode');
     }
