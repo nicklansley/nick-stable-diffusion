@@ -351,7 +351,7 @@ const startCountDown = async (imageCount) =>
 
         if(document.body.innerText.includes("DDIM Steps:"))
         {
-            global_countdownValue = global_countdownValue * (Math.round(parseInt(document.getElementById('ddim_steps').value) / 50));
+            global_countdownValue = global_countdownValue * parseInt(document.getElementById('ddim_steps').value) / 50;
         }
         if(document.body.innerText.includes("Height:"))
         {

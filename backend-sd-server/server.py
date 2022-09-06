@@ -233,7 +233,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             if isinstance(prompts, tuple):
                                 prompts = list(prompts)
                             c = model.get_learned_conditioning(prompts)
-                            shape = [LATENT_CHANNELS, options['width'] // options['downsampling_factor'],
+                            shape = [LATENT_CHANNELS, options['height'] // options['downsampling_factor'],
                                      options['width'] // options['downsampling_factor']]
                             samples_ddim, _ = sampler.sample(S=options['ddim_steps'],
                                                              conditioning=c,
