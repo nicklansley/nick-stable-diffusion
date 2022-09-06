@@ -115,7 +115,12 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
     docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
     </pre>
     This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
-
+    <br><b>UPDATE</b>: One person has documented an issue that running this step produces this output:
+    <pre>
+   Error response from daemon: failed to create shim: OCI runtime create failed: container_linux.go:380: starting container process caused: process_linux.go:545: container init caused: Running hook #0:: error running hook: signal: segmentation fault, stdout: , stderr:: unknown
+   </pre>
+   We are both trying to work out a fix for this 'segmentation fault' error so if you also get this error, please post a comment in the Github issue section for this project, issue name 'docker compose up -d --build: Error response from daemon: failed'.
+   Please include your PC's CPU make/model, GPU card make/model, and PC memory. Thanks. I'll include a test for this here when we find the problem!
     
 <b><i>If all has worked OK in this test section, you're all set.</i></b>
 If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follow the instructions there to get your graphics card and driver working with WSL2.
@@ -152,7 +157,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
           type: none
           device: S:\nick-stable-diffusion-data\library
     </pre>
-    If you are going to be running 'docker compose' (step 4) inside the terminal of a WSl2 distro such as Ubuntu, use the linux drive path format:
+    If you are going to be running 'docker compose' (step 4) inside the terminal of a WSL2 distro such as Ubuntu, use the linux drive path format:
     <pre>
     volumes:
       app-cache-on-s:
