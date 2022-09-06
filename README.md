@@ -46,8 +46,21 @@ This section enables you to check that your computer has everything you need to 
    the images.
 2. The graphics card needs to have at least 8 GB of GPU memory of contiguous memory. I use an RTX 3090 Ti but should work on 3080s, 3070s
    and 2080s.
-3. You have both WSL2 and a repo such as Ubuntu installed. I use Ubuntu 20.04 LTS with 'bash' as the default shell. 
-4. You have the latest edition of Docker Desktop installed, and it is running in WSL2 mode (in 'Settings' -> 'General', the 'Use the WSL 2 based engine' option is ticked).
+3. Check you have both WSL2 and a Linux distro such as Ubuntu installed. I use Ubuntu 20.04 LTS with 'bash' as the default shell. 
+    To find out, open PowerShell and run this command:<pre>wsl --status</pre>
+    You should get a response similar to this, showing you are using Version 2, your default distro is shown, and that the Kernel version is 5.x (or more recent of course):
+    <pre>
+    PS C:\Users\nick> wsl --status
+    Default Distribution: Ubuntu
+    Default Version: 2
+    
+    Windows Subsystem for Linux was last updated on 28/07/2022
+    WSL automatic updates are on.
+    
+    Kernel version: 5.10.102.1
+   </pre>
+
+5. You have the latest edition of Docker Desktop installed, and it is running in WSL2 mode (in 'Settings' -> 'General', the 'Use the WSL 2 based engine' option is ticked).
 5. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance,
    but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over
    20GB memory at the present time. To overcome the max memory error, open (or create)
@@ -61,7 +74,6 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
     <pre>[wsl2]
    memory=60GB</pre> 
    If you had to make this change, reboot your PC at this point.
-
 <hr>
 
 ## Test your computer
@@ -115,29 +127,53 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
    nick-stable-diffusion-data' and then created three empty sub-folders: 'cache', 'model' and 'library'.
    Docker will connect these physical locations to the internal volumes of the containers. You can change the 'device:'
    values to folders on your PC you would prefer the containers to use.
+   
+   
+   If you are going to be running 'docker compose' (step 4) in PowerShell, use the Windows drive path format:
 
-<pre>
-volumes:
-  app-cache-on-s:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: S:\nick-stable-diffusion-data\cache
-  model-on-s:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: S:\nick-stable-diffusion-data\model
-  library-on-s:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: S:\nick-stable-diffusion-data\library
-</pre>
-
+    <pre>
+    volumes:
+      app-cache-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: S:\nick-stable-diffusion-data\cache
+      model-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: S:\nick-stable-diffusion-data\model
+      library-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: S:\nick-stable-diffusion-data\library
+    </pre>
+    If you are going to be running 'docker compose' (step 4) inside the terminal of a WSl2 distro such as Ubuntu, use the linux drive path format:
+    <pre>
+    volumes:
+      app-cache-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: /mnt/s/nick-stable-diffusion-data\cache
+      model-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: /mnt/s/nick-stable-diffusion-data/model
+      library-on-s:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: /mnt/s/nick-stable-diffusion-data/library
+    </pre>
 2. You will need to download the Stable Diffusion model - at the time of writing I am using v1.4 of the model.
    Go here https://huggingface.co/CompVis/stable-diffusion-v-1-4-original and create an account. Then go back to this
    page to accept the terms.
