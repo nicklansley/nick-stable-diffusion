@@ -103,7 +103,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def load_and_format_image(path):
+def load_and_format_image(path, output_width, output_height):
     # load an image from a URL
     if path.startswith("http"):
         # get image name from URL
@@ -127,13 +127,13 @@ def load_and_format_image(path):
 
     old_size = image.size  # old_size[0] is in (width, height) format
 
-    ratio = float(512) / max(old_size)
+    ratio = float(output_width) / max(old_size)
     new_size = tuple([int(x * ratio) for x in old_size])
 
     image.thumbnail(new_size, Image.Resampling.LANCZOS)
-    resized_image = Image.new("RGB", (512, 512))
-    resized_image.paste(image, ((512 - new_size[0]) // 2,
-                            (512 - new_size[1]) // 2))
+    resized_image = Image.new("RGB", (output_width, output_height))
+    resized_image.paste(image, ((output_width - new_size[0]) // 2,
+                            (output_height - new_size[1]) // 2))
 
     w, h = resized_image.size
     print(f"Image resized to size ({w}, {h}) ")
@@ -292,7 +292,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         data = [N_SAMPLES * [text_prompt]]
 
         # load the image
-        resized_image, init_image = load_and_format_image(original_image_path)
+        resized_image, init_image = load_and_format_image(original_image_path, options['width'], options['height'])
         init_image = init_image.to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
