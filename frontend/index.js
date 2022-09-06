@@ -336,7 +336,7 @@ const displayImages = async (library, output) =>
                     image.onmouseover = function ()
                     {
                         this.style.transform = "scale(1.5)";
-                        this.style.transform += `translate(50px,0px)`;
+                        this.style.transform += `translate(0px,0px)`;
                         this.style.transition = "transform 0.25s ease";
                         this.style.zIndex = "100";
                         const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
