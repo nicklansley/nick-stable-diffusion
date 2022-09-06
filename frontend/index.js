@@ -304,8 +304,18 @@ const displayImages = async (library, output) =>
             }
             else
             {
+                const masterImage = document.createElement("img");
+                masterImage.src =  libraryItem['generated_images'][0]; // the first image is the current master image
+                masterImage.id = `master_image_${libraryItem['queue_id']}`;
+                masterImage.alt = libraryItem['text_prompt'];
+                masterImage.height = libraryItem['height'];
+                masterImage.width = libraryItem['width'];
+                masterImage.style.zIndex = "0";
+                output.appendChild(masterImage);
+                output.appendChild(document.createElement("br"));
+
                 let imageCount = 0;
-                for(const image_entry of libraryItem.generated_images)
+                for(const image_entry of libraryItem['generated_images'])
                 {
                     const image = document.createElement("img");
                     image.src = image_entry;
@@ -314,13 +324,15 @@ const displayImages = async (library, output) =>
                     image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
                     image.style.zIndex = "0";
                     image.style.position = "relative";
+
                     image.onmouseover = function ()
                     {
-                        console.log(this.style.zIndex);
-                        this.style.transform = "scale(4)";
-                        this.style.transform += `translate(${image.width / 3}px,0px)`;
+                        this.style.transform = "scale(1.5)";
+                        this.style.transform += `translate(50px,0px)`;
                         this.style.transition = "transform 0.25s ease";
                         this.style.zIndex = "100";
+                        const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
+                        masterImage.src = this.src;
                     };
                     image.onmouseleave = function ()
                     {

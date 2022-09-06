@@ -67,6 +67,15 @@ const retrieveImages = async () =>
             p.innerHTML = authorParametersListForWeb(libraryItem);
             document.getElementById("output").appendChild(p);
 
+            const masterImage = document.createElement("img");
+            masterImage.src =  libraryItem['generated_images'][0]; // the first image is the current master image
+            masterImage.id = `master_image_${libraryItem['queue_id']}`;
+            masterImage.alt = libraryItem['text_prompt'];
+            masterImage.height = libraryItem['height'];
+            masterImage.width = libraryItem['width'];
+            masterImage.style.zIndex = "0";
+            document.getElementById("output").appendChild(masterImage);
+            document.getElementById("output").appendChild(document.createElement("br"));
 
             for(const image_entry of libraryItem['generated_images'])
             {
@@ -94,11 +103,12 @@ const retrieveImages = async () =>
                 }
                 image.onmouseover = function ()
                 {
-                    console.log(this.style.zIndex);
-                    this.style.transform = "scale(4)";
-                    this.style.transform += `translate(${image.width / 2}px,-50px)`;
+                    this.style.transform = `scale(1.5)`;
+                    this.style.transform = `translate(50px,0px)`;
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "100";
+                    const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
+                    masterImage.src = this.src;
                 };
                 image.onmouseleave = function ()
                 {
@@ -163,10 +173,7 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
 
 const deleteImage = async (img) =>
 {
-    const jsonData = img.getAttribute('data-image-details');
-    const data = JSON.parse(jsonData.replaceAll("&quot;", "\""));
-
-    if (window.confirm(`Are you sure you want to delete image "${data.text_prompt}"?`))
+    if (window.confirm(`Are you sure you want to delete image "${img.alt}"?`))
     {
         const rawResponse = await fetch('/deleteimage', {
             method: 'POST',
@@ -175,7 +182,7 @@ const deleteImage = async (img) =>
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                path: data.path
+                path: img.src.substring(img.src.lastIndexOf('/library') + 1)
             })
         });
 
