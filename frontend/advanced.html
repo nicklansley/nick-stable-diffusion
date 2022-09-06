@@ -171,7 +171,7 @@
                     <div id="estimated_time"><i>1 image - estimated time: <b>4</b> seconds</i></div>
                     <div>
                         <hr>
-                        Enter an optional seed value:
+                        Enter an optional seed value: (leave at zero for random seed)
                     </div>
                     <div class="slidecontainer"><input class="slider" id="seed" max="4294967296"
                                                        min="0"
@@ -181,38 +181,38 @@
                                                        value="0">
                     </div>
                     <div id="seed_value">0</div>
-                    (leave at zero for random seed)
+
                     <div>
                         <hr>
-                        Height:
+                        Height: (pixels between 256 and 1024)
                     </div>
                     <div>
                         <div class="slidecontainer"><input class="slider"
                                                            id="height" max="1024"
                                                            min="256"
                                                            oninput="document.getElementById('height_value').innerText = this.value"
-                                                           step="32"
+                                                           step="64"
                                                            type="range"
                                                            value="512">
                         </div>
                         <div id="height_value">512</div>
-                        (pixels between 256 and 1024)
+
                         <div>
                             <hr>
-                            Width:
+                            Width: (pixels between 256 and 1024)
                         </div>
                         <div class="slidecontainer"><input
                                 class="slider" id="width"
                                 max="1024" min="256"
                                 oninput="document.getElementById('width_value').innerText = this.value; calculateEstimatedTime()"
-                                step="32" type="range"
+                                step="64" type="range"
                                 value="512">
                         </div>
                         <div id="width_value">512</div>
-                        (pixels between 256 and 1024)
+
                         <div>
                             <hr>
-                            DDIM Steps:
+                            DDIM Steps: (Number of steps to diffuse the image from 1 to 250)
                         </div>
                         <!-- Careful with changing 'DDIM Steps:' as index.js line 33 uses this literal to detect it has been called from the advanced.html page -->
                         <div class="slidecontainer">
@@ -228,13 +228,11 @@
                         <div id="ddim_steps_value">
                             50
                         </div>
-                        Number of steps to
-                        diffuse the image from 1
-                        to 250
+
 
                         <div>
                             <hr>
-                            Scale:
+                            Scale: (1.0 to 20.0 - 7.5 for recommended default)
                         </div>
 
                         <div class="slidecontainer">
@@ -250,11 +248,7 @@
                         <div id="scale_value">
                             7.5
                         </div>
-                        1.0 to
-                        20.0 -
-                        7.5 for
-                        recommended
-                        default
+
 
                         <div>
                             <hr>
