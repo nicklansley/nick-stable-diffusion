@@ -264,14 +264,25 @@ const getLibrary = async () =>
 }
 
 
-const calculateEstimatedTime = (imageCount) =>
+const calculateEstimatedTime = () =>
 {
+    const imageCount = parseInt(document.getElementById('num_images').value);
     let estimatedTime = imageCount * SECS_PER_IMAGE;
     if(document.body.innerText.includes("DDIM Steps:"))
     {
-        estimatedTime = estimatedTime * Math.round(parseInt(document.getElementById('ddim_steps').value) / 50);
+        estimatedTime = estimatedTime * (parseInt(document.getElementById('ddim_steps').value) / 50);
     }
-    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} - estimated time: <b>${estimatedTime}</b> seconds</i>`;
+    if(document.body.innerText.includes("Height:"))
+    {
+        const height = parseInt(document.getElementById('height').value);
+        estimatedTime = estimatedTime * Math.pow(height / 512, 2);
+    }
+    if(document.body.innerText.includes("Width:"))
+    {
+        const width = parseInt(document.getElementById('width').value);
+        estimatedTime = estimatedTime * Math.pow(width / 512, 2);
+    }
+    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} - estimated time: <b>${parseInt(estimatedTime)}</b> seconds</i>`;
 }
 
 /**
@@ -337,11 +348,25 @@ const startCountDown = async (imageCount) =>
     if(!global_countdownRunning)
     {
         global_countdownValue = imageCount * SECS_PER_IMAGE;
+
         if(document.body.innerText.includes("DDIM Steps:"))
         {
-            global_countdownValue = global_countdownValue * Math.round(parseInt(document.getElementById('ddim_steps').value) / 50);
+            global_countdownValue = global_countdownValue * (Math.round(parseInt(document.getElementById('ddim_steps').value) / 50));
         }
+        if(document.body.innerText.includes("Height:"))
+        {
+            const height = parseInt(document.getElementById('height').value);
+            global_countdownValue = global_countdownValue * Math.pow(height / 512, 2);
+        }
+        if(document.body.innerText.includes("Width:"))
+        {
+            const width = parseInt(document.getElementById('width').value);
+            global_countdownValue = global_countdownValue * Math.pow(width / 512, 2);
+        }
+
         const output = document.getElementById("output");
+        global_countdownValue = parseInt(global_countdownValue);
+
         output.innerHTML = `<i>Results available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
 
         global_countdownTimerIntervalId = setInterval(() =>

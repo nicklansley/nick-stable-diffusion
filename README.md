@@ -135,8 +135,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
    
    
    If you are going to be running 'docker compose' (step 4) in PowerShell, use the Windows drive path format:
-
-    <pre>
+   <pre>
     volumes:
       app-cache-on-s:
         driver: local
@@ -156,9 +155,9 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
           o: bind
           type: none
           device: S:\nick-stable-diffusion-data\library
-    </pre>
+   </pre>
   If you are going to be running 'docker compose' (step 4) inside the terminal of a WSL2 distro such as Ubuntu, use the linux drive path format:
-    <pre>
+   <pre>
     volumes:
       app-cache-on-s:
         driver: local

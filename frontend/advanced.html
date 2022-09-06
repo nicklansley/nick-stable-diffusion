@@ -155,7 +155,7 @@
                     <hr>
                     Choose number of images to create:
                     <div class="slidecontainer"><input class="slider" id="num_images" max="30" min="1"
-                                                       oninput="calculateEstimatedTime(this.value)"
+                                                       oninput="calculateEstimatedTime()"
                                                        step="1" type="range"
                                                        value="1">
                     </div>
@@ -195,7 +195,7 @@
                         <div class="slidecontainer"><input
                                 class="slider" id="width"
                                 max="1024" min="256"
-                                oninput="document.getElementById('width_value').innerText = this.value"
+                                oninput="document.getElementById('width_value').innerText = this.value; calculateEstimatedTime()"
                                 step="32" type="range"
                                 value="512">
                         </div>
@@ -211,7 +211,7 @@
                                    id="ddim_steps"
                                    max="250"
                                    min="1"
-                                   oninput="document.getElementById('ddim_steps_value').innerText = this.value"
+                                   oninput="document.getElementById('ddim_steps_value').innerText = this.value;calculateEstimatedTime()"
                                    step="1"
                                    type="range"
                                    value="50">
