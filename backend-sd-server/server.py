@@ -259,7 +259,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                                 img = Image.fromarray(x_sample.astype(np.uint8))
                                 img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(library_dir_name, f"{str(uuid.uuid4())}.png"))
+                                img.save(os.path.join(library_dir_name, f"{base_count+1:02d}-{str(uuid.uuid4())[:8]}.png"))
                                 base_count += 1
 
                             end = time.time()

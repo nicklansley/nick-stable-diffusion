@@ -141,8 +141,8 @@ class RelayServer(BaseHTTPRequestHandler):
 
     def process_deleteimage(self, data):
         try:
-            os.remove('/app/' + data['path'])
-            print('\nFRONTEND: /app/' + data['path'] + " deleted")
+            os.remove(data['path'])
+            print('\nFRONTEND:', data['path'], ' deleted')
 
         except FileNotFoundError as fnfe:
             print("\nFRONTEND: process_deleteimage FileNotFoundError:", fnfe)
