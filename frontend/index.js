@@ -311,14 +311,14 @@ const displayImages = async (library, output) =>
                     image.src = image_entry;
                     image.alt = libraryItem['text_prompt'];
                     image.height = 150;
-                    image.width = 150;
+                    image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
                     image.style.zIndex = "0";
                     image.style.position = "relative";
                     image.onmouseover = function ()
                     {
                         console.log(this.style.zIndex);
                         this.style.transform = "scale(4)";
-                        this.style.transform += "translate(50px,0px)";
+                        this.style.transform += `translate(${image.width / 3}px,0px)`;
                         this.style.transition = "transform 0.25s ease";
                         this.style.zIndex = "100";
                     };

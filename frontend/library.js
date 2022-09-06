@@ -78,7 +78,7 @@ const retrieveImages = async () =>
                 image.id = imageName.split('.')[0];
                 image.alt = libraryItem['text_prompt'];
                 image.height = 150;
-                image.width = 150;
+                image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
                 image.style.zIndex = "0";
                 image.style.position = "relative";
 
@@ -96,7 +96,7 @@ const retrieveImages = async () =>
                 {
                     console.log(this.style.zIndex);
                     this.style.transform = "scale(4)";
-                    this.style.transform += "translate(50px,-50px)";
+                    this.style.transform += `translate(${image.width / 2}px,-50px)`;
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "100";
                 };
