@@ -157,7 +157,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
           type: none
           device: S:\nick-stable-diffusion-data\library
     </pre>
-    If you are going to be running 'docker compose' (step 4) inside the terminal of a WSL2 distro such as Ubuntu, use the linux drive path format:
+  If you are going to be running 'docker compose' (step 4) inside the terminal of a WSL2 distro such as Ubuntu, use the linux drive path format:
     <pre>
     volumes:
       app-cache-on-s:
