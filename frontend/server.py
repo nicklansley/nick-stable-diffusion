@@ -52,6 +52,7 @@ class RelayServer(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length)
         data = json.loads(body)
         print("\nFRONTEND:", data)
+
         if api_command == '/prompt':
             result = self.queue_request_to_redis(data)
             if result == 'X':
@@ -75,7 +76,21 @@ class RelayServer(BaseHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(b'{"success": false}')
+
+        elif api_command == '/imagecount':
+            if 'queue_id' in data:
+                image_count = self.get_image_count(data['queue_id'])
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(b'{"image_count": ' + str(image_count).encode() + b', "success": true}')
+            else:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b'{"success": false}')
+
         return
+
 
     def queue_request_to_redis(self, data):
         try:
@@ -125,6 +140,15 @@ class RelayServer(BaseHTTPRequestHandler):
         except Exception as e:
             print("\nFRONTEND: queue_request_to_redis Error:", e)
             return 'X'
+
+    def get_image_count(self, queue_id):
+        image_count = 0
+        for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
+            for image_name in files:
+                if not image_name.startswith('00-original') and image_name.endswith('.png'):
+                    image_count += 1
+        print('\nFRONTEND: Image count for queue_id', queue_id, 'is', image_count)
+        return image_count
 
     def check_queue_request(self):
         try:
