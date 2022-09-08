@@ -151,20 +151,13 @@ class RelayServer(BaseHTTPRequestHandler):
             return 'X'
 
     def get_image_list(self, queue_id):
-        image_data = {
-            "imageCount": 0,
-            "imageList": []
-        }
+        image_data = []
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
                 if image_name.endswith('.png'):
-                    image_data["imageList"].append('/library/' + queue_id + '/' + image_name)
+                    image_data.append('/library/' + queue_id + '/' + image_name)
 
-                    # Don't include the file '00-original.png' in the image count, as that is the original image
-                    if not image_name == '00-original.png':
-                        image_data['imageCount'] += 1
-
-        print('\nFRONTEND: Image list for queue_id', queue_id, 'is', image_data['imageList'])
+        print('\nFRONTEND: Image list for queue_id', queue_id, 'is', image_data)
         return image_data
 
     def check_queue_request(self):

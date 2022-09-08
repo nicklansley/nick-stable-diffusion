@@ -300,23 +300,19 @@ const calculateEstimatedTime = () =>
 
 /**
  * Loop through the library looking for our queue_id and return/display the actual images.
- * imageData is formatted as:
- * - imageCount: count of images
- * - imageList: Array of images
- * @returns {Promise<void>}
- * @param imageData
+ * @param imageList
  */
-const displayImages = async (imageData) =>
+const displayImages = (imageList) =>
 {
     const timestamp = new Date().getTime();    // used to force a reload of the image and not get a cached copy
     const masterImage = document.getElementById("master_image");
 
-    masterImage.src = imageData['imageList'].length > 0 ? `${imageData['imageList'][imageData['imageList'].length - 1]}?timestamp=${timestamp}` : "/blank.png";
+    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
 
-    for(let imageIndex = 0; imageIndex < imageData['imageCount']; imageIndex += 1)
+    for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
-        image.src = imageData['imageList'][imageIndex] ? `${imageData['imageList'][imageIndex]}?timestamp=${timestamp}` : "/blank.png";
+        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
     }
 }
 
@@ -337,7 +333,11 @@ const createImagePlaceHolders = () =>
     output.appendChild(masterImage);
     output.appendChild(document.createElement("br"));
 
-    for(let imageIndex = 0; imageIndex < global_imagesRequested; imageIndex += 1)
+    const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
+
+    const imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
+
+    for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
     {
         const image = document.createElement("img");
         image.id = `image_${imageIndex}`;
@@ -407,23 +407,26 @@ const startCountDown = async (requestedImageCount) =>
     // Measure the time taken between each image becoming available
     let previousImageCount = 0;
     let previousImageTime = new Date().getTime();
+    const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
     // set up the countdown interval function
     global_countdownTimerIntervalId = setInterval(async () =>
     {
         // Find out how many images have already been created for this queue_id (set in global_currentQueueId))
         const currentImageList = await getImageList();
-        if (currentImageList['imageCount'] > previousImageCount)
+        const currentImageCount = includesOriginalImage ? currentImageList.length - 1 : currentImageList.length;
+
+        if (currentImageCount > previousImageCount)
         {
             // If the number of images has increased, then we can recalculate the estimated time
             const currentImageTime = new Date().getTime();
             const secsPerImage = Math.ceil((currentImageTime - previousImageTime) / 1000);
-            countdownSeconds = secsPerImage * (requestedImageCount - currentImageList['imageCount']);
-            previousImageCount = currentImageList['imageCount'];
+            countdownSeconds = secsPerImage * (requestedImageCount - currentImageCount);
+            previousImageCount = currentImageCount;
             previousImageTime = currentImageTime;
             await displayImages(currentImageList);
         }
-        else if (currentImageList['imageCount'] === requestedImageCount)
+        else if (currentImageCount === requestedImageCount)
         {
             console.log("All images are ready - stopping countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
             clearInterval(global_countdownTimerIntervalId);
@@ -440,8 +443,8 @@ const startCountDown = async (requestedImageCount) =>
         }
         else
         {
-            countdownSeconds = countdownSeconds > 0 ? countdownSeconds - 1 : 0;
-            status.innerHTML = `<i>${currentImageList['imageCount']} of ${requestedImageCount} images created so far - results available `;
+            status.innerHTML = `<i>${currentImageCount} of ${requestedImageCount} images created so far - results available `;
+
             if (countdownSeconds > 0)
             {
                 status.innerHTML += `in about <b>${countdownSeconds}</b> second${countdownSeconds === 1 ? '' : 's'}...</i>`;

@@ -119,9 +119,9 @@ def load_and_format_image(path, output_width, output_height):
         print(f"Loading image from volume path {path}")
         image = Image.open(path).convert("RGB")
 
-    # make sure both width and height of the image are <= 512:
     print(f"loaded input image from {path}")
 
+    # resize image to fit model, maintaining aspect ratio
     w, h = image.size
     print(f"image size ({w}, {h})")
 
@@ -130,23 +130,29 @@ def load_and_format_image(path, output_width, output_height):
     ratio = float(output_width) / max(old_size)
     new_size = tuple([int(x * ratio) for x in old_size])
 
-    image.thumbnail(new_size, Image.Resampling.LANCZOS)
-    resized_image = Image.new("RGB", (output_width, output_height))
-    resized_image.paste(image, ((output_width - new_size[0]) // 2,
-                            (output_height - new_size[1]) // 2))
+    resized_image = image.resize(new_size, Image.ANTIALIAS)
 
-    w, h = resized_image.size
-    print(f"Image resized to size ({w}, {h}) ")
+    resized_w, resized_h = resized_image.size
+    print(f"Image resized to size ({resized_w}, {resized_h}) ")
 
-    image = np.array(resized_image).astype(np.float32) / 255.0
+    # create a new image and paste the resized on it. The new image size is the same size as the
+    # requested output. The resized image is centered in the new image maintaining aspect ratio.
+    # If it's not an exact fit, black bands will appear at the top/bottom or sides of the new image.
+    # That's not an issue but the app will only fill in the black parts if the image can be changed
+    # by more than 80% (see STRENGTH parameter)
+    new_image = Image.new("RGB", (output_width, output_height))
+    new_image.paste(resized_image, ((output_width - new_size[0]) // 2, (output_height - new_size[1]) // 2))
+
+    image = np.array(new_image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
     processed_image = 2. * image - 1.
 
-    # Commented out because burning the words "Original Image" into the image was disrupting the 'advanced' workflow
-    # where I take an image form the libray to manipulate it further. You should know the original image!
-    # ImageDraw.Draw(resized_image).text((10, 10), "Original Image", fill=(255, 255, 255))
-    return resized_image, processed_image
+    # ImageDraw.Draw(new_image).text((10, 10), "Original Image", fill=(255, 255, 255))
+    # line above commented out because burning the words "Original Image" into the image was disrupting the 'advanced'
+    # workflow where I take an image from the libray to manipulate it further. You should know the original image!
+
+    return new_image, processed_image
 
 
 def put_watermark(img, wm_encoder=None):
