@@ -32,12 +32,18 @@
         border: 5px solid #ffffff;
     }
 
+    textarea {
+    font-size:36px;
+    }
+
     .label {
         color: white;
         padding: 8px;
         background-color: darkslategray;
-        width: 90%;
+        width: 98.5%;
     }
+
+    input { font-size: 20px; }
 
     .button-9 {
         appearance: auto;
@@ -139,14 +145,14 @@
 
     <div>
         <div>Enter a prompt:</div>
-        <div><textarea cols="132" id="prompt" rows="6" type="text"/></textarea></div>
+        <div><textarea cols="50" id="prompt" rows="6" type="text"/></textarea></div>
     </div>
     <div>
         <div>
             <hr>
             Optional input image<br><small>Enter URL directly to the image on the web,<br>or choose one from the library
             folder using 'library/&lt;path-to-file&gt;'</small>:
-            <div><input id="original_image_path" type="text" size="132"/></div>
+            <div><input id="original_image_path" type="text" size="90"/></div>
             <hr>
             If an image is provided, choose by what percentage it can be changed by the AI:
             <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"

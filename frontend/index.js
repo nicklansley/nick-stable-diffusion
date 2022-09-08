@@ -443,7 +443,7 @@ const startCountDown = async (requestedImageCount) =>
         }
         else
         {
-            status.innerHTML = `<i>${currentImageCount} of ${requestedImageCount} images created so far - results available `;
+            status.innerHTML = `<i>${currentImageCount < 0 ? 0 : currentImageCount} of ${requestedImageCount} images created so far - results available `;
 
             if (countdownSeconds > 0)
             {
