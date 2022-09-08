@@ -1,12 +1,13 @@
+
 const SECS_PER_IMAGE = 4; // depends on GPU image creation speed - 4 works well for me
 let global_currentQueueId = '';
-let global_countdownTimerIntervalId = null;
+let global_imagesRequested = 0;
 let global_countdownValue = 0;
-let global_countdownRunning = false;
+let global_countdownTimerIntervalId = null;
 
 /**
  * Send the text prompt to the AI and get a queue_id back in 'queue_id' which will be used to track the request.
- * @returns {Promise<void>}
+ * @returns {Promise<void>
  */
 const go = async () =>
 {
@@ -14,12 +15,30 @@ const go = async () =>
     document.getElementById('buttonGo').innerText = "Creating images...";
     document.getElementById('buttonGo').enabled = false;
 
-    const data = {
-        prompt: document.getElementById("prompt").value,
-        num_images: document.getElementById("num_images").value,
-        seed: 0
+    global_imagesRequested = parseInt(document.getElementById('num_images').value);
+
+    //If the timer is already running and the button is clicked again, the user is sending a new request
+    //to be added to the queue. So we need to stop the countdown timer, as the countdown is no longer
+    //applicable to this new current request.
+    if(global_countdownTimerIntervalId)
+    {
+        clearInterval(global_countdownTimerIntervalId);
+        global_countdownTimerIntervalId = null;
     }
 
+    const data = prepareRequestData();
+    const rawResponse = await sendPromptRequest(data);
+    await processPromptRequestResponse(rawResponse);
+}
+
+
+const prepareRequestData = () =>
+{
+    const data = {
+        prompt: document.getElementById("prompt").value,
+        num_images: global_imagesRequested,
+        seed: 0
+    }
     if (document.body.innerText.includes("DDIM Steps:"))
     {
         //We have the advanced options incoming for the request from advanced.html
@@ -75,9 +94,12 @@ const go = async () =>
             }
         }
         data['downsampling_factor'] = downsamplingFactor;
-
     }
+    return data;
+}
 
+const sendPromptRequest = async (data) =>
+{
     document.getElementById("output").innerText = "";
 
     const rawResponse = await fetch('/prompt', {
@@ -88,12 +110,17 @@ const go = async () =>
         },
         body: JSON.stringify(data)
     });
+    return rawResponse;
+}
 
+const processPromptRequestResponse = async (rawResponse) =>
+{
     if (rawResponse.status === 200)
     {
         const queueConfirmation = await rawResponse.json();
+
         global_currentQueueId = queueConfirmation.queue_id;
-        document.getElementById('status').innerText = `Request queued - check the queue for position`;
+        document.getElementById('status').innerText = "Request queued - check the queue for position";
     }
     else
     {
@@ -104,51 +131,25 @@ const go = async () =>
 }
 
 
-/**
- * Retrieve the queue and display it.
- * @returns {Promise<void>}
- */
-const retrieveAndDisplayCurrentQueue = async () =>
+const getImageList = async () =>
 {
-    const output = document.getElementById("output");
-    const queueResponse = await fetch('/queue_status', {
-        method: 'GET',
+    const imageListResponse = await fetch('/imagelist', {
+        method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
+        body: JSON.stringify({queue_id: global_currentQueueId})
     });
 
-    if (queueResponse.status === 200)
+    if (imageListResponse.status === 200)
     {
-        const queueData = await queueResponse.json();
-        await displayQueue(queueData);
+        return await imageListResponse.json();
 
-        //Look for our Queue ID in the queue:
-        let foundQueueId = false;
-        for(const queueItem of queueData)
-        {
-            if (queueItem.queue_id === global_currentQueueId)
-            {
-                foundQueueId = true;
-                break;
-            }
-        }
-        //If we did not find our queue_id then processing of our request must be completed.
-        //So, if no images are being displayed, go get them!
-        //However, do not this if the prompt has no value (i.e. when the page is first loaded)
-        if (!foundQueueId
-            && (output.innerText === 'Retrieving images...' || output.innerHTML === '' || output.innerText.startsWith('Results available in'))
-            && document.getElementById("prompt").value.length > 0)
-        {
-            document.getElementById('status').innerText = `Image creation completed`;
-            stopCountDown();
-            const library = await getLibrary();
-            if (library)
-            {
-                await displayImages(library, output);
-            }
-        }
+    }
+    else
+    {
+        return { 'imageCount': -1 };  // error
     }
 
 
@@ -162,7 +163,7 @@ const retrieveAndDisplayCurrentQueue = async () =>
  */
 const displayQueue = async (queueList) =>
 {
-    let myQueueIdIsCurrentlyBeingProcessedFlag = false;
+    let backendProcessingRequestNow = false;
 
     const queueUI = document.getElementById("queue");
     if (queueList.length === 0)
@@ -171,27 +172,16 @@ const displayQueue = async (queueList) =>
     }
     else
     {
-        // Is my request being currently processed?
-        myQueueIdIsCurrentlyBeingProcessedFlag = queueList[0].queue_id === global_currentQueueId
-
+        // Is my request being currently processed? If it's first in the queue, then yes.
+        backendProcessingRequestNow = queueList[0].queue_id === global_currentQueueId
 
         // The first item in the queue is the one that the AI is currently processing:
-        queueUI.innerHTML = `<p><b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
+        queueUI.innerHTML = `<p><b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
 
         const processingDiv = document.createElement("div");
-        processingDiv.innerHTML = `<b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${myQueueIdIsCurrentlyBeingProcessedFlag ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+        processingDiv.innerHTML = `<b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
 
-        // If we are the first in the queue, our prompt is the one currently being processed by the AI
-        // so highlight it:
-        if (myQueueIdIsCurrentlyBeingProcessedFlag && document.getElementById("output").innerText !== "Retrieving images...")
-        {
-            // Mention this in the status message:
-            document.getElementById('status').innerText = `Your request is being processed right now...`;
-            await startCountDown(queueList[0].num_images);
-        }
-
-        // Add the rest of the queue to the UI:
-
+        // Add the rest of the queued list of requests to the UI:
         let queuePosition = 1;
         let imageCount = 0;
         if (queueList.length > 1)
@@ -208,12 +198,12 @@ const displayQueue = async (queueList) =>
                 if (queueItem.queue_id === global_currentQueueId)
                 {
                     listItem.style.fontWeight = "bold";
-                    listItem.style.backgroundColor = "lightgreen";
-                    myQueueIdIsCurrentlyBeingProcessedFlag = true;
+                    listItem.style.backgroundColor = "green";
+                    backendProcessingRequestNow = true;
+
                     // Mention this in the status message:
                     document.getElementById('status').innerText = `Request queued - position: ${queuePosition}`;
                     imageCount += queueItem.num_images;
-                    await startCountDown(imageCount);
                 }
                 orderedList.appendChild(listItem);
                 queuePosition += 1;
@@ -224,7 +214,6 @@ const displayQueue = async (queueList) =>
         {
             queueUI.innerHTML += " >> Queue is Empty!"
         }
-
     }
 
 
@@ -272,7 +261,7 @@ const getLibrary = async () =>
         {
             if (rawResponse.status === 404)
             {
-                document.getElementById('status').innerText = "DALL-E Engine Status: Online and ready";
+                document.getElementById('status').innerText = "SD Engine Status: Online and ready";
                 return [];
             }
             else
@@ -303,145 +292,160 @@ const calculateEstimatedTime = () =>
         const width = parseInt(document.getElementById('width').value);
         estimatedTime = estimatedTime * Math.pow(width / 512, 2);
     }
+
     document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} - estimated time: <b>${parseInt(estimatedTime)}</b> seconds</i>`;
 }
 
 /**
  * Loop through the library looking for our queue_id and return/display the actual images.
+ * imageData is formatted as:
+ * - imageCount: count of images
+ * - imageList: Array of images
  * @param library
- * @param output
  * @returns {Promise<void>}
  */
-const displayImages = async (library, output) =>
+const displayImages = async (imageData) =>
 {
-    output.innerHTML = ""; //Empty of all child HTML ready for new images to be added.
-    for(const libraryItem of library)
+    const output = document.getElementById("output");
+    output.innerHTML = ""; //Empty of all child HTML ready for new images to be added (it should be empty anyway).
+
+    if(imageData['imageCount'] > 0)
     {
-        if (libraryItem.queue_id === global_currentQueueId)
+        const masterImage = document.createElement("img");
+        if (imageData['imageList'].length > 0)
         {
-            if (libraryItem.error)
+            // Update the master_image with teh most recent image in the list
+            masterImage.src = imageData['imageList'][imageData['imageList'].length - 1];
+            masterImage.id = `master_image`;
+            // masterImage.alt = libraryItem['text_prompt'];
+            masterImage.style.zIndex = "0";
+            output.appendChild(masterImage);
+            output.appendChild(document.createElement("br"));
+        }
+
+        let imageCount = 0;
+        for(const image_entry of imageData['imageList'])
+        {
+            const image = document.createElement("img");
+            image.src = image_entry;
+            //image.alt = libraryItem['text_prompt'];
+            image.height = 150;
+            //image.width = Math.ceil(150 * (masterImage.width / masterImage.height));
+            image.width = 150;
+            image.style.zIndex = "0";
+            image.style.position = "relative";
+
+            image.onmouseover = function ()
             {
-                output.innerHTML = `<p><b>Sorry, an error occurred: ${libraryItem.error}</b></p>`;
-            }
-            else
+                this.style.transform = "scale(1.5)";
+                this.style.transform += `translate(0px,0px)`;
+                this.style.transition = "transform 0.25s ease";
+                this.style.zIndex = "100";
+                const masterImage = document.getElementById(`master_image`);
+                masterImage.src = this.src;
+            };
+            image.onmouseleave = function ()
             {
-                const masterImage = document.createElement("img");
-                if (libraryItem['generated_images'].length > 0)
-                {
-                    if (libraryItem['generated_images'][0].endsWith('00-original.png'))
-                    {
-                        masterImage.src = libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
-                    }
-                    else
-                    {
-                        masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
-                    }
-
-                    masterImage.id = `master_image_${libraryItem['queue_id']}`;
-                    masterImage.alt = libraryItem['text_prompt'];
-                    masterImage.height = libraryItem['height'];
-                    masterImage.width = libraryItem['width'];
-                    masterImage.style.zIndex = "0";
-                    output.appendChild(masterImage);
-                    output.appendChild(document.createElement("br"));
-                }
-
-                let imageCount = 0;
-                for(const image_entry of libraryItem['generated_images'])
-                {
-                    const image = document.createElement("img");
-                    image.src = image_entry;
-                    image.alt = libraryItem['text_prompt'];
-                    image.height = 150;
-                    image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
-                    image.style.zIndex = "0";
-                    image.style.position = "relative";
-
-                    image.onmouseover = function ()
-                    {
-                        this.style.transform = "scale(1.5)";
-                        this.style.transform += `translate(0px,0px)`;
-                        this.style.transition = "transform 0.25s ease";
-                        this.style.zIndex = "100";
-                        const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
-                        masterImage.src = this.src;
-                    };
-                    image.onmouseleave = function ()
-                    {
-                        this.style.transform = "scale(1)";
-                        this.style.transform += "translate(0px,0px)";
-                        this.style.transition = "transform 0.25s ease";
-                        this.style.zIndex = "0";
-                    };
-                    output.appendChild(image);
-                    imageCount += 1;
-                }
-            }
+                this.style.transform = "scale(1)";
+                this.style.transform += "translate(0px,0px)";
+                this.style.transition = "transform 0.25s ease";
+                this.style.zIndex = "0";
+            };
+            output.appendChild(image);
+            imageCount += 1;
         }
     }
+
+
+}
+
+function estimateCountdownTimeSeconds(imageCount)
+{
+    let countdownValue = imageCount * SECS_PER_IMAGE;
+
+    if (document.body.innerText.includes("DDIM Steps:"))
+    {
+        countdownValue = global_countdownValue * parseInt(document.getElementById('ddim_steps').value) / 50;
+    }
+    if (document.body.innerText.includes("Height:"))
+    {
+        const height = parseInt(document.getElementById('height').value);
+        countdownValue = countdownValue * Math.pow(height / 512, 2);
+    }
+    if (document.body.innerText.includes("Width:"))
+    {
+        const width = parseInt(document.getElementById('width').value);
+        countdownValue = countdownValue * Math.pow(width / 512, 2);
+    }
+
+    countdownValue = Math.floor(countdownValue);
+    return countdownValue;
 }
 
 /**
  * Start the countdown timer to indicate when our images should be ready
- * @param imageCount
+ * @param requestedImageCount
  * @param queuePosition
  * @returns {Promise<void>}
  */
-const startCountDown = async (imageCount) =>
+const startCountDown = async (requestedImageCount) =>
 {
-    if (!global_countdownRunning)
+    // Have a guess about how long this is going to take
+    console.log("Starting countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
+    const status = document.getElementById("status");
+    let countdownSeconds = 0;
+    // Measure the time taken between each image becoming available
+    let previousImageCount = 0;
+    let previousImageTime = new Date().getTime();
+
+    // set up the countdown interval function
+    global_countdownTimerIntervalId = setInterval(async () =>
     {
-        global_countdownValue = imageCount * SECS_PER_IMAGE;
-
-        if (document.body.innerText.includes("DDIM Steps:"))
+        // Find out how many images have already been created for this queue_id (set in global_currentQueueId))
+        const currentImageList = await getImageList();
+        if (currentImageList['imageCount'] > previousImageCount)
         {
-            global_countdownValue = global_countdownValue * parseInt(document.getElementById('ddim_steps').value) / 50;
+            // If the number of images has increased, then we can recalculate the estimated time
+            const currentImageTime = new Date().getTime();
+            const secsPerImage = Math.ceil((currentImageTime - previousImageTime) / 1000);
+            countdownSeconds = secsPerImage * (requestedImageCount - currentImageList['imageCount']);
+            previousImageCount = currentImageList['imageCount'];
+            previousImageTime = currentImageTime;
+            await displayImages(currentImageList);
         }
-        if (document.body.innerText.includes("Height:"))
+        else if (currentImageList['imageCount'] === requestedImageCount)
         {
-            const height = parseInt(document.getElementById('height').value);
-            global_countdownValue = global_countdownValue * Math.pow(height / 512, 2);
+            console.log("All images are ready - stopping countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
+            clearInterval(global_countdownTimerIntervalId);
+            global_countdownTimerIntervalId = null;
+            document.getElementById("status").innerText = "Processing completed";
+            document.getElementById("buttonGo").innerText = "Click to send request";
+            document.getElementById("buttonGo").enabled = true;
+
+            // This sleep() pause ensures that the backend has finished writing the images before we try to download
+            // them for the final time. If we don't do this, then the download may cause partial images to be downloaded.
+            // If partial images were previously downloaded then this final sleep will correct any issues.
+            await sleep(1);
+            await displayImages(currentImageList);
         }
-        if (document.body.innerText.includes("Width:"))
+        else
         {
-            const width = parseInt(document.getElementById('width').value);
-            global_countdownValue = global_countdownValue * Math.pow(width / 512, 2);
-        }
-
-        const output = document.getElementById("output");
-        global_countdownValue = parseInt(global_countdownValue);
-
-        output.innerHTML = `<i>Results available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
-
-        global_countdownTimerIntervalId = setInterval(() =>
-        {
-
-            if (global_countdownValue === 1)
+            countdownSeconds = countdownSeconds > 0 ? countdownSeconds - 1 : 0;
+            status.innerHTML = `<i>${currentImageList['imageCount']} of ${requestedImageCount} images created so far - results available `;
+            if (countdownSeconds > 0)
             {
-                stopCountDown();
+                status.innerHTML += `in about <b>${countdownSeconds}</b> second${countdownSeconds === 1 ? '' : 's'}...</i>`;
             }
             else
             {
-                global_countdownValue -= 1;
-                output.innerHTML = `<i>Results available in about <b>${global_countdownValue}</b> second${global_countdownValue === 1 ? '' : 's'}...</i>`;
+                status.innerHTML += `shortly...</i>`;
             }
-        }, 1000); // the countdown will trigger every 1 second
+        }
+    }, 1000); // the countdown will trigger every 1 second
 
-        global_countdownRunning = true;
-    }
+
 }
 
-/**
- *
- */
-const stopCountDown = () =>
-{
-    clearInterval(global_countdownTimerIntervalId);
-    document.getElementById("output").innerHTML = "Retrieving images...";
-    document.getElementById("buttonGo").innerText = "Click to send request";
-    document.getElementById("buttonGo").enabled = true;
-    global_countdownRunning = false;
-}
 
 
 const populateControlsFromHref = () =>
@@ -527,8 +531,50 @@ const setDarkModeFromLocalStorage = () =>
 
 
 /**
+ * A useful sleep function
+ * A calling function can use 'await sleep(1);' to pause for 1 second
+ * @param seconds
+ * @returns {Promise<unknown>}
+ */
+const sleep = (seconds) =>
+{
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+/**
  * Set a timer to go and get the queued prompt requests from the server every 2 seconds
  * NB: Ths does not put a strain on the (python) web server as turnaround is only 10-20 milliseconds
  * so evn if a lot of people are using the service simultaneously it easily copes (I used apache AB to test!)
  */
+
+/**
+ * Retrieve the queue and display it - set by a 2-second interval timer
+ * @returns {Promise<void>}
+ */
+const retrieveAndDisplayCurrentQueue = async () =>
+{
+    const queueResponse = await fetch('/queue_status', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (queueResponse.status === 200)
+    {
+        // display the queue
+        const queueData = await queueResponse.json();
+        await displayQueue(queueData);
+
+        if(queueData.length > 0)
+        {
+            // if our queue_is is found at the top of the queue, the backend is processing our request so we
+            // need to start the countdown timer (unless it's already running)
+            if (queueData[0].queue_id === global_currentQueueId && !global_countdownTimerIntervalId)
+            {
+                await startCountDown(queueData[0].num_images);
+            }
+        }
+    }
+}
 setInterval(retrieveAndDisplayCurrentQueue, 2000);

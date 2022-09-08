@@ -58,8 +58,51 @@ def send_request_to_sd_engine(prompt_info):
         return {'queue_id': 'X', 'success': False}
 
 
-def update_library_catalogue():
+def update_library_catalogue(queue_id):
     print('\nSCHEDULER: Updating library catalogue')
+    library_entry = {}
+
+    # load the current library catalogue
+    try:
+        with open("/app/library/library.json", "r", encoding="utf8") as library_json_file:
+            library = json.load(library_json_file)
+    except FileNotFoundError:
+        rebuild_library_catalogue()
+        return
+    try:
+        # read this queue_id's index card:
+        idx_file_name = "/app/library/" + queue_id + "/index.json"
+        with open(idx_file_name, "r", encoding="utf8") as index_json_file:
+            metadata = json.load(index_json_file)
+
+            # copy the metadata to the library entry
+            if type(metadata) is dict:
+                library_entry = copy.deepcopy(metadata)
+                library_entry["creation_unixtime"] = os.path.getmtime(idx_file_name)
+                library_entry["generated_images"] = []
+
+        for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
+            add_image_list_entries_to_library_entry(files, library_entry, root)
+
+        # add the library entry to the library catalogue
+        library.append(json.loads(json.dumps(library_entry)))
+
+        # write the library catalogue
+        with open("/app/library/library.json", "w", encoding="utf8") as outfile:
+            outfile.write(json.dumps(library, indent=4, sort_keys=True))
+
+        print('\nSCHEDULER: Update of library catalogue completed')
+
+    except json.decoder.JSONDecodeError as jde:
+        print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
+
+
+    except Exception as e:
+        print('\nSCHEDULER: Update of library catalogue failed', e)
+
+
+def rebuild_library_catalogue():
+    print('\nSCHEDULER: Rebuilding library catalogue')
     library = []
     library_entry = {}
 
@@ -87,7 +130,7 @@ def update_library_catalogue():
                                 library.append(json.loads(json.dumps(library_entry)))
 
                     except json.decoder.JSONDecodeError as jde:
-                        print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
+                        print("SCHEDULER: rebuild_library_catalogue JSONDecodeError:", jde)
 
         # add the images file paths to the library catalogue
         for root, dirs, files in os.walk("/app/library", topdown=False):
@@ -111,10 +154,30 @@ def update_library_catalogue():
         with open("/app/library/library.json", "w", encoding="utf8") as outfile:
             outfile.write(json.dumps(library, indent=4, sort_keys=True))
 
-        print('\nSCHEDULER: Update of library catalogue completed')
+        print('\nSCHEDULER: Rebuild of library catalogue completed')
 
     except Exception as e:
-        print('\nSCHEDULER: Update of library catalogue failed', e)
+        print('\nSCHEDULER: Rebuild of library catalogue failed', e)
+
+def add_image_list_entries_to_library_entry(files, library_entry, root):
+    # Used by update_library_catalogue() and rebuild_library_catalogue() to add the generated images to library entry
+    for image_name in files:
+        if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
+            image_file_path = os.path.join(root, image_name)
+            print(image_file_path)
+            # if the image has a metadata section then add it to the
+            # end of the image file if ADD_METADATA_TO_FILES is enabled
+            if ADD_METADATA_TO_FILES:
+                update_file_metadata(image_file_path, library_entry)
+
+            # add the image file path to the library entry
+            if library_entry["queue_id"] in root:
+                image_file_path = image_file_path.replace('/app/', '')
+
+                if image_file_path not in library_entry["generated_images"]:
+                    library_entry["generated_images"].append(image_file_path)
+    print(library_entry)
+    print(library_entry['generated_images'])
 
 
 def update_file_metadata(img_path, library_entry):
@@ -178,19 +241,18 @@ if __name__ == "__main__":
     print("SCHEDULER: Started")
     signal.signal(signal.SIGTERM, exit_signal_handler)
     signal.signal(signal.SIGINT, exit_signal_handler)
-    update_library_catalogue()
+    rebuild_library_catalogue()
     print("SCHEDULER: Listening for requests...")
     while True:
         time.sleep(1)
         queue_item = get_next_queue_request()
         if queue_item['queue_id'] != 'X':
             request_data = send_request_to_sd_engine(queue_item)
+            delete_request_from_redis_queue(queue_item)
             if request_data['queue_id'] == queue_item['queue_id']:
-                update_library_catalogue()
+                update_library_catalogue(queue_item['queue_id'])
 
             if request_data['success']:
                 print("SCHEDULER: Processing complete - library updated\n\n")
             else:
                 print("SCHEDULER: Request failed")
-
-            delete_request_from_redis_queue(queue_item)

@@ -125,7 +125,6 @@
 </style>
 <body onload="populateControlsFromHref();setDarkModeFromLocalStorage()">
 <h1>Advanced Stable Diffusion Web Playground</h1>
-<p class="label" id="status"></p>
 <div class="input_div">
     <p>
         <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far
@@ -287,8 +286,9 @@
                             </button>
                         </div>
                         <hr>
-                        <div class="container" id="output">
-                        </div>
+                        <p class="label" id="status"></p>
+
+                        <div class="container" id="output"></div>
                         <div class="container"
                              id="queue">
                             Current

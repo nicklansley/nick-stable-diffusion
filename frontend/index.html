@@ -42,7 +42,7 @@
         color: white;
         padding: 8px;
         background-color: darkslategray;
-        width: 700px;
+        width: 90%;
     }
 
     .button-9 {
@@ -131,7 +131,6 @@
 </style>
 <body onload="setDarkModeFromLocalStorage()">
 <h1>Stable Diffusion Web Playground</h1>
-<p class="label" id="status"></p>
 <div class="input_div">
     <p>
         <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far</button>
@@ -168,13 +167,12 @@
                         id="buttonGo"
                         onclick="go()"
                         role="button">
-                    <Click></Click>
-                    to
-                    send
-                    request
+                    Click to send request
                 </button>
             </div>
-                <hr>
+            <p class="label" id="status"></p>
+
+
             <div class="container" id="output">
             </div>
             <div class="container"

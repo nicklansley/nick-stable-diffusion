@@ -14,6 +14,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
 - A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of
   results.
+- NEW: Images appear as they are created rather than waiting for the whole batch to be created.
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
 - NEW: Manipulate images you have already created that reside in the library. Click on an image in the library and a new
@@ -43,6 +44,11 @@ DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of th
 This project is being improved daily throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
+### Latest:
+* Massively improved UI which can now display images as they appear during processing rather than waiting until the end.
+* Improved, refactores and simplified index.js dumps original countdown and created an estimate on a per-image basis.
+* Scheduler now updates the library catalogue instantly rather than rebuilding it - ideal when library grows massively.
+ * Various bug fixes and improvements
 
 ## Make sure your computer has everything ready
 This section enables you to check that your computer has everything you need to run the application.

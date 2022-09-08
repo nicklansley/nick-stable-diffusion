@@ -77,13 +77,13 @@ class RelayServer(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b'{"success": false}')
 
-        elif api_command == '/imagecount':
+        elif api_command == '/imagelist':
             if 'queue_id' in data:
-                image_count = self.get_image_count(data['queue_id'])
+                image_list = self.get_image_list(data['queue_id'])
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                self.wfile.write(b'{"image_count": ' + str(image_count).encode() + b', "success": true}')
+                self.wfile.write(json.dumps(image_list).encode())
             else:
                 self.send_response(400)
                 self.end_headers()
@@ -141,14 +141,22 @@ class RelayServer(BaseHTTPRequestHandler):
             print("\nFRONTEND: queue_request_to_redis Error:", e)
             return 'X'
 
-    def get_image_count(self, queue_id):
-        image_count = 0
+    def get_image_list(self, queue_id):
+        image_data = {
+            "imageCount": 0,
+            "imageList": []
+        }
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
-                if not image_name.startswith('00-original') and image_name.endswith('.png'):
-                    image_count += 1
-        print('\nFRONTEND: Image count for queue_id', queue_id, 'is', image_count)
-        return image_count
+                if image_name.endswith('.png'):
+                    image_data["imageList"].append('/library/' + queue_id + '/' + image_name)
+
+                    # Don't include the file '00-original.png' in the image count, as that is the original image
+                    if not image_name == '00-original.png':
+                        image_data['imageCount'] += 1
+
+        print('\nFRONTEND: Image list for queue_id', queue_id, 'is', image_data['imageList'])
+        return image_data
 
     def check_queue_request(self):
         try:
