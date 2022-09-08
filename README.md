@@ -46,9 +46,9 @@ the project working on your machine. Check the commits list for the latest chang
 
 ### Latest:
 * Massively improved UI which can now display images as they appear during processing rather than waiting until the end.
-* Improved, refactores and simplified index.js dumps original countdown and created an estimate on a per-image basis.
+* Improved, refactored and simplified index.js dumps original countdown and created an estimate on a per-image basis.
 * Scheduler now updates the library catalogue instantly rather than rebuilding it - ideal when library grows massively.
- * Various bug fixes and improvements
+* Various bug fixes and improvements
 
 ## Make sure your computer has everything ready
 This section enables you to check that your computer has everything you need to run the application.

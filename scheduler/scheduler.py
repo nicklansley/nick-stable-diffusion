@@ -3,6 +3,8 @@ import sys
 import json
 import copy
 import time
+from json import JSONDecodeError
+
 import redis
 import signal
 import requests
@@ -69,6 +71,10 @@ def update_library_catalogue(queue_id):
     except FileNotFoundError:
         rebuild_library_catalogue()
         return
+    except JSONDecodeError as jde:
+        rebuild_library_catalogue()
+        return
+
     try:
         # read this queue_id's index card:
         idx_file_name = "/app/library/" + queue_id + "/index.json"
@@ -95,7 +101,6 @@ def update_library_catalogue(queue_id):
 
     except json.decoder.JSONDecodeError as jde:
         print("SCHEDULER: update_library_catalogue JSONDecodeError:", jde)
-
 
     except Exception as e:
         print('\nSCHEDULER: Update of library catalogue failed', e)
@@ -159,12 +164,13 @@ def rebuild_library_catalogue():
     except Exception as e:
         print('\nSCHEDULER: Rebuild of library catalogue failed', e)
 
+
 def add_image_list_entries_to_library_entry(files, library_entry, root):
     # Used by update_library_catalogue() and rebuild_library_catalogue() to add the generated images to library entry
     for image_name in files:
         if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
             image_file_path = os.path.join(root, image_name)
-            print(image_file_path)
+
             # if the image has a metadata section then add it to the
             # end of the image file if ADD_METADATA_TO_FILES is enabled
             if ADD_METADATA_TO_FILES:
@@ -176,8 +182,6 @@ def add_image_list_entries_to_library_entry(files, library_entry, root):
 
                 if image_file_path not in library_entry["generated_images"]:
                     library_entry["generated_images"].append(image_file_path)
-    print(library_entry)
-    print(library_entry['generated_images'])
 
 
 def update_file_metadata(img_path, library_entry):
