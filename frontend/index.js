@@ -128,6 +128,8 @@ const processPromptRequestResponse = async (rawResponse) =>
     }
     document.getElementById('buttonGo').innerText = "Click to send request";
     document.getElementById('buttonGo').enabled = true;
+
+    await createImagePlaceHolders();
 }
 
 
@@ -301,46 +303,46 @@ const calculateEstimatedTime = () =>
  * imageData is formatted as:
  * - imageCount: count of images
  * - imageList: Array of images
- * @param library
  * @returns {Promise<void>}
+ * @param imageData
  */
-const displayImages = async (imageData, requestedImageCount) =>
+const displayImages = async (imageData) =>
+{
+    const timestamp = new Date().getTime();    // used to force a reload of the image and not get a cached copy
+    const masterImage = document.getElementById("master_image");
+
+    masterImage.src = imageData['imageList'].length > 0 ? `${imageData['imageList'][imageData['imageList'].length - 1]}?timestamp=${timestamp}` : "/blank.png";
+
+    for(let imageIndex = 0; imageIndex < imageData['imageCount']; imageIndex += 1)
+    {
+        const image = document.getElementById(`image_${imageIndex}`);
+        image.src = imageData['imageList'][imageIndex] ? `${imageData['imageList'][imageIndex]}?timestamp=${timestamp}` : "/blank.png";
+    }
+}
+
+/**
+ * Creates the image placeholders in the UI which will be populated with actual images as processing progresses
+ */
+const createImagePlaceHolders = () =>
 {
     const output = document.getElementById("output");
     output.innerHTML = ""; //Empty of all child HTML ready for new images to be added (it should be empty anyway).
 
-    for(let imageIndex = 0; imageIndex < requestedImageCount; imageIndex += 1)
-    {
-        const image = imageData.imageList[imageIndex];
-        if (image.queue_id === global_currentQueueId)
-        {
-            const imageDiv = document.createElement("div");
-            imageDiv.classList.add("image");
-            imageDiv.innerHTML = `<img src="${image.image}" alt="Image ${imageIndex + 1}"><br><p>Image ${imageIndex + 1} of ${requestedImageCount}</p>`;
-            output.appendChild(imageDiv);
-        }
-    }
-
     const masterImage = document.createElement("img");
-    if (imageData['imageList'].length > 0)
-    {
-        // Update the master_image with teh most recent image in the list
-        masterImage.src = imageData['imageList'][imageData['imageList'].length - 1];
-        masterImage.id = `master_image`;
-        // masterImage.alt = libraryItem['text_prompt'];
-        masterImage.style.zIndex = "0";
-        output.appendChild(masterImage);
-        output.appendChild(document.createElement("br"));
-    }
+    masterImage.id = `master_image`;
+    masterImage.style.zIndex = "0";
 
-    let imageCount = 0;
-    for(const image_entry of imageData['imageList'])
+    // Update the master_image with teh most recent image in the list
+    masterImage.src = "/blank.png";
+    output.appendChild(masterImage);
+    output.appendChild(document.createElement("br"));
+
+    for(let imageIndex = 0; imageIndex < global_imagesRequested; imageIndex += 1)
     {
         const image = document.createElement("img");
-        image.src = image_entry;
-        //image.alt = libraryItem['text_prompt'];
+        image.id = `image_${imageIndex}`;
+        image.src = "/blank.png";
         image.height = 150;
-        //image.width = Math.ceil(150 * (masterImage.width / masterImage.height));
         image.width = 150;
         image.style.zIndex = "0";
         image.style.position = "relative";
@@ -362,12 +364,10 @@ const displayImages = async (imageData, requestedImageCount) =>
             this.style.zIndex = "0";
         };
         output.appendChild(image);
-        imageCount += 1;
     }
-
-
-
 }
+
+
 
 function estimateCountdownTimeSeconds(imageCount)
 {
@@ -421,7 +421,7 @@ const startCountDown = async (requestedImageCount) =>
             countdownSeconds = secsPerImage * (requestedImageCount - currentImageList['imageCount']);
             previousImageCount = currentImageList['imageCount'];
             previousImageTime = currentImageTime;
-            await displayImages(currentImageList, requestedImageCount);
+            await displayImages(currentImageList);
         }
         else if (currentImageList['imageCount'] === requestedImageCount)
         {

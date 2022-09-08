@@ -13,6 +13,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 class RelayServer(BaseHTTPRequestHandler):
     def do_GET(self):
         api_command = unquote(self.path)
+
+        # if the URL includes query parameters, remove them!
+        # We don't use query strings in this app but the web client sends a timestamp in a query string
+        # such as 'wantedimage.png?&timestamp=166264887209' to overcome browser caching
+
+        query_string = api_command.split('?')
+        if len(query_string) > 1:
+            api_command = api_command.split('?')[0]
+
         print("\nFRONTEND: GET >> API command =", api_command)
         if api_command.endswith('/'):
             self.process_ui('/index.html')
@@ -182,11 +191,7 @@ class RelayServer(BaseHTTPRequestHandler):
         return True
 
     def process_ui(self, path):
-        # if the file path includes query parameters, remove them to get the file from the drive:
-        query_string = self.path.split('?')
-        if len(query_string) > 1:
-            path = path.split('?')[0]
-
+        print('\nFRONTEND: Serving UI file:', path)
         if path.endswith('.html'):
             response_content_type = 'text/html'
         elif path.endswith('.js'):
@@ -219,6 +224,7 @@ class RelayServer(BaseHTTPRequestHandler):
                 self.wfile.write(data)
 
         except FileNotFoundError:
+            print(file_path + ' file not found')
             self.log_message(file_path + ' file not found')
             self.send_response(404)
             self.end_headers()
