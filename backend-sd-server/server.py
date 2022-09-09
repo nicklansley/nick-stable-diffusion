@@ -59,6 +59,8 @@ PRECISION = "autocast"  # can be "autocast" or "full"
 STRENGTH = 0.75  # was opt.strength - used when processing an image - 0 means no change through 0.999 means full change
 OUTPUT_PATH = '/library'
 PORT = 8080
+WATERMARK_FLAG = False  # set to True to enable watermarking
+SAFETY_FLAG = False  # set to True to enable safety checking
 
 # GLOBAL VARS
 global_device = None
@@ -160,10 +162,11 @@ def load_and_format_image(path, output_width, output_height):
 
 
 def put_watermark(img, wm_encoder=None):
-    if wm_encoder is not None:
-        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        img = wm_encoder.encode(img, 'dwtDct')
-        img = Image.fromarray(img[:, :, ::-1])
+    if WATERMARK_FLAG:
+        if wm_encoder is not None:
+            img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+            img = wm_encoder.encode(img, 'dwtDct')
+            img = Image.fromarray(img[:, :, ::-1])
     return img
 
 
@@ -178,7 +181,7 @@ def load_replacement(x):
         return x
 
 
-def orig_check_safety(x_image):
+def check_safety(x_image):
     safety_checker_input = safety_feature_extractor(numpy_to_pil(x_image), return_tensors="pt")
     x_checked_image, has_nsfw_concept = safety_checker(images=x_image, clip_input=safety_checker_input.pixel_values)
     assert x_checked_image.shape[0] == len(has_nsfw_concept)
@@ -188,7 +191,7 @@ def orig_check_safety(x_image):
     return x_checked_image, has_nsfw_concept
 
 
-def check_safety(x_image):
+def danger_will_robinson(x_image):
     return x_image, []
 
 
@@ -218,7 +221,6 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
-    base_count = len(os.listdir(library_dir_name))
 
     try:
         assert text_prompt is not None
@@ -237,45 +239,30 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                 with model.ema_scope():
                     for n in trange(int(num_images / N_SAMPLES), desc="Sampling"):
                         for prompts in tqdm(data, desc="data"):
-                            uc = None
+                            unconditional_conditioning = None
                             if SCALE != 1.0:
-                                uc = model.get_learned_conditioning(N_SAMPLES * [""])
+                                unconditional_conditioning = model.get_learned_conditioning(N_SAMPLES * [""])
                             if isinstance(prompts, tuple):
                                 prompts = list(prompts)
-                            c = model.get_learned_conditioning(prompts)
+                            conditioning = model.get_learned_conditioning(prompts)
+
                             shape = [LATENT_CHANNELS, options['height'] // options['downsampling_factor'],
                                      options['width'] // options['downsampling_factor']]
-                            samples_ddim, _ = sampler.sample(S=options['ddim_steps'],
-                                                             conditioning=c,
-                                                             batch_size=N_SAMPLES,
-                                                             shape=shape,
-                                                             verbose=False,
-                                                             unconditional_guidance_scale=options['scale'],
-                                                             unconditional_conditioning=uc,
-                                                             eta=options['ddim_eta'],
-                                                             x_T=start_code)
 
-                            x_samples_ddim = model.decode_first_stage(samples_ddim)
-                            x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-                            x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
+                            max_ddim_steps = options['max_ddim_steps']
+                            min_ddim_steps = options['min_ddim_steps']
 
-                            # REPLACE WITH orig_check_safety() to re-enable the safety check
-                            # x_checked_image, has_nsfw_concept = orig_check_safety(x_samples_ddim)
-                            x_checked_image, has_nsfw_concept = check_safety(x_samples_ddim)
-
-                            x_checked_image_torch = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
-
-                            for x_sample in x_checked_image_torch:
-                                x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                img = Image.fromarray(x_sample.astype(np.uint8))
-                                img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(library_dir_name, f"{base_count+1:02d}-{str(uuid.uuid4())[:8]}.png"))
-                                base_count += 1
+                            for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
+                                run_sampling(conditioning, each_ddim_step, library_dir_name,
+                                                          model,
+                                                          options, sampler, shape, start_code,
+                                                          unconditional_conditioning,
+                                                          wm_encoder)
 
                             end = time.time()
                             time_taken = end - start
 
-                            save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken,
+                            save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken,
                                                '', '')
 
         return {'success': True, 'queue_id': queue_id}
@@ -284,8 +271,46 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), '')
+        save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), '')
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
+
+
+def run_sampling(conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
+                 unconditional_conditioning, wm_encoder):
+
+    image_counter = 0
+    try:
+        samples_ddim, _ = sampler.sample(S=ddim_steps,
+                                         conditioning=conditioning,
+                                         batch_size=N_SAMPLES,
+                                         shape=shape,
+                                         verbose=False,
+                                         unconditional_guidance_scale=options['scale'],
+                                         unconditional_conditioning=unconditional_conditioning,
+                                         eta=options['ddim_eta'],
+                                         x_T=start_code)
+        x_samples_ddim = model.decode_first_stage(samples_ddim)
+        x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+        x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
+        # REPLACE WITH orig_check_safety() to re-enable the safety check
+        # x_checked_image, has_nsfw_concept = orig_check_safety(x_samples_ddim)
+        if SAFETY_FLAG:
+            x_checked_image, has_nsfw_concept = check_safety(x_samples_ddim)
+        else:
+            x_checked_image, has_nsfw_concept = danger_will_robinson(x_samples_ddim)
+
+        x_checked_image_torch = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
+        for x_sample in x_checked_image_torch:
+            x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+            img = Image.fromarray(x_sample.astype(np.uint8))
+            img = put_watermark(img, wm_encoder)
+            img.save(os.path.join(library_dir_name, f"{image_counter + 1:02d}-{str(uuid.uuid4())[:8]}-{ddim_steps:03d}.png"))
+            image_counter += 1
+
+    except Exception as e:
+        print('Error in run_sampling: ' + str(e))
+
+    return image_counter
 
 
 def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options):
@@ -295,7 +320,10 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
-    base_count = len(os.listdir(library_dir_name))
+    image_counter = len(os.listdir(library_dir_name))
+
+    max_ddim_steps = options['max_ddim_steps']
+    min_ddim_steps = options['min_ddim_steps']
 
     try:
         assert text_prompt is not None
@@ -307,10 +335,11 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
-        sampler.make_schedule(ddim_num_steps=options['ddim_steps'], ddim_eta=DDIM_ETA, verbose=False)
+        sampler.make_schedule(ddim_num_steps=max_ddim_steps, ddim_eta=DDIM_ETA, verbose=False)
 
         assert 0. <= options['strength'] <= 1., 'can only work with strength in [0.0, 1.0]'
-        t_enc = int(options['strength'] * options['ddim_steps'])
+
+        t_enc = int(options['strength'] * max_ddim_steps)
         print(f"target t_enc is {t_enc} steps")
 
         precision_scope = autocast if PRECISION == "autocast" else nullcontext
@@ -340,8 +369,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                                 img = Image.fromarray(x_sample.astype(np.uint8))
                                 img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(library_dir_name, f"{base_count+1:02d}-{str(uuid.uuid4())[:8]}.png"))
-                                base_count += 1
+                                img.save(os.path.join(library_dir_name, f"{image_counter+1:02d}-{str(uuid.uuid4())[:8]}.png"))
+                                image_counter += 1
 
                             # save the resized original image
                             resized_image.save(os.path.join(library_dir_name, '00-original.png'))
@@ -349,7 +378,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                             end = time.time()
                             time_taken = end - start
 
-                            save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken,
+                            save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken,
                                                '', original_image_path)
 
             return {'success': True, 'queue_id': queue_id}
@@ -358,22 +387,23 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), original_image_path)
+        save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), original_image_path)
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
-def save_metadata_file(base_count, library_dir_name, options, queue_id, text_prompt, time_taken, error,
+def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
                        original_image_path):
     with open(library_dir_name + '/index.json', 'w', encoding="utf8") as outfile:
         metadata = {
             "text_prompt": text_prompt,
-            "num_images": base_count,
+            "num_images": num_images,
             "queue_id": queue_id,
             "time_taken": round(time_taken, 2),
             "seed": options['seed'],
             "height": options['height'],
             "width": options['width'],
-            "ddim_steps": options['ddim_steps'],
+            "min_ddim_steps": options['min_ddim_steps'],
+            "max_ddim_steps": options['max_ddim_steps'],
             "ddim_eta": options['ddim_eta'],
             "scale": options['scale'],
             "downsampling_factor": options['downsampling_factor'],
@@ -426,7 +456,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             'seed': random.randint(1, 2147483647),
             'height': HEIGHT,
             'width': WIDTH,
-            'ddim_steps': DDIM_STEPS,
+            'max_ddim_steps': DDIM_STEPS,
+            'min_ddim_steps': DDIM_STEPS,
             'ddim_eta': DDIM_ETA,
             'scale': SCALE,
             'downsampling_factor': DOWNSAMPLING_FACTOR,
@@ -443,19 +474,29 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # use the seed generated when options was initialised
             pass
 
-
         if 'height' in data:
             options['height'] = int(data['height'])
         if 'width' in data:
             options['width'] = int(data['width'])
-        if 'ddim_steps' in data:
-            options['ddim_steps'] = int(data['ddim_steps'])
         if 'ddim_eta' in data:
             options['ddim_eta'] = float(data['ddim_eta'])
         if 'scale' in data:
             options['scale'] = float(data['scale'])
         if 'downsampling_factor' in data:
             options['downsampling_factor'] = int(data['downsampling_factor'])
+
+        if 'ddim_steps' in data:
+            options['max_ddim_steps'] = int(data['ddim_steps'])
+        if 'max_ddim_steps' in data:
+            options['max_ddim_steps'] = int(data['max_ddim_steps'])
+        if 'min_ddim_steps' in data:
+            options['min_ddim_steps'] = int(data['min_ddim_steps'])
+
+        # safety feature - min_ddim_steps must be less than or equal to  max_ddim_steps
+        # otherwise make them the same value
+        if options['min_ddim_steps'] > options['max_ddim_steps']:
+            options['min_ddim_steps'] = options['max_ddim_steps']
+
         if 'strength' in data:
             options['strength'] = float(data['strength'])
             if options['strength'] >= 1.0:
@@ -515,4 +556,8 @@ if __name__ == "__main__":
     print('------------------------------------------')
     print('Backend Server ready for processing on port', PORT)
     print('------------------------------------------')
+    if not WATERMARK_FLAG:
+        print('Note: Watermarking is disabled')
+    if not SAFETY_FLAG:
+        print('Note: Safety checks are disabled')
     httpd.serve_forever()

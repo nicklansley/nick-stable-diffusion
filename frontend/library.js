@@ -153,7 +153,8 @@ const authorParametersListForWeb = (libraryItem) =>
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Seed: ${libraryItem['seed']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;height: ${libraryItem['height']}px`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;width: ${libraryItem['width']}px`
-    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;DDIM Steps: ${libraryItem['ddim_steps']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Min DDIM Steps: ${libraryItem['min_ddim_steps']}`;
+    text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Max DDIM Steps: ${libraryItem['max_ddim_steps']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;scale: ${libraryItem['scale']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;downsampling factor: ${libraryItem['downsampling_factor']}`;
     if (libraryItem['original_image_path'] !== '')
@@ -172,7 +173,7 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     const urlencoded_image_src = encodeURIComponent(image_src);
     const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
-    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${libraryItem['seed']}&height=${libraryItem['height']}&width=${libraryItem['width']}&ddim_steps=${libraryItem['ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
+    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${libraryItem['seed']}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
     return link;
 }
 

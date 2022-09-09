@@ -15,6 +15,9 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of
   results.
 - NEW: Images appear as they are created rather than waiting for the whole batch to be created.
+- NEW: Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
+The DDIM step number will be added to each image's filename as its last three characters before '.png'. This new feature unlocks all sorts of extra variations for the same prompt!
+Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
 - NEW: Manipulate images you have already created that reside in the library. Click on an image in the library and a new
@@ -45,6 +48,9 @@ This project is being improved daily throughout September 2022, so check back of
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
+* Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
+The DDIM step number will be added to each image's filename as its last three characters before '.png'. This new feature unlocks all sorts of extra variations for the same prompt!
+Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
 * Massively improved UI which can now display images as they appear during processing rather than waiting until the end.
 * Improved, refactored and simplified index.js dumps original countdown and created an estimate on a per-image basis.
 * Scheduler now updates the library catalogue instantly rather than rebuilding it - ideal when library grows massively.
@@ -311,8 +317,7 @@ with great responsibility and you must
 not forget what you agreed to when downloading the model in <i>Fast Start</i>> above. 
 
 If you prefer to avoid the possibility of NSFW content (for example, you are allowing minors to use the application or you are demonstrating this as a show & tell at 
-work), re-enable the safety catch in the backend code by changing server.py line 254 from
-calling check_safety() to calling orig_check_safety()
+work), re-enable the safety catch by setting SAFETY_FLAG to True in the backend-sd-server/server.py file.
 
 I only disabled the safety catch because Rick Astley (the NSFW
 replacement image) was appearing too often on innocent prompts, notwithstanding the fact that my definition of 'innocent'

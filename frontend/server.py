@@ -151,11 +151,16 @@ class RelayServer(BaseHTTPRequestHandler):
             return 'X'
 
     def get_image_list(self, queue_id):
-        image_data = []
+        image_data = {
+            'completed': False,
+            'images': []
+        }
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
                 if image_name.endswith('.png'):
-                    image_data.append('/library/' + queue_id + '/' + image_name)
+                    image_data['images'].append('/library/' + queue_id + '/' + image_name)
+                elif image_name == 'index.json':
+                    image_data['completed'] = True
 
         print('\nFRONTEND: Image list for queue_id', queue_id, 'is', image_data)
         return image_data

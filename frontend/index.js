@@ -60,11 +60,8 @@ const prepareRequestData = () =>
             data['width'] = 512;
         }
 
-        data['ddim_steps'] = parseInt(document.getElementById("ddim_steps").value);
-        if (data['ddim_steps'] === '')
-        {
-            data['ddim_steps'] = 50;
-        }
+        data['min_ddim_steps'] = parseInt(document.getElementById("min_ddim_steps").value);
+        data['max_ddim_steps'] = parseInt(document.getElementById("max_ddim_steps").value);
 
         data['scale'] = parseFloat(document.getElementById("scale").value);
         if (data['scale'] === '')
@@ -151,7 +148,7 @@ const getImageList = async () =>
     }
     else
     {
-        return { 'imageCount': -1 };  // error
+        return { 'completed': true, 'images': [] };  // error condition
     }
 
 
@@ -276,26 +273,12 @@ const getLibrary = async () =>
 }
 
 
-const calculateEstimatedTime = () =>
+const displayCalculatedImageCount = () =>
 {
-    const imageCount = parseInt(document.getElementById('num_images').value);
-    let estimatedTime = imageCount * SECS_PER_IMAGE;
-    if (document.body.innerText.includes("DDIM Steps:"))
-    {
-        estimatedTime = estimatedTime * (parseInt(document.getElementById('ddim_steps').value) / 50);
-    }
-    if (document.body.innerText.includes("Height:"))
-    {
-        const height = parseInt(document.getElementById('height').value);
-        estimatedTime = estimatedTime * Math.pow(height / 512, 2);
-    }
-    if (document.body.innerText.includes("Width:"))
-    {
-        const width = parseInt(document.getElementById('width').value);
-        estimatedTime = estimatedTime * Math.pow(width / 512, 2);
-    }
-
-    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} - estimated time: <b>${parseInt(estimatedTime)}</b> seconds</i>`;
+    let imageCount = parseInt(document.getElementById('num_images').value);
+    const ddim_steps_factor = parseInt(document.getElementById('max_ddim_steps').value) - parseInt(document.getElementById('min_ddim_steps').value) + 1
+    imageCount = imageCount * ddim_steps_factor;
+    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
 }
 
 /**
@@ -339,7 +322,13 @@ const createImagePlaceHolders = () =>
 
     const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
-    const imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
+    let imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
+
+    // multiply the number of images required by the number of the difference in ddim_steos
+    const min_ddim_steps = parseInt(document.getElementById("min_ddim_steps").value);
+    const max_ddim_steps = parseInt(document.getElementById("max_ddim_steps").value);
+    imageElementsToCreate = imageElementsToCreate * (max_ddim_steps - min_ddim_steps + 1);
+
 
     for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
     {
@@ -417,8 +406,8 @@ const startCountDown = async (requestedImageCount) =>
     global_countdownTimerIntervalId = setInterval(async () =>
     {
         // Find out how many images have already been created for this queue_id (set in global_currentQueueId))
-        const currentImageList = await getImageList();
-        const currentImageCount = includesOriginalImage ? currentImageList.length - 1 : currentImageList.length;
+        const currentImageListData = await getImageList();
+        const currentImageCount = includesOriginalImage ? currentImageListData['images'].length - 1 : currentImageListData['images'].length;
 
         if (currentImageCount > previousImageCount)
         {
@@ -428,14 +417,18 @@ const startCountDown = async (requestedImageCount) =>
             countdownSeconds = secsPerImage * (requestedImageCount - currentImageCount);
             previousImageCount = currentImageCount;
             previousImageTime = currentImageTime;
-            await displayImages(currentImageList);
+            await displayImages(currentImageListData['images']);
         }
-        else if (currentImageCount === requestedImageCount)
+        else if (currentImageCount === requestedImageCount || currentImageListData['completed'])
         {
             console.log("All images are ready - stopping countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
             clearInterval(global_countdownTimerIntervalId);
             global_countdownTimerIntervalId = null;
             document.getElementById("status").innerText = "Processing completed";
+            if(currentImageCount < requestedImageCount)
+            {
+                document.getElementById("status").innerText += " - some DDIM steps failed to process";
+            }
             document.getElementById("buttonGo").innerText = "Click to send request";
             document.getElementById("buttonGo").enabled = true;
 
@@ -443,7 +436,7 @@ const startCountDown = async (requestedImageCount) =>
             // them for the final time. If we don't do this, then the download may cause partial images to be downloaded.
             // If partial images were previously downloaded then this final sleep will correct any issues.
             await sleep(1);
-            await displayImages(currentImageList);
+            await displayImages(currentImageListData['images']);
         }
         else
         {
@@ -463,6 +456,36 @@ const startCountDown = async (requestedImageCount) =>
 
 }
 
+const ensureDDIMStepsAreValid = (ddim_control) => {
+    const originalImagePath = document.getElementById("original_image_path").value;
+    let maxDDIMSteps = parseInt(document.getElementById("max_ddim_steps").value);
+    let minDDIMSteps = parseInt(document.getElementById("min_ddim_steps").value);
+    document.getElementById(ddim_control.id + '_value').innerText = ddim_control.value;
+
+    const lockDDIMControls = originalImagePath !== "";
+
+    if(ddim_control.id === "min_ddim_steps")
+    {
+        if(lockDDIMControls || minDDIMSteps > maxDDIMSteps)
+        {
+            document.getElementById("max_ddim_steps").value = minDDIMSteps;
+            maxDDIMSteps = minDDIMSteps;
+        }
+    }
+    else
+    {
+        if(lockDDIMControls || maxDDIMSteps < minDDIMSteps)
+        {
+            document.getElementById("min_ddim_steps").value = maxDDIMSteps;
+            minDDIMSteps = maxDDIMSteps;
+        }
+    }
+
+    document.getElementById("min_ddim_steps_value").innerText = minDDIMSteps.toString();
+    document.getElementById("max_ddim_steps_value").innerText = maxDDIMSteps.toString();
+
+    displayCalculatedImageCount();
+}
 
 
 const populateControlsFromHref = () =>
@@ -500,9 +523,22 @@ const populateControlsFromHref = () =>
         }
         if (params.has('ddim_steps'))
         {
-            document.getElementById('ddim_steps').value = params.get('ddim_steps');
-            document.getElementById('ddim_steps_value').innerText = params.get('ddim_steps');
+            document.getElementById('max_ddim_steps').value = params.get('ddim_steps');
+            document.getElementById('max_ddim_steps_value').innerText = params.get('ddim_steps');
+            document.getElementById('min_ddim_steps').value = params.get('ddim_steps');
+            document.getElementById('min_ddim_steps_value').innerText = params.get('ddim_steps');
         }
+        if (params.has('min_ddim_steps'))
+        {
+            document.getElementById('min_ddim_steps').value = params.get('min_ddim_steps');
+            document.getElementById('min_ddim_steps_value').innerText = params.get('min_ddim_steps');
+        }
+        if (params.has('max_ddim_steps'))
+        {
+            document.getElementById('max_ddim_steps').value = params.get('max_ddim_steps');
+            document.getElementById('max_ddim_steps_value').innerText = params.get('max_ddim_steps');
+        }
+
         if (params.has('scale'))
         {
             document.getElementById('scale').value = params.get('scale');
@@ -589,7 +625,7 @@ const retrieveAndDisplayCurrentQueue = async () =>
             // need to start the countdown timer (unless it's already running)
             if (queueData[0].queue_id === global_currentQueueId && !global_countdownTimerIntervalId)
             {
-                await startCountDown(queueData[0].num_images);
+                await startCountDown(queueData[0].num_images * (queueData[0].max_ddim_steps - queueData[0].min_ddim_steps + 1));
             }
         }
     }

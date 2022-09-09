@@ -169,7 +169,7 @@
                     <hr>
                     Choose number of images to create:
                     <div class="slidecontainer"><input class="slider" id="num_images" max="30" min="1"
-                                                       oninput="calculateEstimatedTime()"
+                                                       oninput="displayCalculatedImageCount()"
                                                        step="1" type="range"
                                                        value="1">
                     </div>
@@ -209,7 +209,7 @@
                         <div class="slidecontainer"><input
                                 class="slider" id="width"
                                 max="1024" min="256"
-                                oninput="document.getElementById('width_value').innerText = this.value; calculateEstimatedTime()"
+                                oninput="document.getElementById('width_value').innerText = this.value; displayCalculatedImageCount()"
                                 step="64" type="range"
                                 value="512">
                         </div>
@@ -217,20 +217,39 @@
 
                         <div>
                             <hr>
-                            DDIM Steps: (Number of steps to diffuse the image from 1 to 250)
+                            Minimum DDIM Steps: (Number of steps to diffuse the image)
                         </div>
                         <!-- Careful with changing 'DDIM Steps:' as index.js line 33 uses this literal to detect it has been called from the advanced.html page -->
                         <div class="slidecontainer">
                             <input class="slider"
-                                   id="ddim_steps"
+                                   id="min_ddim_steps"
                                    max="250"
                                    min="1"
-                                   oninput="document.getElementById('ddim_steps_value').innerText = this.value;calculateEstimatedTime()"
+                                   oninput="ensureDDIMStepsAreValid(this);"
                                    step="1"
                                    type="range"
                                    value="50">
                         </div>
-                        <div id="ddim_steps_value">
+                        <div id="min_ddim_steps_value">
+                            50
+                        </div>
+
+                        <div>
+                            <hr>
+                            Maximum DDIM Steps: (locked to Minimum DDIM Steps if there is an imput image)
+                        </div>
+                        <!-- Careful with changing 'DDIM Steps:' as index.js line 33 uses this literal to detect it has been called from the advanced.html page -->
+                        <div class="slidecontainer">
+                            <input class="slider"
+                                   id="max_ddim_steps"
+                                   max="250"
+                                   min="1"
+                                   oninput="ensureDDIMStepsAreValid(this);"
+                                   step="1"
+                                   type="range"
+                                   value="50">
+                        </div>
+                        <div id="max_ddim_steps_value">
                             50
                         </div>
 
