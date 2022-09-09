@@ -333,8 +333,8 @@ const createImagePlaceHolders = () =>
     let imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
 
     // multiply the number of images required by the number of the difference in ddim_steps
-    const maxDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
-    const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     imageElementsToCreate = imageElementsToCreate * (maxDDIMSteps - minDDIMSteps + 1);
 
 
