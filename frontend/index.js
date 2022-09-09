@@ -281,8 +281,9 @@ const getLibrary = async () =>
 const displayCalculatedImageCount = () =>
 {
     let imageCount = parseInt(document.getElementById('num_images').value);
-    const ddim_steps_factor = parseInt(document.getElementById('max_ddim_steps').value) - parseInt(document.getElementById('min_ddim_steps').value) + 1
-    imageCount = imageCount * ddim_steps_factor;
+    const maxDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    imageCount = imageCount * (maxDDIMSteps - minDDIMSteps + 1);
     document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
 }
 
@@ -331,10 +332,10 @@ const createImagePlaceHolders = () =>
 
     let imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
 
-    // multiply the number of images required by the number of the difference in ddim_steos
-    const min_ddim_steps = parseInt(document.getElementById("min_ddim_steps").value);
-    const max_ddim_steps = parseInt(document.getElementById("max_ddim_steps").value);
-    imageElementsToCreate = imageElementsToCreate * (max_ddim_steps - min_ddim_steps + 1);
+    // multiply the number of images required by the number of the difference in ddim_steps
+    const maxDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    imageElementsToCreate = imageElementsToCreate * (maxDDIMSteps - minDDIMSteps + 1);
 
 
     for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
@@ -637,7 +638,9 @@ const retrieveAndDisplayCurrentQueue = async () =>
             // need to start the countdown timer (unless it's already running)
             if (queueData[0].queue_id === global_currentQueueId && !global_countdownTimerIntervalId)
             {
-                await startCountDown(queueData[0].num_images * (queueData[0].max_ddim_steps - queueData[0].min_ddim_steps + 1));
+                const maxDDIMSteps = queueData[0].max_ddim_steps ? queueData[0].max_ddim_steps : 0;
+                const minDDIMSteps = queueData[0].min_ddim_steps ? queueData[0].min_ddim_steps : 0;
+                await startCountDown(queueData[0].num_images * (maxDDIMSteps - minDDIMSteps + 1));
             }
         }
     }
