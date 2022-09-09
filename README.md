@@ -16,7 +16,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
   results.
 - NEW: Images appear as they are created rather than waiting for the whole batch to be created.
 - NEW: Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
-The DDIM step number will be added to each image's filename "image_num"-"ddim_step_num"-"random-8-char".png. This new feature unlocks all sorts of extra variations for the same prompt!
+The DDIM step number will be added to each image's filename<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
 Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
@@ -49,7 +49,7 @@ the project working on your machine. Check the commits list for the latest chang
 
 ### Latest:
 * Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
-The DDIM step number will be added to each image's filename so it has format "image_num"-"ddim_step_num"-"random-8-char".png. This new feature unlocks all sorts of extra variations for the same prompt!
+The DDIM step number will be added to each image's filename so it has format<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
 Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
 * Massively improved UI which can now display images as they appear during processing rather than waiting until the end.
 * Improved, refactored and simplified index.js dumps original countdown and created an estimate on a per-image basis.

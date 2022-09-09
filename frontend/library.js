@@ -122,10 +122,8 @@ const retrieveImages = async () =>
                     this.style.zIndex = "100";
                     const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
                     masterImage.src = this.src;
-                    const srcElements = this.src.split("/");
-                    const imageNameSections = srcElements[5].split("-");
                     const masterImageCaption = document.getElementById(`master_image_caption_${libraryItem['queue_id']}`);
-                    masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
+                    masterImageCaption.innerText = authorDescriptionFromImageFileName(this.src);
                 };
                 image.onmouseleave = function ()
                 {
@@ -148,6 +146,20 @@ const retrieveImages = async () =>
     }
     const dateNow = new Date();
     document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${imageCount} images within ${libraryEntryCount} library entries`;
+}
+
+const authorDescriptionFromImageFileName = (imageFileName) =>
+{
+    if(imageFileName.includes("blank.png")) return '';
+    if(imageFileName.includes("original.png")) return 'Original input image'
+
+    const srcElements = imageFileName.split("/");
+    const imageNameSections = srcElements[5].split("-");
+    const imageNumber = imageNameSections[0]
+    const ddimSteps = imageNameSections[1].replace('D', '')
+    const scale = imageNameSections[2].replace('S', '');
+    const seedValue = imageNameSections[3].replace('R', '');
+    return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
 }
 
 const authorParametersListForWeb = (libraryItem) =>

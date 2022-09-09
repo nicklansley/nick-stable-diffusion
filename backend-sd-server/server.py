@@ -283,7 +283,6 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
 def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
                  unconditional_conditioning, wm_encoder):
-
     try:
         samples_ddim, _ = sampler.sample(S=ddim_steps,
                                          conditioning=conditioning,
@@ -304,17 +303,27 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
         else:
             x_checked_image, has_nsfw_concept = danger_will_robinson(x_samples_ddim)
 
-        x_checked_image_torch = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
-        for x_sample in x_checked_image_torch:
-            x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-            img = Image.fromarray(x_sample.astype(np.uint8))
-            img = put_watermark(img, wm_encoder)
-            img.save(os.path.join(library_dir_name, f"{image_counter + 1:02d}-{ddim_steps:03d}-{str(uuid.uuid4())[:8]}.png"))
-            image_counter += 1
+        x_samples = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
+
+        image_counter = save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples,
+                                           options['seed'], options['scale'])
 
     except Exception as e:
         print('Error in run_sampling: ' + str(e))
 
+    return image_counter
+
+
+def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale):
+    # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png
+    for x_sample in x_samples:
+        x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+        img = Image.fromarray(x_sample.astype(np.uint8))
+        img = put_watermark(img, wm_encoder)
+        img.save(
+            os.path.join(library_dir_name,
+                         f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png"))
+        image_counter += 1
     return image_counter
 
 
@@ -370,14 +379,9 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
                             # save the newly created images
-                            for x_sample in x_samples:
-                                x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                img = Image.fromarray(x_sample.astype(np.uint8))
-                                img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(library_dir_name,
-                                f"{image_counter + 1:02d}-{max_ddim_steps:03d}-{str(uuid.uuid4())[:8]}.png"))
-
-                                image_counter += 1
+                            image_counter = save_image_samples(max_ddim_steps, image_counter, library_dir_name,
+                                                               wm_encoder,
+                                                               x_samples, options['seed'], options['scale'])
 
                             # save the resized original image
                             resized_image.save(os.path.join(library_dir_name, '00-original.png'))
@@ -385,7 +389,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                             end = time.time()
                             time_taken = end - start
 
-                            save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken,
+                            save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
+                                               time_taken,
                                                '', original_image_path)
 
             return {'success': True, 'queue_id': queue_id}
@@ -394,7 +399,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken, str(e), original_image_path)
+        save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken, str(e),
+                           original_image_path)
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
@@ -416,7 +422,7 @@ def save_metadata_file(num_images, library_dir_name, options, queue_id, text_pro
             "downsampling_factor": options['downsampling_factor'],
             "error": error,
             "original_image_path": original_image_path,
-            "strength": options['strength'] if "strength" in options else -1 # -1 means not applicable
+            "strength": options['strength'] if "strength" in options else -1  # -1 means not applicable
         }
         json.dump(metadata, outfile, indent=4, ensure_ascii=False)
 
@@ -455,7 +461,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"error": "Bad request: missing prompt, queue_id or num_images"}')
             return
-
 
         # Set up defaults for the optional extra properties which will
         # be overwritten should they be in the request
@@ -518,7 +523,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # only image paths which are wither URLs or are sourced from the library are allowed.
             if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
                 if original_image_path != '':
-                    print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(original_image_path))
+                    print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
+                        original_image_path))
                 original_image_path = ''
         # process!
         if original_image_path != '':

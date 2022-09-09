@@ -287,6 +287,20 @@ const displayCalculatedImageCount = () =>
     document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
 }
 
+const authorDescriptionFromImageFileName = (imageFileName) =>
+{
+    if(imageFileName.includes("blank.png")) return '';
+    if(imageFileName.includes("original.png")) return 'Original input image'
+
+    const srcElements = imageFileName.split("/");
+    const imageNameSections = srcElements[5].split("-");
+    const imageNumber = imageNameSections[0]
+    const ddimSteps = imageNameSections[1].replace('D', '')
+    const scale = imageNameSections[2].replace('S', '');
+    const seedValue = imageNameSections[3].replace('R', '');
+    return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
+}
+
 /**
  * Loop through the library looking for our queue_id and return/display the actual images.
  * @param imageList
@@ -300,9 +314,7 @@ const displayImages = (imageList) =>
     masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
     if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
     {
-        const srcElements = masterImage.src.split("/");
-        const imageNameSections = srcElements[5].split("-");
-        masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
+        masterImageCaption.innerText = authorDescriptionFromImageFileName(masterImage.src)
     }
 
     // Now the master image had been updated, we can display the rest of the images in their correct aspect ratios:
@@ -364,16 +376,7 @@ const createImagePlaceHolders = () =>
             const masterImage = document.getElementById(`master_image`);
             const masterImageCaption = document.getElementById(`master_image_caption`);
             masterImage.src = this.src;
-            if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
-            {
-                const srcElements = this.src.split("/");
-                const imageNameSections = srcElements[5].split("-");
-                masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
-            }
-            else
-            {
-                masterImageCaption.innerText = "(blank or original image)";
-            }
+            masterImageCaption.innerText = authorDescriptionFromImageFileName(this.src)
         };
         image.onmouseleave = function ()
         {
