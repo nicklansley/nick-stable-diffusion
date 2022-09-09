@@ -85,7 +85,9 @@ const retrieveImages = async () =>
                 masterImage.width = libraryItem['width'];
                 masterImage.style.zIndex = "0";
                 document.getElementById("output").appendChild(masterImage);
-                document.getElementById("output").appendChild(document.createElement("br"));
+                const masterImageCaption = document.createElement("p")
+                masterImageCaption.id = `master_image_caption_${libraryItem['queue_id']}`;
+                output.appendChild(masterImageCaption);
             }
 
             for(const image_entry of libraryItem['generated_images'])
@@ -120,6 +122,10 @@ const retrieveImages = async () =>
                     this.style.zIndex = "100";
                     const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
                     masterImage.src = this.src;
+                    const srcElements = this.src.split("/");
+                    const imageNameSections = srcElements[5].split("-");
+                    const masterImageCaption = document.getElementById(`master_image_caption_${libraryItem['queue_id']}`);
+                    masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
                 };
                 image.onmouseleave = function ()
                 {

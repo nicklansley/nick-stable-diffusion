@@ -252,7 +252,6 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             max_ddim_steps = options['max_ddim_steps']
                             min_ddim_steps = options['min_ddim_steps']
-                            image_counter += 1
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
                                 run_sampling(image_counter,
                                              conditioning,
@@ -268,6 +267,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             end = time.time()
                             time_taken = end - start
+                            image_counter += 1
 
                     save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 

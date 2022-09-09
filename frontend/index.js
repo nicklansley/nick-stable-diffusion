@@ -174,11 +174,16 @@ const displayQueue = async (queueList) =>
         // Is my request being currently processed? If it's first in the queue, then yes.
         backendProcessingRequestNow = queueList[0].queue_id === global_currentQueueId
 
+        const maxDDIMSteps = queueList[0].max_ddim_steps ? queueList[0].max_ddim_steps : 0;
+        const minDDIMSteps = queueList[0].min_ddim_steps ? queueList[0].min_ddim_steps : 0;
+
+        const imageRequestCount = queueList[0].num_images * (maxDDIMSteps - minDDIMSteps + 1);
+
         // The first item in the queue is the one that the AI is currently processing:
-        queueUI.innerHTML = `<p><b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
+        queueUI.innerHTML = `<p><b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
 
         const processingDiv = document.createElement("div");
-        processingDiv.innerHTML = `<b>Now creating ${queueList[0].num_images} image${queueList[0].num_images > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+        processingDiv.innerHTML = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
 
         // Add the rest of the queued list of requests to the UI:
         let queuePosition = 1;
@@ -587,6 +592,7 @@ const setDarkModeFromLocalStorage = () =>
         document.body.classList.add('dark-mode');
     }
 }
+
 
 
 /**
