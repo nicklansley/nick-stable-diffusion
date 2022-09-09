@@ -127,7 +127,11 @@ def load_and_format_image(path, output_width, output_height):
 
     old_size = image.size  # old_size[0] is in (width, height) format
 
-    ratio = float(output_width) / max(old_size)
+    if output_width > output_height:
+        ratio = float(output_width) / max(old_size)
+    else:
+        ratio = float(output_height) / max(old_size)
+
     new_size = tuple([int(x * ratio) for x in old_size])
 
     resized_image = image.resize(new_size, Image.ANTIALIAS)

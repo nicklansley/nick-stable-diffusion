@@ -162,7 +162,7 @@ def rebuild_library_catalogue():
         print('\nSCHEDULER: Rebuild of library catalogue completed')
 
     except Exception as e:
-        print('\nSCHEDULER: Rebuild of library catalogue failed', e)
+        print('\nSCHEDULER: Rebuild of library catalogue failed, or there is no library until first images are created', e)
 
 
 def add_image_list_entries_to_library_entry(files, library_entry, root):
@@ -185,6 +185,12 @@ def add_image_list_entries_to_library_entry(files, library_entry, root):
 
 
 def update_file_metadata(img_path, library_entry):
+    # if library_entry is an empty object, it means that an image file found in the library folder is
+    # not to do with the library - for example images placed there by the user for
+    # local processing of input images in the advanced.html page. In which case just return False
+    if library_entry == {}:
+        return False
+
     # make a copy of the library entry so we don't modify the original
     library_metadata = copy.deepcopy(library_entry)
 

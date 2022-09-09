@@ -309,10 +309,14 @@ const displayImages = (imageList) =>
 
     masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
 
+    // Now the master image had been updated, we can display the rest of the images in their correct aspect ratios:
+    const widthHeightRatio = masterImage.height / masterImage.width;
+
     for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
         image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
+        image.width = image.height / widthHeightRatio;
     }
 }
 
