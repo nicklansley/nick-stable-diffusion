@@ -281,8 +281,8 @@ const getLibrary = async () =>
 const displayCalculatedImageCount = () =>
 {
     let imageCount = parseInt(document.getElementById('num_images').value);
-    const maxDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
-    const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
+    const maxDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
+    const minDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     imageCount = imageCount * (maxDDIMSteps - minDDIMSteps + 1);
     document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
 }
