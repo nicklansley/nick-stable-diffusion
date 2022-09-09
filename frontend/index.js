@@ -519,6 +519,8 @@ const populateControlsFromHref = () =>
     if (window.location.href.includes("?"))
     {
         const params = new URLSearchParams(window.location.search);
+        let checkForImageDDIMInconsistencyFlag = false;
+
         if (params.has('prompt'))
         {
             document.getElementById('prompt').value = params.get('prompt');
@@ -526,6 +528,7 @@ const populateControlsFromHref = () =>
         if (params.has('original_image_path'))
         {
             document.getElementById('original_image_path').value = params.get('original_image_path');
+            checkForImageDDIMInconsistencyFlag = true;
         }
         if (params.has('strength'))
         {
@@ -547,7 +550,7 @@ const populateControlsFromHref = () =>
             document.getElementById('height').value = params.get('height');
             document.getElementById('height_value').innerText = params.get('height');
         }
-        if (params.has('ddim_steps'))
+        if (params.has('ddim_steps')) // legacy from an 'old' version of the library
         {
             document.getElementById('max_ddim_steps').value = params.get('ddim_steps');
             document.getElementById('max_ddim_steps_value').innerText = params.get('ddim_steps');
@@ -558,11 +561,13 @@ const populateControlsFromHref = () =>
         {
             document.getElementById('min_ddim_steps').value = params.get('min_ddim_steps');
             document.getElementById('min_ddim_steps_value').innerText = params.get('min_ddim_steps');
+            checkForImageDDIMInconsistencyFlag = true;
         }
         if (params.has('max_ddim_steps'))
         {
             document.getElementById('max_ddim_steps').value = params.get('max_ddim_steps');
             document.getElementById('max_ddim_steps_value').innerText = params.get('max_ddim_steps');
+            checkForImageDDIMInconsistencyFlag = true;
         }
 
         if (params.has('scale'))
@@ -587,6 +592,20 @@ const populateControlsFromHref = () =>
             else if (params.get('downsampling_factor') === "16")
             {
                 document.getElementById('ds16').checked = true;
+            }
+        }
+
+        // Check for input image AND differing DDIM steps, which is not supported at the moment.
+        if(checkForImageDDIMInconsistencyFlag && document.getElementById('original_image_path').value !== "" && document.getElementById('min_ddim_steps').value !== document.getElementById('max_ddim_steps').value)
+        {
+            if(confirm("This page has received both an input image URL AND differing Max/Min DDIM steps, which is not supported at the moment.\n\nSelect OK to use the input image and lock the DDIM steps to the same value. \n\nSelect Cancel to remove the input image URL and keep the different DDIM Step values."))
+            {
+                document.getElementById('min_ddim_steps').value = document.getElementById('max_ddim_steps').value;
+                document.getElementById('min_ddim_steps_value').innerText = document.getElementById('max_ddim_steps').value;
+            }
+            else
+            {
+                document.getElementById('original_image_path').value = "";
             }
         }
     }
