@@ -221,6 +221,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
+    image_counter = 0
 
     try:
         assert text_prompt is not None
@@ -251,19 +252,24 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             max_ddim_steps = options['max_ddim_steps']
                             min_ddim_steps = options['min_ddim_steps']
-
+                            image_counter += 1
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
-                                run_sampling(conditioning, each_ddim_step, library_dir_name,
-                                                          model,
-                                                          options, sampler, shape, start_code,
-                                                          unconditional_conditioning,
-                                                          wm_encoder)
+                                run_sampling(image_counter,
+                                             conditioning,
+                                             each_ddim_step,
+                                             library_dir_name,
+                                             model,
+                                             options,
+                                             sampler,
+                                             shape,
+                                             start_code,
+                                             unconditional_conditioning,
+                                             wm_encoder)
 
                             end = time.time()
                             time_taken = end - start
 
-                            save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken,
-                                               '', '')
+                    save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 
         return {'success': True, 'queue_id': queue_id}
 
@@ -275,10 +281,9 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
-def run_sampling(conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
+def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
                  unconditional_conditioning, wm_encoder):
 
-    image_counter = 0
     try:
         samples_ddim, _ = sampler.sample(S=ddim_steps,
                                          conditioning=conditioning,
@@ -304,7 +309,7 @@ def run_sampling(conditioning, ddim_steps, library_dir_name, model, options, sam
             x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
             img = Image.fromarray(x_sample.astype(np.uint8))
             img = put_watermark(img, wm_encoder)
-            img.save(os.path.join(library_dir_name, f"{image_counter + 1:02d}-{str(uuid.uuid4())[:8]}-{ddim_steps:03d}.png"))
+            img.save(os.path.join(library_dir_name, f"{image_counter + 1:02d}-{ddim_steps:03d}-{str(uuid.uuid4())[:8]}.png"))
             image_counter += 1
 
     except Exception as e:

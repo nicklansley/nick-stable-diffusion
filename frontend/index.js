@@ -318,7 +318,9 @@ const createImagePlaceHolders = () =>
     // Update the master_image with teh most recent image in the list
     masterImage.src = "/blank.png";
     output.appendChild(masterImage);
-    output.appendChild(document.createElement("br"));
+    const p = document.createElement("p")
+    p.id = "master_image_caption";
+    output.appendChild(p);
 
     const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
@@ -347,7 +349,11 @@ const createImagePlaceHolders = () =>
             this.style.transition = "transform 0.25s ease";
             this.style.zIndex = "100";
             const masterImage = document.getElementById(`master_image`);
+            const masterImageCaption = document.getElementById(`master_image_caption`);
             masterImage.src = this.src;
+            const srcElements = this.src.split("/");
+            const imageNameSections = srcElements[5].split("-");
+            masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
         };
         image.onmouseleave = function ()
         {
