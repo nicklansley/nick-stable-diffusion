@@ -298,7 +298,7 @@ const displayImages = (imageList) =>
     const masterImageCaption = document.getElementById("master_image_caption");
 
     masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
-    if(!masterImage.src.includes("blank.png"))
+    if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
     {
         const srcElements = masterImage.src.split("/");
         const imageNameSections = srcElements[5].split("-");
@@ -364,9 +364,16 @@ const createImagePlaceHolders = () =>
             const masterImage = document.getElementById(`master_image`);
             const masterImageCaption = document.getElementById(`master_image_caption`);
             masterImage.src = this.src;
-            const srcElements = this.src.split("/");
-            const imageNameSections = srcElements[5].split("-");
-            masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
+            if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
+            {
+                const srcElements = this.src.split("/");
+                const imageNameSections = srcElements[5].split("-");
+                masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
+            }
+            else
+            {
+                masterImageCaption.innerText = "(blank or original image)";
+            }
         };
         image.onmouseleave = function ()
         {
