@@ -295,8 +295,15 @@ const displayImages = (imageList) =>
 {
     const timestamp = new Date().getTime();    // used to force a reload of the image and not get a cached copy
     const masterImage = document.getElementById("master_image");
+    const masterImageCaption = document.getElementById("master_image_caption");
 
     masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
+    if(!masterImage.src.includes("blank.png"))
+    {
+        const srcElements = masterImage.src.split("/");
+        const imageNameSections = srcElements[5].split("-");
+        masterImageCaption.innerText = `Image ${imageNameSections[0]}, DDIM step ${imageNameSections[1]}`;
+    }
 
     // Now the master image had been updated, we can display the rest of the images in their correct aspect ratios:
     const widthHeightRatio = masterImage.height / masterImage.width;
