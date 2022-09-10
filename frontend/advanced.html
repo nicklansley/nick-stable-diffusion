@@ -163,10 +163,10 @@
             Optional input image<br><small>Enter URL directly to the image on the web,<br>or choose one from the library
             folder using 'library/&lt;path-to-file&gt;'</small>:
             <div><input id="original_image_path" type="text" size="90"/></div>
-           <p>or drag and drop an input image into this box</p>
+           <p>or drag and drop an input image into this box:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
            <div id="image_drop_area""></div>
            <p id="file_name"></p>
-
+            <button class="button-9" onclick="document.getElementById('original_image_path').value = ''; document.getElementById('image_drop_area').innerHTML = '';">Remove Input Image</button>
             <hr>
             If an image is provided, choose by what percentage it can be changed by the AI:
             <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"
