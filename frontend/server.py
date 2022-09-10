@@ -122,8 +122,12 @@ class RelayServer(BaseHTTPRequestHandler):
                 # think up a random 8 alphanumeric character filename so it doesn't overwrite anything
                 image_name = str(uuid.uuid4())[:8] + '.' + image_suffix
 
+                # if a folder does not exist, create it
+                if not os.path.exists('/app/library/drag_and_drop_images'):    # if the folder does not exist
+                    os.makedirs('/app/library/drag_and_drop_images')
+
                 # save the image file
-                image_path = '/app/library/' + image_name
+                image_path = '/app/library/drag_and_drop_images/' + image_name
                 print('Image converted to binary and saved to', image_path)
                 with open(image_path, 'wb') as f:
                     f.write(image_data)

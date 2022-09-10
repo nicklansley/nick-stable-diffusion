@@ -140,17 +140,18 @@ def rebuild_library_catalogue():
         # add the images file paths to the library catalogue
         for root, dirs, files in os.walk("/app/library", topdown=False):
             for image_name in files:
-                if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
+                image_path = os.path.join(root, image_name)
+                if 'drag_and_drop_images' not in image_path and (image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png')):
 
                     # if the image has a metadata section then add it to the
                     # end of the image file if ADD_METADATA_TO_FILES is enabled
                     if ADD_METADATA_TO_FILES:
-                        update_file_metadata(os.path.join(root, image_name), library_entry)
+                        update_file_metadata(image_path, library_entry)
 
                     # add the image file path to the library entry
                     for library_entry in library:
                         if library_entry["queue_id"] in root:
-                            image_file_path = os.path.join(root, image_name).replace('/app/', '')
+                            image_file_path = image_path.replace('/app/', '')
 
                             if image_file_path not in library_entry["generated_images"]:
                                 library_entry["generated_images"].append(image_file_path)
