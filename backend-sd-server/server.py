@@ -1,3 +1,5 @@
+import base64
+import gzip
 import os
 import random
 import urllib.request
@@ -401,6 +403,10 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken, str(e),
                            original_image_path)
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
+
+    # gzip a string then convert to base64
+    def gzip_and_encode(self, string):
+        return base64.b64encode(gzip.compress(string.encode('utf-8'))).decode('utf-8')
 
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
