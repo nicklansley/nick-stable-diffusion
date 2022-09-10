@@ -389,9 +389,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                             end = time.time()
                             time_taken = end - start
 
-                            save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
-                                               time_taken,
-                                               '', original_image_path)
+                    save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
+                                       time_taken, '', original_image_path)
 
             return {'success': True, 'queue_id': queue_id}
 
