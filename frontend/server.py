@@ -6,6 +6,7 @@ import signal
 import sys
 import redis
 import uuid
+import base64
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -63,7 +64,14 @@ class RelayServer(BaseHTTPRequestHandler):
         print("\nFRONTEND:", data)
 
         if api_command == '/prompt':
-            result = self.queue_request_to_redis(data)
+            result = 'X'
+            ok_flag, message, data = self.quality_assure(data)
+            if ok_flag:
+                result = self.queue_request_to_redis(data)
+            else:
+                self.send_response(400)
+                self.end_headers()
+
             if result == 'X':
                 self.send_response(500)
                 self.end_headers()
@@ -101,47 +109,48 @@ class RelayServer(BaseHTTPRequestHandler):
         return
 
 
+    # take base64 string and save it to a file as binary
+    # the image string starts 'data:image/png;base64,iVBORw....' in base64 encoding
+    def convert_base64_to_image_binary_and_save_file(self, image_base64_string):
+        try:
+            image_elements = image_base64_string.split(',')
+            image_suffix = image_elements[0].split(';')[0].split('/')[1]
+            confirm_base64 = image_elements[0].split(';')[1] == 'base64'
+            if confirm_base64:
+                # encode the base64 string to binary
+                image_data = base64.b64decode(image_elements[1])
+                # think up a random 8 alphanumeric character filename so it doesn't overwrite anything
+                image_name = str(uuid.uuid4())[:8] + '.' + image_suffix
+
+                # save the image file
+                image_path = '/app/library/' + image_name
+                print('Image converted to binary and saved to', image_path)
+                with open(image_path, 'wb') as f:
+                    f.write(image_data)
+                return image_path.replace('/app/', '')
+            else:
+                return 'ERROR: Not a base64 string-based imaga'
+
+        except Exception as e:
+            print("\nFRONTEND: process_saveimage Error:", e)
+            return 'ERROR: Could not process image string'
+
+    def quality_assure(self, data):
+        if 'original_image_path' in data:
+            image_path = self.convert_base64_to_image_binary_and_save_file(data['original_image_path'])
+            if image_path.startswith('ERROR'):
+                return False, image_path, data
+            else:
+                data['original_image_path'] = image_path
+
+        return True, 'OK', data
+
     def queue_request_to_redis(self, data):
         try:
             r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
             data['queue_id'] = str(uuid.uuid4())
             data['num_images'] = int(data['num_images'])
             data['seed'] = int(data['seed'])
-
-            # These are optional parameters
-            try:
-                if not data['gen_top_k']:
-                    pass
-                else:
-                    data['gen_top_k'] = float(data['gen_top_k'])
-            except KeyError:
-                pass
-
-            try:
-                if not data['gen_top_p']:
-                    pass
-                else:
-                    data['gen_top_p'] = float(data['gen_top_p'])
-            except KeyError:
-                pass
-
-            try:
-                if not data['temperature']:
-                    pass
-                else:
-                    data['temperature'] = float(data['temperature'])
-                if data['temperature'] == 0.0:
-                    data['temperature'] = 0.01
-            except KeyError:
-                pass
-
-            try:
-                if not data['condition_scale']:
-                    pass
-                else:
-                    data['condition_scale'] = float(data['condition_scale'])
-            except KeyError:
-                pass
 
             r.lpush('queue', json.dumps(data))
             print("\nFRONTEND: Request queued to redis with queue_id:", data['queue_id'])

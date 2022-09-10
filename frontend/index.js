@@ -631,6 +631,58 @@ const setDarkModeFromLocalStorage = () =>
 }
 
 
+const setupImageDragDrop = () =>
+{
+    const imageDropArea = document.getElementById('image_drop_area');
+    imageDropArea.addEventListener('dragover', (e) =>
+    {
+        e.preventDefault();
+        e.stopPropagation();
+        imageDropArea.classList.add('drag-over');
+    });
+
+    imageDropArea.addEventListener('dragleave', (e) =>
+    {
+        e.preventDefault();
+        e.stopPropagation();
+        imageDropArea.classList.remove('drag-over');
+    });
+
+    imageDropArea.addEventListener('drop', (e) =>
+    {
+        e.preventDefault();
+        e.stopPropagation();
+        imageDropArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file)
+        {
+            const reader = new FileReader();
+            reader.onload = (e) =>
+            {
+                const img = new Image();
+                img.onload = () =>
+                {
+                    document.getElementById('original_image_path').value = e.target.result;
+                    const dragDropImage = document.createElement('img');
+                    dragDropImage.src = e.target.result;
+                    imageDropArea.innerHTML = '';
+                    imageDropArea.appendChild(dragDropImage);
+                    if(dragDropImage.height > 300)
+                    {
+                        dragDropImage.style.height = "300px";
+                        dragDropImage.style.width = "auto";
+                    }
+                    imageDropArea.style.height = `${dragDropImage.height + 30}px`;
+                    imageDropArea.style.width = `${dragDropImage.width + 30}px`;
+                    document.getElementById('original_image_path').dispatchEvent(new Event('change'));
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
 
 /**
  * A useful sleep function
