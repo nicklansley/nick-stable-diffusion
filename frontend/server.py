@@ -136,7 +136,7 @@ class RelayServer(BaseHTTPRequestHandler):
             return 'ERROR: Could not process image string'
 
     def quality_assure(self, data):
-        if 'original_image_path' in data and data['original_image_path'] != '':
+        if 'original_image_path' in data and data['original_image_path'] != '' and 'data:image' in data['original_image_path']:
             image_path = self.convert_base64_to_image_binary_and_save_file(data['original_image_path'])
             if image_path.startswith('ERROR'):
                 return False, image_path, data
