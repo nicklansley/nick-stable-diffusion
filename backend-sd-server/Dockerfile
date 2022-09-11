@@ -1,5 +1,5 @@
 # FROM nvidia/cuda:11.4.3-cudnn8-devel-ubuntu20.04
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu22.04
 # expose
 EXPOSE 8000
 

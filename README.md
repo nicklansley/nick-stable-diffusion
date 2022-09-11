@@ -49,6 +49,7 @@ This project is being improved daily throughout September 2022, so check back of
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
+* NEW: Massive reduction in backend's general memory requirements - down from 20GB to 8GB, and image disk size down from 17.2 GB to 13.6 GB achieved by changing container image to runtime version of Nvidia/Cuda. No longer any need to increase WSL2 memory size. 
 * NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 * Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
 The DDIM step number will be added to each image's filename so it has format<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
@@ -78,20 +79,8 @@ This section enables you to check that your computer has everything you need to 
     Kernel version: 5.10.102.1
    </pre>
 
-5. You have the latest edition of Docker Desktop installed, and it is running in WSL2 mode (in 'Settings' -> 'General', the 'Use the WSL 2 based engine' option is ticked).
-5. You should already be using Docker Desktop in WSL2 for all kinds of reasons including performance,
-   but by default WSL2 does not have the 'right' to use maximum memory, and Docker reports that this project uses over
-   20GB memory at the present time. To overcome the max memory error, open (or create)
-   a file in your Windows home directory called   <b>.wslconfig</b> - for example on my PC: <pre>
-C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a memory size of 4GB lower than your
-   PC's memory (mine has 64 GB).
-   This does not mean that WSL2 will grab all but 4GB of your PC memory, it's just that you are giving it the 'right' to
-   use that much if it really needs it.
-   Why 4GB? I am guessing Windows can just about keep running on 4GB of memory, but I have not tested it...! The file
-   should look like this:
-    <pre>[wsl2]
-   memory=60GB</pre> 
-   If you had to make this change, reboot your PC at this point.
+4. You have the latest edition of Docker Desktop installed, and it is running in WSL2 mode (in 'Settings' -> 'General', the 'Use the WSL 2 based engine' option is ticked).
+
 <hr>
 
 ## Test your computer
@@ -130,7 +119,7 @@ C:\Users\nick\\.wslconfig</pre> and put a 'memory=' property in that file with a
    is the version of CUDA that the backend uses. This is a big download, so it may take a while but it will save
    'docker compose' time doing this during <i>Fast Start</i> later:
     <pre>
-    docker run --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04  nvidia-smi
+    docker run --gpus all nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu22.04 nvidia-smi
     </pre>
     This should produce <i>identical</i> output to the 'nvidia-smi' command you ran in WSL2 above. If it doesn't, you have a problem with your graphics card or driver.
     <br><b>UPDATE</b>: One person has documented an issue that running this step produces this output:
