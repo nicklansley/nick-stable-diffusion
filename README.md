@@ -259,7 +259,7 @@ If you wish, you can use a service such as ngrok to get your computer a temporar
 friends submit prompts using the application, they will just get added to the queue and processed in turn. Indeed, the whole
 application is designed for multi-user operation.
 
-Behind the scenes for this simple prompting page, the ddim_steps is set to 50, scale is set to 7.5, image size is
+Behind the scenes for this simple prompting page, the ddim_steps is set to 30, scale is set to 7.5, image size is
 512x512px and the downsampling factor is 8.
 These defaults can be altered using the capital-letter variables at the top of script file backend-sd-server/server.py
 if you wish to change them,
