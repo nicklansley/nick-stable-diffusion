@@ -49,7 +49,7 @@ RUN pip3 install --upgrade pudb==2019.2
 RUN pip3 install --upgrade invisible-watermark
 RUN pip3 install --upgrade imageio==2.9.0
 RUN pip3 install --upgrade imageio-ffmpeg==0.4.2
-RUN pip3 install --upgrade pytorch-lightning==1.4.2
+RUN pip3 install --upgrade pytorch-lightning==1.6.0
 RUN pip3 install --upgrade omegaconf==2.1.1
 RUN pip3 install --upgrade test-tube>=0.7.5
 RUN pip3 install --upgrade streamlit>=0.73.1
