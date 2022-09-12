@@ -45,7 +45,7 @@ private project which I have only later realised may be of help to others. I sho
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
 ## Simple UI
-![](UI screenshot.png)
+![](simple.png)
 
 
 ## Advanced UI
