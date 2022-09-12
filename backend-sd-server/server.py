@@ -54,7 +54,7 @@ DOWNSAMPLING_FACTOR = 8  # was opt.F
 SAMPLE_THIS_OFTEN = 1  # was opt.n_iter
 MODEL_PATH = 'models/ldm/stable-diffusion-v1/model.ckpt'
 SCALE = 7.5  # was opt.scale#
-DDIM_STEPS = 30  # was opt.ddim_steps (number of ddim sampling steps)
+DDIM_STEPS = 40  # was opt.ddim_steps (number of ddim sampling steps)
 DDIM_ETA = 0.0  # was opt.ddim_eta  (ddim eta (eta=0.0 corresponds to deterministic sampling)
 N_SAMPLES = 1  # was opt.n_samples (how many samples to produce for each given prompt. A.k.a. batch size)
 PRECISION = "autocast"  # can be "autocast" or "full"
