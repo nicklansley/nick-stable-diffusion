@@ -255,7 +255,9 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             max_ddim_steps = options['max_ddim_steps']
                             min_ddim_steps = options['min_ddim_steps']
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
-                                seed_everything(options['seed'])
+                                if max_ddim_steps != min_ddim_steps:
+                                    seed_everything(options['seed'])
+
                                 run_sampling(image_counter,
                                              conditioning,
                                              each_ddim_step,
