@@ -512,7 +512,13 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
 
     document.getElementById("min_ddim_steps_value").innerText = minDDIMSteps.toString();
     document.getElementById("max_ddim_steps_value").innerText = maxDDIMSteps.toString();
-
+    if(minDDIMSteps !== maxDDIMSteps && parseInt(document.getElementById("num_images").value) > 1)
+    {
+        if(confirm("You can only use a range of DDIM steps if you are requesting a single image.\nDo you want to change the number of images to 1?"))
+        {
+            document.getElementById("num_images").value = 1;
+        }
+    }
     displayCalculatedImageCount();
 }
 

@@ -255,6 +255,9 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             max_ddim_steps = options['max_ddim_steps']
                             min_ddim_steps = options['min_ddim_steps']
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
+
+                                # forces the seed back to the one requested, or we will get a seed for a
+                                # different image each time we execute run_sampling()
                                 if max_ddim_steps != min_ddim_steps:
                                     seed_everything(options['seed'])
 
@@ -272,7 +275,9 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             end = time.time()
                             time_taken = end - start
+                            image_changed_flag = True
                             image_counter += 1
+
 
                     save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 
