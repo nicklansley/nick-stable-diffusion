@@ -45,13 +45,23 @@ private project which I have only later realised may be of help to others. I sho
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
 ## Simple UI
+Type in a prompt, choose the number of images and 'Click to send request'. The images will appear on the page as they are created: 
+
 ![](simple.png)
 
 
 ## Advanced UI
+Add an input prompt then fiddle with the controls! Drag and drop an image into the box to use it as the input image for the prompt.
+Choose a min and max range of DDIM steps to create a series of images with different DDIM steps. The DDIM step number will be added to each image's filename.
+Alter the classifier scale, and even choose your own starting seed for image creation consistency.
+
 ![](advanced.png)
 
 ## Library UI
+Images created by this application will appear in the library. 
+Hover over an image for a close up. Click on an image to open a new Advanced page with 
+all the settings used to create that image pre-filled, and the image set as the input image for further manipulation.
+
 ![](library.png)
 
 ## Daily updates!
