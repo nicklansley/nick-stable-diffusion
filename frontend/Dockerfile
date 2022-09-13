@@ -9,7 +9,6 @@ EXPOSE 3000
 COPY *.html /app
 COPY *.js /app
 COPY *.py /app
-COPY *.css /app
 COPY *.png /app
 COPY *.ico /app
 COPY site.webmanifest /app

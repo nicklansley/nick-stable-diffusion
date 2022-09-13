@@ -191,7 +191,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
         driver_opts:
           o: bind
           type: none
-          device: /mnt/s/nick-stable-diffusion-data\cache
+          device: /mnt/s/nick-stable-diffusion-data/cache
       model-on-s:
         driver: local
         driver_opts:

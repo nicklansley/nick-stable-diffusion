@@ -51,7 +51,7 @@ const retrieveImages = async () =>
 
     for(const libraryItem of library)
     {
-        if (searchText.length === 0 || libraryItem['text_prompt'].includes(searchText))
+        if (searchText.length === 0 || libraryItem['text_prompt'].toLowerCase().includes(searchText.toLowerCase()))
         {
             libraryEntryCount += 1;
             const hr = document.createElement("hr");
