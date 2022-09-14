@@ -277,9 +277,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             end = time.time()
                             time_taken = end - start
-                            image_changed_flag = True
                             image_counter += 1
-
 
                     save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 
@@ -354,6 +352,10 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
 
         # load the image
         resized_image, init_image = load_and_format_image(original_image_path, options['width'], options['height'])
+
+        # save the resized original image
+        resized_image.save(os.path.join(library_dir_name, '00-original.png'))
+
         init_image = init_image.to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
@@ -397,12 +399,9 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                     x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
                                     # save the newly created images
-                                    image_counter = save_image_samples(max_ddim_steps, image_counter, library_dir_name,
+                                    image_counter = save_image_samples(each_ddim_step, image_counter, library_dir_name,
                                                                        wm_encoder,
                                                                        x_samples, options['seed'], options['scale'])
-
-                                    # save the resized original image
-                                    resized_image.save(os.path.join(library_dir_name, '00-original.png'))
 
                                     end = time.time()
                                     time_taken = end - start
