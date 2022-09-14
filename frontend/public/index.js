@@ -281,6 +281,7 @@ const getLibrary = async () =>
 const displayCalculatedImageCount = () =>
 {
     let imageCount = parseInt(document.getElementById('num_images').value);
+    document.getElementById('num_images_value').innerText = `${imageCount} image${imageCount > 1 ? "s" : ""}`;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     imageCount = imageCount * (maxDDIMSteps - minDDIMSteps + 1);
@@ -322,7 +323,7 @@ const displayImages = (imageList) =>
     for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
-        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
+        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}` : "/blank.png";
         image.width = image.height / widthHeightRatio;
     }
 }
@@ -352,7 +353,8 @@ const createImagePlaceHolders = () =>
     // multiply the number of images required by the number of the difference in ddim_steps
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
-    const imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps + 1);
+    let imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps);
+    imageElementsToCreate = includesOriginalImage ? imageElementsToCreate + 1 : imageElementsToCreate;
 
 
     for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
