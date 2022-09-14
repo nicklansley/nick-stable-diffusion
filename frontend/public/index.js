@@ -307,11 +307,10 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
  */
 const displayImages = (imageList) =>
 {
-    const timestamp = new Date().getTime();    // used to force a reload of the image and not get a cached copy
     const masterImage = document.getElementById("master_image");
     const masterImageCaption = document.getElementById("master_image_caption");
 
-    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
+    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}` : "/blank.png";
     if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
     {
         masterImageCaption.innerText = authorDescriptionFromImageFileName(masterImage.src)

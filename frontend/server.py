@@ -10,6 +10,7 @@ import base64
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+PORT_NUMBER = 3000
 
 class RelayServer(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -24,26 +25,8 @@ class RelayServer(BaseHTTPRequestHandler):
             api_command = api_command.split('?')[0]
 
         print("\nFRONTEND: GET >> API command =", api_command)
-        if api_command.endswith('/'):
-            self.process_ui('/index.html')
-
-        elif api_command.endswith('/getlibrary'):
+        if api_command.endswith('/getlibrary'):
             self.process_ui('/library/library.json')
-
-        elif api_command.endswith('.html') or \
-                'advanced.html?' in api_command or \
-                'index.html?' in api_command  or \
-                api_command.endswith('.js') or \
-                api_command.endswith('.js') or \
-                api_command.endswith('.css') or \
-                api_command.endswith('.ico') or \
-                api_command.endswith('.gif') or \
-                api_command.endswith('.png') or \
-                api_command.endswith('.jpeg') or \
-                api_command.endswith('.map') or \
-                api_command.endswith('.webmanifest') or \
-                api_command.endswith('.jpg'):
-            self.process_ui(api_command)
 
         elif api_command == '/queue_status':
             queue_data = self.check_queue_request()
@@ -250,7 +233,7 @@ def exit_signal_handler(self, sig):
 if __name__ == "__main__":
     signal.signal(signal.SIGTERM, exit_signal_handler)
     signal.signal(signal.SIGINT, exit_signal_handler)
-    relayServerRef = HTTPServer(("", 3000), RelayServer)
+    relayServerRef = HTTPServer(("", PORT_NUMBER), RelayServer)
     sys.stderr.write('Frontend Web Server\n\n')
     sys.stderr.flush()
 

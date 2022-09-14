@@ -70,6 +70,7 @@ the project working on your machine. Check the commits list for the latest chang
 
 ### Latest:
 * NEW: DDIM Steps now works with input images as well as just text prompts.
+* NEW: Fixed bug that sometimes caused partial or corrupted images to appear during processing.
 * NEW: Massive reduction in backend's general memory requirements - down from 20GB to 8GB, and image disk size down from 17.2 GB to 13.6 GB achieved by changing container image to runtime version of Nvidia/Cuda. No longer any need to increase WSL2 memory size. 
 * NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 * Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
