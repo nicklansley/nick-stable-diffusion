@@ -98,7 +98,7 @@
 </div>
 <div>
     Filter Library: <input type="text" id="searchText" size="30" onkeyup="retrieveImages()">
-    <button onclick="document.getElementById('searchText').value = '';">Clear Filters</button>
+    <button onclick="document.getElementById('searchText').value = '';retrieveImages()">Clear Filters</button>
     &nbsp;&nbsp;&nbsp;&nbsp;Check for new images every 10 seconds: <input type="checkbox" id="autoRefresh"
                                                                           onchange="setAutoRefresh()"><br>
     <small>

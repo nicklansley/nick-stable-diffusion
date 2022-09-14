@@ -254,7 +254,9 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                             max_ddim_steps = options['max_ddim_steps']
                             min_ddim_steps = options['min_ddim_steps']
+                            print(f"Running DDIM steps {min_ddim_steps} to {max_ddim_steps}")
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
+                                print(f"Running DDIM step {each_ddim_step}")
 
                                 # forces the seed back to the one requested, or we will get a seed for a
                                 # different image each time we execute run_sampling()
@@ -346,9 +348,6 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
     os.makedirs(library_dir_name, exist_ok=True)
     image_counter = len(os.listdir(library_dir_name))
 
-    max_ddim_steps = options['max_ddim_steps']
-    min_ddim_steps = options['min_ddim_steps']
-
     try:
         assert text_prompt is not None
         data = [N_SAMPLES * [text_prompt]]
@@ -359,50 +358,61 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
         init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
-        sampler.make_schedule(ddim_num_steps=max_ddim_steps, ddim_eta=DDIM_ETA, verbose=False)
+        max_ddim_steps = options['max_ddim_steps']
+        min_ddim_steps = options['min_ddim_steps']
+        print(f"Running DDIM steps {min_ddim_steps} to {max_ddim_steps}")
 
-        assert 0. <= options['strength'] <= 1., 'can only work with strength in [0.0, 1.0]'
+        for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
+            try:
+                print(f"Running DDIM step {each_ddim_step}")
+                seed_everything(options['seed'])
 
-        t_enc = int(options['strength'] * max_ddim_steps)
-        print(f"target t_enc is {t_enc} steps")
+                sampler.make_schedule(ddim_num_steps=each_ddim_step, ddim_eta=DDIM_ETA, verbose=False)
 
-        precision_scope = autocast if PRECISION == "autocast" else nullcontext
-        with torch.no_grad():
-            with precision_scope("cuda"):
-                with model.ema_scope():
-                    for n in trange(int(num_images / N_SAMPLES), desc="Sampling"):
-                        for prompts in tqdm(data, desc="data"):
-                            uc = None
-                            if SCALE != 1.0:
-                                uc = model.get_learned_conditioning(N_SAMPLES * [""])
-                            if isinstance(prompts, tuple):
-                                prompts = list(prompts)
-                            c = model.get_learned_conditioning(prompts)
+                assert 0. <= options['strength'] <= 1., 'can only work with strength in [0.0, 1.0]'
 
-                            # encode (scaled latent)
-                            z_enc = sampler.stochastic_encode(init_latent, torch.tensor([t_enc] * N_SAMPLES).to(device))
-                            # decode it
-                            samples = sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=options['scale'],
-                                                     unconditional_conditioning=uc, )
+                t_enc = int(options['strength'] * each_ddim_step)
+                print(f"target t_enc is {t_enc} steps")
 
-                            x_samples = model.decode_first_stage(samples)
-                            x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
+                precision_scope = autocast if PRECISION == "autocast" else nullcontext
+                with torch.no_grad():
+                    with precision_scope("cuda"):
+                        with model.ema_scope():
+                            for n in trange(int(num_images / N_SAMPLES), desc="Sampling"):
+                                for prompts in tqdm(data, desc="data"):
+                                    uc = None
+                                    if SCALE != 1.0:
+                                        uc = model.get_learned_conditioning(N_SAMPLES * [""])
+                                    if isinstance(prompts, tuple):
+                                        prompts = list(prompts)
+                                    c = model.get_learned_conditioning(prompts)
 
-                            # save the newly created images
-                            image_counter = save_image_samples(max_ddim_steps, image_counter, library_dir_name,
-                                                               wm_encoder,
-                                                               x_samples, options['seed'], options['scale'])
+                                    # encode (scaled latent)
+                                    z_enc = sampler.stochastic_encode(init_latent, torch.tensor([t_enc] * N_SAMPLES).to(device))
+                                    # decode it
+                                    samples = sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=options['scale'],
+                                                             unconditional_conditioning=uc, )
 
-                            # save the resized original image
-                            resized_image.save(os.path.join(library_dir_name, '00-original.png'))
+                                    x_samples = model.decode_first_stage(samples)
+                                    x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
-                            end = time.time()
-                            time_taken = end - start
+                                    # save the newly created images
+                                    image_counter = save_image_samples(max_ddim_steps, image_counter, library_dir_name,
+                                                                       wm_encoder,
+                                                                       x_samples, options['seed'], options['scale'])
 
-                    save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
-                                       time_taken, '', original_image_path)
+                                    # save the resized original image
+                                    resized_image.save(os.path.join(library_dir_name, '00-original.png'))
 
-            return {'success': True, 'queue_id': queue_id}
+                                    end = time.time()
+                                    time_taken = end - start
+
+                            save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
+                                               time_taken, '', original_image_path)
+            except Exception as e:
+                print('Error in process_image: ' + str(e))
+
+        return {'success': True, 'queue_id': queue_id}
 
     except Exception as e:
         print(e)

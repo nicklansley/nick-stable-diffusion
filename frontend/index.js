@@ -284,7 +284,7 @@ const displayCalculatedImageCount = () =>
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     imageCount = imageCount * (maxDDIMSteps - minDDIMSteps + 1);
-    document.getElementById('estimated_time').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
+    document.getElementById('status').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
 }
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
@@ -349,12 +349,11 @@ const createImagePlaceHolders = () =>
 
     const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
-    let imageElementsToCreate = includesOriginalImage ? global_imagesRequested + 1 : global_imagesRequested;
 
     // multiply the number of images required by the number of the difference in ddim_steps
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
-    imageElementsToCreate = imageElementsToCreate * (maxDDIMSteps - minDDIMSteps + 1);
+    const imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps + 1);
 
 
     for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
@@ -486,16 +485,14 @@ const startCountDown = async (requestedImageCount) =>
 }
 
 const ensureDDIMStepsAreValid = (ddim_control) => {
-    const originalImagePath = document.getElementById("original_image_path").value;
     let maxDDIMSteps = parseInt(document.getElementById("max_ddim_steps").value);
     let minDDIMSteps = parseInt(document.getElementById("min_ddim_steps").value);
     document.getElementById(ddim_control.id + '_value').innerText = ddim_control.value;
 
-    const lockDDIMControls = originalImagePath !== "";
 
     if(ddim_control.id === "min_ddim_steps")
     {
-        if(lockDDIMControls || minDDIMSteps > maxDDIMSteps)
+        if(minDDIMSteps > maxDDIMSteps)
         {
             document.getElementById("max_ddim_steps").value = minDDIMSteps;
             maxDDIMSteps = minDDIMSteps;
@@ -503,7 +500,7 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
     }
     else
     {
-        if(lockDDIMControls || maxDDIMSteps < minDDIMSteps)
+        if(maxDDIMSteps < minDDIMSteps)
         {
             document.getElementById("min_ddim_steps").value = maxDDIMSteps;
             minDDIMSteps = maxDDIMSteps;
@@ -514,14 +511,21 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
     document.getElementById("max_ddim_steps_value").innerText = maxDDIMSteps.toString();
     if(minDDIMSteps !== maxDDIMSteps && parseInt(document.getElementById("num_images").value) > 1)
     {
-        if(confirm("You can only use a range of DDIM steps if you are requesting a single image.\nDo you want to change the number of images to 1?"))
-        {
-            document.getElementById("num_images").value = 1;
-        }
+       document.getElementById("num_images").value = 1;
+       document.getElementById("num_images_value").innerText = "1";
+       document.getElementById("status").innerText = "Number of images set to 1 because DDIM steps are not equal";
     }
     displayCalculatedImageCount();
 }
 
+const buttonClearImage_Clicked = (button) =>
+{
+    document.getElementById("original_image_path").value = "";
+    document.getElementById('image_drop_area').innerHTML = '';
+    button.style.visibility = "hidden";
+    document.getElementById("status").innerText = "Original image cleared";
+    displayCalculatedImageCount();
+}
 
 const populateControlsFromHref = () =>
 {
@@ -537,7 +541,8 @@ const populateControlsFromHref = () =>
         if (params.has('original_image_path'))
         {
             document.getElementById('original_image_path').value = params.get('original_image_path');
-            checkForImageDDIMInconsistencyFlag = true;
+            document.getElementById('button_remove_image').style.visibility = 'visible';
+
         }
         if (params.has('strength'))
         {
@@ -601,20 +606,6 @@ const populateControlsFromHref = () =>
             else if (params.get('downsampling_factor') === "16")
             {
                 document.getElementById('ds16').checked = true;
-            }
-        }
-
-        // Check for input image AND differing DDIM steps, which is not supported at the moment.
-        if(checkForImageDDIMInconsistencyFlag && document.getElementById('original_image_path').value !== "" && document.getElementById('min_ddim_steps').value !== document.getElementById('max_ddim_steps').value)
-        {
-            if(confirm("This page has received both an input image URL AND differing Max/Min DDIM steps, which is not supported at the moment.\n\nSelect OK to use the input image and lock the DDIM steps to the same value. \n\nSelect Cancel to remove the input image URL and keep the different DDIM Step values."))
-            {
-                document.getElementById('min_ddim_steps').value = document.getElementById('max_ddim_steps').value;
-                document.getElementById('min_ddim_steps_value').innerText = document.getElementById('max_ddim_steps').value;
-            }
-            else
-            {
-                document.getElementById('original_image_path').value = "";
             }
         }
     }
@@ -685,6 +676,7 @@ const setupImageDragDrop = () =>
                 img.src = e.target.result;
             }
             reader.readAsDataURL(file);
+            document.getElementById('button_remove_image').style.visibility = 'visible';
         }
     });
 }

@@ -17,7 +17,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - NEW: Images appear as they are created rather than waiting for the whole batch to be created.
 - NEW: Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
 The DDIM step number will be added to each image's filename<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
-Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
+- NEW: DDIM-Steps now works with input images as well as just text prompts.
 - NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
@@ -69,6 +69,7 @@ This project is being improved daily throughout September 2022, so check back of
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
+* NEW: DDIM Steps now works with input images as well as just text prompts.
 * NEW: Massive reduction in backend's general memory requirements - down from 20GB to 8GB, and image disk size down from 17.2 GB to 13.6 GB achieved by changing container image to runtime version of Nvidia/Cuda. No longer any need to increase WSL2 memory size. 
 * NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 * Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
