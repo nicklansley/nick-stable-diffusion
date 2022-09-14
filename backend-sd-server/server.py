@@ -194,6 +194,7 @@ def check_safety(x_image):
 
 
 def danger_will_robinson(x_image):
+    print("Danger, Will Robinson! NSFW content detected but not suppressed!")
     return x_image, []
 
 
@@ -306,8 +307,7 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
         x_samples_ddim = model.decode_first_stage(samples_ddim)
         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
         x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
-        # REPLACE WITH orig_check_safety() to re-enable the safety check
-        # x_checked_image, has_nsfw_concept = orig_check_safety(x_samples_ddim)
+
         if SAFETY_FLAG:
             x_checked_image, has_nsfw_concept = check_safety(x_samples_ddim)
         else:

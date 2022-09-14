@@ -164,7 +164,9 @@
             folder using 'library/&lt;path-to-file&gt;'</small>:
             <div><input id="original_image_path" type="text" size="90""/></div>
            <p>or drag and drop an input image into this box:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
-           <div id="image_drop_area""></div>
+           <div id="image_drop_area" style="height: 330px; width: 330px">
+               <img id="drag_drop_image" src="" style="height: 300px; width: auto"/>
+           </div>
            <p id="file_name"></p>
             <button id="button_remove_image" class="button-9" onclick="buttonClearImage_Clicked(this);">Remove Input Image</button>
             <hr>

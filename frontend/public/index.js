@@ -550,6 +550,9 @@ const populateControlsFromHref = () =>
         if (params.has('original_image_path'))
         {
             document.getElementById('original_image_path').value = params.get('original_image_path');
+            const dragDropImage = document.getElementById('drag_drop_image');
+            dragDropImage.src = params.get('original_image_path');
+
             document.getElementById('button_remove_image').style.visibility = 'visible';
 
         }
@@ -669,17 +672,13 @@ const setupImageDragDrop = () =>
                 img.onload = () =>
                 {
                     document.getElementById('original_image_path').value = e.target.result;
-                    const dragDropImage = document.createElement('img');
+                    const dragDropImage = document.getElementById('drag_drop_image');
                     dragDropImage.src = e.target.result;
-                    imageDropArea.innerHTML = '';
-                    imageDropArea.appendChild(dragDropImage);
                     if(dragDropImage.height > 300)
                     {
                         dragDropImage.style.height = "300px";
                         dragDropImage.style.width = "auto";
                     }
-                    imageDropArea.style.height = `${dragDropImage.height + 30}px`;
-                    imageDropArea.style.width = `${dragDropImage.width + 30}px`;
                     document.getElementById('original_image_path').dispatchEvent(new Event('change'));
                 }
                 img.src = e.target.result;
