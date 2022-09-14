@@ -315,10 +315,11 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
  */
 const displayImages = (imageList) =>
 {
+    const timestamp = new Date().getTime();
     const masterImage = document.getElementById("master_image");
     const masterImageCaption = document.getElementById("master_image_caption");
 
-    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}` : "/blank.png";
+    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
     if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
     {
         masterImageCaption.innerText = authorDescriptionFromImageFileName(masterImage.src)
@@ -330,7 +331,7 @@ const displayImages = (imageList) =>
     for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
-        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}` : "/blank.png";
+        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
         image.width = image.height / widthHeightRatio;
     }
 }

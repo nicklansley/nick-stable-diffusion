@@ -62,7 +62,7 @@ STRENGTH = 0.75  # was opt.strength - used when processing an image - 0 means no
 OUTPUT_PATH = '/library'
 PORT = 8080
 WATERMARK_FLAG = False  # set to True to enable watermarking
-SAFETY_FLAG = False  # set to True to enable safety checking
+SAFETY_FLAG = True  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
 
 # GLOBAL VARS
 global_device = None
@@ -175,7 +175,7 @@ def put_watermark(img, wm_encoder=None):
 def load_replacement(x):
     try:
         hwc = x.shape
-        y = Image.open("assets/rick.jpeg").convert("RGB").resize((hwc[1], hwc[0]))
+        y = Image.open("assets/nsfw.png").convert("RGB").resize((hwc[1], hwc[0]))
         y = (np.array(y) / 255.0).astype(x.dtype)
         assert y.shape == x.shape
         return y
