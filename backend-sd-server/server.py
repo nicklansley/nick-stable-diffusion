@@ -62,7 +62,7 @@ STRENGTH = 0.75  # was opt.strength - used when processing an image - 0 means no
 OUTPUT_PATH = '/library'
 PORT = 8080
 WATERMARK_FLAG = False  # set to True to enable watermarking
-SAFETY_FLAG = True  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
+SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
 
 # GLOBAL VARS
 global_device = None
@@ -594,6 +594,12 @@ if __name__ == "__main__":
     print('------------------------------------------')
     if not WATERMARK_FLAG:
         print('Note: Watermarking is disabled')
+    else:
+        print('Note: Watermarking is enabled with "Stable Diffusion" text')
+
     if not SAFETY_FLAG:
-        print('Note: Safety checks are disabled')
+        print('Note: Safety checks are disabled - take responsibility for your own actions!')
+    else:
+        print('Note: Safety checks are are enabled. A NSFW-replacement image will be used if an image is deemed naughty')
+
     httpd.serve_forever()
