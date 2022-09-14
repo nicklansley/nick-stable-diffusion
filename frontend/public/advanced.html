@@ -183,7 +183,7 @@
                     <hr>
                     Choose number of images to create:
                     <div class="slidecontainer"><input class="slider" id="num_images" max="30" min="1"
-                                                       oninput="displayCalculatedImageCount()"
+                                                       oninput="validateImageCountInput()"
                                                        step="1" type="range"
                                                        value="1">
                     </div>
@@ -223,7 +223,7 @@
                         <div class="slidecontainer"><input
                                 class="slider" id="width"
                                 max="1024" min="256"
-                                oninput="document.getElementById('width_value').innerText = this.value; displayCalculatedImageCount()"
+                                oninput="document.getElementById('width_value').innerText = this.value; validateImageCountInput()"
                                 step="64" type="range"
                                 value="512">
                         </div>

@@ -278,15 +278,22 @@ const getLibrary = async () =>
 }
 
 
-const displayCalculatedImageCount = () =>
+const validateImageCountInput = () =>
 {
     let imageCount = parseInt(document.getElementById('num_images').value);
-    document.getElementById('num_images_value').innerText = `${imageCount} image${imageCount > 1 ? "s" : ""}`;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
-    imageCount = imageCount * (maxDDIMSteps - minDDIMSteps + 1);
-    document.getElementById('status').innerHTML = `<i>${imageCount} image${imageCount > 1 ? "s" : ""} to be created</i>`;
+    if(minDDIMSteps !== maxDDIMSteps)
+    {
+        document.getElementById('num_images').value = 1;
+        document.getElementById('num_images_value').innerText = `1 image, because the DDIM Steps setting (from ${minDDIMSteps} to ${maxDDIMSteps}) will generate ${maxDDIMSteps - minDDIMSteps + 1} images`;
+    }
+    else
+    {
+    document.getElementById('num_images_value').innerText = `${imageCount} image${imageCount > 1 ? "s" : ""}`;
+    }
 }
+
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
@@ -516,7 +523,7 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
        document.getElementById("num_images_value").innerText = "1";
        document.getElementById("status").innerText = "Number of images set to 1 because DDIM steps are not equal";
     }
-    displayCalculatedImageCount();
+    validateImageCountInput();
 }
 
 const buttonClearImage_Clicked = (button) =>
@@ -525,7 +532,7 @@ const buttonClearImage_Clicked = (button) =>
     document.getElementById('image_drop_area').innerHTML = '';
     button.style.visibility = "hidden";
     document.getElementById("status").innerText = "Original image cleared";
-    displayCalculatedImageCount();
+    validateImageCountInput();
 }
 
 const populateControlsFromHref = () =>
