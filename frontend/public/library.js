@@ -148,6 +148,16 @@ const retrieveImages = async () =>
     document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${imageCount} images within ${libraryEntryCount} library entries`;
 }
 
+
+const getSeedValueFromImageFileName = (imageFileName) =>
+{
+    if(imageFileName.includes("blank.png")) return '';
+    if(imageFileName.includes("original.png")) return '';
+    const srcElements = imageFileName.split("/");
+    const imageNameSections = srcElements[2].split("-");
+    return imageNameSections[3].replace('R', '');
+}
+
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
     if(imageFileName.includes("blank.png")) return '';
@@ -191,7 +201,9 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     const urlencoded_image_src = encodeURIComponent(image_src);
     const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
-    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${libraryItem['seed']}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
+    let seedValue = getSeedValueFromImageFileName(image_src);
+    if (seedValue === '') seedValue = libraryItem['seed'];
+    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${seedValue}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
     return link;
 }
 

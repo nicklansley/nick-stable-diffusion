@@ -4,7 +4,7 @@ let global_currentQueueId = '';
 let global_imagesRequested = 0;
 let global_countdownValue = 0;
 let global_countdownTimerIntervalId = null;
-
+let global_imageLoading = false;
 /**
  * Send the text prompt to the AI and get a queue_id back in 'queue_id' which will be used to track the request.
  * @returns {Promise<void>
@@ -313,7 +313,7 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
  * Loop through the library looking for our queue_id and return/display the actual images.
  * @param imageList
  */
-const displayImages = (imageList) =>
+const displayImages = async (imageList) =>
 {
     const timestamp = new Date().getTime();
     const masterImage = document.getElementById("master_image");
@@ -333,6 +333,13 @@ const displayImages = (imageList) =>
         const image = document.getElementById(`image_${imageIndex}`);
         image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
         image.width = image.height / widthHeightRatio;
+        global_imageLoading = true;
+        while(global_imageLoading)
+        {
+            // We wait for this image's onload event to complete and set global_imageLoading to false before moving on to the next image:
+            await sleep(100);
+        }
+
     }
 }
 
@@ -374,6 +381,11 @@ const createImagePlaceHolders = () =>
         image.width = 150;
         image.style.zIndex = "0";
         image.style.position = "relative";
+
+        image.onload = () =>
+        {
+            global_imageLoading = false;
+        }
 
         image.onmouseover = function ()
         {
@@ -472,7 +484,7 @@ const startCountDown = async (requestedImageCount) =>
             // This sleep() pause ensures that the backend has finished writing the images before we try to download
             // them for the final time. If we don't do this, then the download may cause partial images to be downloaded.
             // If partial images were previously downloaded then this final sleep will correct any issues.
-            await sleep(1);
+            await sleep(1000);
             await displayImages(currentImageListData['images']);
         }
         else
@@ -696,9 +708,9 @@ const setupImageDragDrop = () =>
  * @param seconds
  * @returns {Promise<unknown>}
  */
-const sleep = (seconds) =>
+const sleep = (milliSeconds) =>
 {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    return new Promise(resolve => setTimeout(resolve, milliSeconds));
 }
 /**
  * Set a timer to go and get the queued prompt requests from the server every 2 seconds

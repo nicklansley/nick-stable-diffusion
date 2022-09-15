@@ -219,8 +219,15 @@ def setup():
 
 def process(text_prompt, device, model, wm_encoder, queue_id, num_images, options):
     print('Running Prompt Processing')
+
+    chosen_seed = options['seed']
+    if chosen_seed == 0:
+        chosen_seed = random.randint(1, 2147483647)
+    else:
+        # we push the seed back by 1 as it will be incremented as we start the looping
+        chosen_seed -= 1
+
     sampler = PLMSSampler(model)  # Uses PLMS model
-    seed_everything(options['seed'])
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
@@ -259,10 +266,15 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             for each_ddim_step in range(min_ddim_steps, max_ddim_steps + 1):
                                 print(f"Running DDIM step {each_ddim_step}")
 
-                                # forces the seed back to the one requested, or we will get a seed for a
-                                # different image each time we execute run_sampling()
-                                if max_ddim_steps != min_ddim_steps:
-                                    seed_everything(options['seed'])
+                                if max_ddim_steps == min_ddim_steps:
+                                    # We're going to increment the seed counter for each image in order to
+                                    # document the seed used at the image level - the seed value will be recorded
+                                    # in the image file name.
+                                    # if the steps differ then we keep the same seed for consistency for the 'one' image
+                                    chosen_seed += 1
+
+                                print(f"Running DDIM step {each_ddim_step} with seed {chosen_seed}")
+                                seed_everything(chosen_seed)
 
                                 run_sampling(image_counter,
                                              conditioning,
@@ -274,7 +286,8 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                                              shape,
                                              start_code,
                                              unconditional_conditioning,
-                                             wm_encoder)
+                                             wm_encoder,
+                                             chosen_seed)
 
                             end = time.time()
                             time_taken = end - start
@@ -293,7 +306,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
 
 def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
-                 unconditional_conditioning, wm_encoder):
+                 unconditional_conditioning, wm_encoder, seed_value):
     try:
         samples_ddim, _ = sampler.sample(S=ddim_steps,
                                          conditioning=conditioning,
@@ -316,7 +329,7 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
         x_samples = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
 
         image_counter = save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples,
-                                           options['seed'], options['scale'])
+                                           seed_value, options['scale'])
 
     except Exception as e:
         print('Error in run_sampling: ' + str(e))
@@ -330,6 +343,7 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
         x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
         img = Image.fromarray(x_sample.astype(np.uint8))
         img = put_watermark(img, wm_encoder)
+        print(f"Saving image #{image_counter} with DDIM step {ddim_steps}, scale {scale} and seed {seed_value}")
         img.save(
             os.path.join(library_dir_name,
                          f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png"))
@@ -340,11 +354,18 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
 def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
-    seed_everything(options['seed'])
+
+    chosen_seed = options['seed']
+    if chosen_seed == 0:
+        chosen_seed = random.randint(1, 2147483647)
+    else:
+        # we push the seed back by 1 as it will be incremented as we start the looping
+        chosen_seed -= 1
+
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
-    image_counter = len(os.listdir(library_dir_name))
+    image_counter = 0
 
     try:
         assert text_prompt is not None
@@ -382,11 +403,21 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                         with model.ema_scope():
                             for n in trange(int(num_images / N_SAMPLES), desc="Sampling"):
                                 for prompts in tqdm(data, desc="data"):
+                                    if max_ddim_steps == min_ddim_steps:
+                                        # increment the seed counter so we can keep control of the seed for each image
+                                        # (if the steps differ then we keep the same seed for consistency
+                                        # for the 'one' image)
+                                        chosen_seed += 1
+
+                                    print(f"Running DDIM step {each_ddim_step} with seed {chosen_seed}")
+                                    seed_everything(chosen_seed)
+
                                     uc = None
                                     if SCALE != 1.0:
                                         uc = model.get_learned_conditioning(N_SAMPLES * [""])
                                     if isinstance(prompts, tuple):
                                         prompts = list(prompts)
+
                                     c = model.get_learned_conditioning(prompts)
 
                                     # encode (scaled latent)
@@ -399,9 +430,13 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                     x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
                                     # save the newly created images
-                                    image_counter = save_image_samples(each_ddim_step, image_counter, library_dir_name,
-                                                                       wm_encoder,
-                                                                       x_samples, options['seed'], options['scale'])
+                                    image_counter = save_image_samples(each_ddim_step,
+                                                       image_counter,
+                                                       library_dir_name,
+                                                       wm_encoder,
+                                                       x_samples,
+                                                       chosen_seed,
+                                                       options['scale'])
 
                                     end = time.time()
                                     time_taken = end - start
@@ -488,7 +523,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         # Set up defaults for the optional extra properties which will
         # be overwritten should they be in the request
         options = {
-            'seed': random.randint(1, 2147483647),
+            'seed': 0,
             'height': HEIGHT,
             'width': WIDTH,
             'max_ddim_steps': DDIM_STEPS,
@@ -506,7 +541,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             # else use the seed generated when options was initialised
 
         except ValueError:
-            # use the seed generated when options was initialised
+            # keep the seed at 0 to be generated within the process functions
             pass
 
         if 'height' in data:
