@@ -82,21 +82,6 @@ Currently, this only applies when you do not supply an input image. I'm working 
 * Various bug fixes and improvements
 
 
-## Example Workflow
-1. Start with the 'simple' page and type in a prompt and keep the default creation of 3 images. 
-2. Click to send the request.
-3. Review the images as they appear on the page and adjust the prompt to tune the results.
-4. Once you are getting close to the art you are looking for, expand the number of images up to a maximum of 30.
-5. If you are happy with the direction the images are going in,, click on the 'Library' page button to review them in the library.
-6. Click on an image in the library to open a new advanced page with all the settings used to create that image pre-filled, and the image set as the input image for further manipulation.
-7. Adjust the number of images to be created to, say 10 and click to send the request. The first result will be close to the chosen image because the same seed was used that originally created it.
-8. Start reducing the amount of change allowed by the AI by adjusting the 'Change' slider to closer to a lower percentage value. The images will be very similar to the original image.
-9. If you want greater variety, remove the seed value, so a random seed starts being used.
-10. As you finesse the images, you can start increasing its size by adjusting the 'height' and 'width' sliders to a higher value. The images will be larger and more detailed.
-11. Adjust the 'scale' control to vary the 'polish' of the images. The higher the value, the more 'polished' the images will be (although this is subjective!)
-12. If a 'better' image arrives but you want to finesses it, refresh the Library page then click on that image, and return to step 6.
-12. Keep reducing the value of the 'Change' slider to tune the final look.
-
 ## Make sure your computer has everything ready
 This section enables you to check that your computer has everything you need to run the application.
 1. Make sure you have an NVidia graphics card and a NVidia's GPU driver installed. This is how the backend will render
@@ -332,6 +317,21 @@ are 'substantially' different to the original.</i>
 If you click an image in the library, it will open a new advanced page with the settings that made that image already
 preset so you can manipulate it further.
 
+## Example Workflow
+1. Start with the 'simple' page and type in a prompt and keep the default creation of 3 images. 
+2. Click to send the request.
+3. Review the images as they appear on the page and adjust the prompt to tune the results.
+4. Once you are getting close to the art you are looking for, expand the number of images up to a maximum of 30.
+5. If you are happy with the direction the images are going in,, click on the 'Library' page button to review them in the library.
+6. Click on an image in the library to open a new advanced page with all the settings used to create that image pre-filled, and the image set as the input image for further manipulation.
+7. Adjust the number of images to be created to, say 10 and click to send the request. The first result will be close to the chosen image because the same seed was used that originally created it.
+8. Start reducing the amount of change allowed by the AI by adjusting the 'Change' slider to closer to a lower percentage value. The images will be very similar to the original image.
+9. If you want greater variety, remove the seed value, so a random seed starts being used.
+10. As you finesse the images, you can start increasing its size by adjusting the 'height' and 'width' sliders to a higher value. The images will be larger and more detailed.
+11. Adjust the 'scale' control to vary the 'polish' of the images. The higher the value, the more 'polished' the images will be (although this is subjective!)
+12. If a 'better' image arrives but you want to finesses it, refresh the Library page then click on that image, and return to step 6.
+12. Keep reducing the value of the 'Change' slider to tune the final look.
+
 ## API
 
 The API is a simple RESTful API that can be used by the UI to send requests to the backend.
@@ -357,6 +357,7 @@ innocent prompts, and it has no moral compass to help you unsee what it has crea
 
 
 ## Licenses
+See LICENSE page for details of licensing for this project
 
 The favicon used by this application was generated using the following graphics from Twitter Twemoji:
 
@@ -364,3 +365,4 @@ The favicon used by this application was generated using the following graphics 
 - Graphics Author: Copyright 2020 Twitter, Inc and other contributors (https://github.com/twitter/twemoji)
 - Graphics Source: https://github.com/twitter/twemoji/blob/master/assets/svg/1f929.svg
 - Graphics License: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
