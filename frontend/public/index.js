@@ -1,4 +1,3 @@
-
 const SECS_PER_IMAGE = 4; // depends on GPU image creation speed - 4 works well for me
 let global_currentQueueId = '';
 let global_imagesRequested = 0;
@@ -20,7 +19,7 @@ const go = async () =>
     //If the timer is already running and the button is clicked again, the user is sending a new request
     //to be added to the queue. So we need to stop the countdown timer, as the countdown is no longer
     //applicable to this new current request.
-    if(global_countdownTimerIntervalId)
+    if (global_countdownTimerIntervalId)
     {
         clearInterval(global_countdownTimerIntervalId);
         global_countdownTimerIntervalId = null;
@@ -80,7 +79,17 @@ const prepareRequestData = () =>
         }
 
 
-        let downsamplingFactor = 0;
+        data['downsampling_factor'] = getDownSamplingFactor();
+    }
+    return data;
+}
+
+
+const getDownSamplingFactor = () =>
+{
+    let downsamplingFactor = 8;
+    try
+    {
         const dsfRadioGroup = document.getElementsByName("downsampling_factor");
         for(let i = 0; i < dsfRadioGroup.length; i++)
         {
@@ -90,9 +99,12 @@ const prepareRequestData = () =>
                 break;
             }
         }
-        data['downsampling_factor'] = downsamplingFactor;
     }
-    return data;
+    catch (e)
+    {
+        downsamplingFactor = 8;
+    }
+    return downsamplingFactor;
 }
 
 const sendPromptRequest = async (data) =>
@@ -148,7 +160,7 @@ const getImageList = async () =>
     }
     else
     {
-        return { 'completed': true, 'images': [] };  // error condition
+        return {'completed': true, 'images': []};  // error condition
     }
 
 
@@ -283,22 +295,28 @@ const validateImageCountInput = () =>
     let imageCount = parseInt(document.getElementById('num_images').value);
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
-    if(minDDIMSteps !== maxDDIMSteps)
+    if (minDDIMSteps !== maxDDIMSteps)
     {
         document.getElementById('num_images').value = 1;
         document.getElementById('num_images_value').innerText = `1 image, because the DDIM Steps setting (from ${minDDIMSteps} to ${maxDDIMSteps}) will generate ${maxDDIMSteps - minDDIMSteps + 1} images`;
     }
     else
     {
-    document.getElementById('num_images_value').innerText = `${imageCount} image${imageCount > 1 ? "s" : ""}`;
+        document.getElementById('num_images_value').innerText = `${imageCount} image${imageCount > 1 ? "s" : ""}`;
     }
 }
 
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
-    if(imageFileName.includes("blank.png")) return '';
-    if(imageFileName.includes("original.png")) return 'Original input image'
+    if (imageFileName.includes("blank.png"))
+    {
+        return '';
+    }
+    if (imageFileName.includes("original.png"))
+    {
+        return 'Original input image'
+    }
 
     const srcElements = imageFileName.split("/");
     const imageNameSections = srcElements[5].split("-");
@@ -320,7 +338,7 @@ const displayImages = async (imageList) =>
     const masterImageCaption = document.getElementById("master_image_caption");
 
     masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
-    if(!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
+    if (!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
     {
         masterImageCaption.innerText = authorDescriptionFromImageFileName(masterImage.src)
     }
@@ -334,7 +352,7 @@ const displayImages = async (imageList) =>
         image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
         image.width = image.height / widthHeightRatio;
         global_imageLoading = true;
-        while(global_imageLoading)
+        while (global_imageLoading)
         {
             // We wait for this image's onload event to complete and set global_imageLoading to false before moving on to the next image:
             await sleep(100);
@@ -362,7 +380,7 @@ const createImagePlaceHolders = () =>
     p.id = "master_image_caption";
     output.appendChild(p);
 
-    const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
+    const includesOriginalImage = document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
 
     // multiply the number of images required by the number of the difference in ddim_steps
@@ -387,6 +405,23 @@ const createImagePlaceHolders = () =>
             global_imageLoading = false;
         }
 
+        image.onclick = function ()
+        {
+            const libraryItem = {
+                text_prompt: document.getElementById("prompt").value,
+                seed: getSeedValueFromImageFileName(this.src),
+                height: document.getElementById("height") ? document.getElementById("height").value : 512,
+                width: document.getElementById("width") ? document.getElementById("width").value : 512,
+                min_ddim_steps: document.getElementById("min_ddim_steps") ? document.getElementById("min_ddim_steps").value : 40,
+                max_ddim_steps: document.getElementById("max_ddim_steps") ? document.getElementById("max_ddim_steps").value : 40,
+                ddim_eta: 0,  // not used by the UI but available to the API
+                scale: document.getElementById("scale") ? document.getElementById("scale").value : 7.5,
+                downsampling_factor: getDownSamplingFactor()
+            }
+            const urlencoded_image_src = this.src;
+            window.open(`${createLinkToAdvancedPage(urlencoded_image_src, libraryItem)}`, '_self');
+        }
+
         image.onmouseover = function ()
         {
             this.style.transform = "scale(1.5)";
@@ -408,7 +443,6 @@ const createImagePlaceHolders = () =>
         output.appendChild(image);
     }
 }
-
 
 
 function estimateCountdownTimeSeconds(imageCount)
@@ -449,7 +483,7 @@ const startCountDown = async (requestedImageCount) =>
     // Measure the time taken between each image becoming available
     let previousImageCount = 0;
     let previousImageTime = new Date().getTime();
-    const includesOriginalImage =  document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
+    const includesOriginalImage = document.getElementById("original_image_path") && document.getElementById("original_image_path").value !== "";
 
     // set up the countdown interval function
     global_countdownTimerIntervalId = setInterval(async () =>
@@ -474,7 +508,7 @@ const startCountDown = async (requestedImageCount) =>
             clearInterval(global_countdownTimerIntervalId);
             global_countdownTimerIntervalId = null;
             document.getElementById("status").innerText = "Processing completed";
-            if(currentImageCount < requestedImageCount)
+            if (currentImageCount < requestedImageCount)
             {
                 document.getElementById("status").innerText += " - some DDIM steps failed to process";
             }
@@ -505,15 +539,16 @@ const startCountDown = async (requestedImageCount) =>
 
 }
 
-const ensureDDIMStepsAreValid = (ddim_control) => {
+const ensureDDIMStepsAreValid = (ddim_control) =>
+{
     let maxDDIMSteps = parseInt(document.getElementById("max_ddim_steps").value);
     let minDDIMSteps = parseInt(document.getElementById("min_ddim_steps").value);
     document.getElementById(ddim_control.id + '_value').innerText = ddim_control.value;
 
 
-    if(ddim_control.id === "min_ddim_steps")
+    if (ddim_control.id === "min_ddim_steps")
     {
-        if(minDDIMSteps > maxDDIMSteps)
+        if (minDDIMSteps > maxDDIMSteps)
         {
             document.getElementById("max_ddim_steps").value = minDDIMSteps;
             maxDDIMSteps = minDDIMSteps;
@@ -521,7 +556,7 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
     }
     else
     {
-        if(maxDDIMSteps < minDDIMSteps)
+        if (maxDDIMSteps < minDDIMSteps)
         {
             document.getElementById("min_ddim_steps").value = maxDDIMSteps;
             minDDIMSteps = maxDDIMSteps;
@@ -530,11 +565,11 @@ const ensureDDIMStepsAreValid = (ddim_control) => {
 
     document.getElementById("min_ddim_steps_value").innerText = minDDIMSteps.toString();
     document.getElementById("max_ddim_steps_value").innerText = maxDDIMSteps.toString();
-    if(minDDIMSteps !== maxDDIMSteps && parseInt(document.getElementById("num_images").value) > 1)
+    if (minDDIMSteps !== maxDDIMSteps && parseInt(document.getElementById("num_images").value) > 1)
     {
-       document.getElementById("num_images").value = 1;
-       document.getElementById("num_images_value").innerText = "1";
-       document.getElementById("status").innerText = "Number of images set to 1 because DDIM steps are not equal";
+        document.getElementById("num_images").value = 1;
+        document.getElementById("num_images_value").innerText = "1";
+        document.getElementById("status").innerText = "Number of images set to 1 because DDIM steps are not equal";
     }
     validateImageCountInput();
 }
@@ -686,7 +721,7 @@ const setupImageDragDrop = () =>
                     document.getElementById('original_image_path').value = e.target.result;
                     const dragDropImage = document.getElementById('drag_drop_image');
                     dragDropImage.src = e.target.result;
-                    if(dragDropImage.height > 300)
+                    if (dragDropImage.height > 300)
                     {
                         dragDropImage.style.height = "300px";
                         dragDropImage.style.width = "auto";
@@ -699,6 +734,38 @@ const setupImageDragDrop = () =>
             document.getElementById('button_remove_image').style.visibility = 'visible';
         }
     });
+}
+
+const createLinkToAdvancedPage = (image_src, libraryItem) =>
+{
+    // Remove the domain name before '/library'
+    let adjustedImageSrc = image_src.replace(image_src.substring(0, image_src.indexOf('/library') + 1), '');
+    // Remove the ?timestamp=.... end part
+    adjustedImageSrc = adjustedImageSrc.replace(adjustedImageSrc.substring(adjustedImageSrc.indexOf('?'), adjustedImageSrc.length), '');
+    const urlencoded_image_src = encodeURIComponent(adjustedImageSrc);
+    const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
+    let seedValue = getSeedValueFromImageFileName(image_src);
+    if (seedValue === '')
+    {
+        seedValue = libraryItem['seed'];
+    }
+    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${seedValue}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
+    return link;
+}
+
+const getSeedValueFromImageFileName = (imageFileName) =>
+{
+    if (imageFileName.includes("blank.png"))
+    {
+        return '';
+    }
+    if (imageFileName.includes("original.png"))
+    {
+        return '';
+    }
+    const srcElements = imageFileName.split("/");
+    const imageNameSections = srcElements[5].split("-");
+    return imageNameSections[3].replace('R', '');
 }
 
 
@@ -738,7 +805,7 @@ const retrieveAndDisplayCurrentQueue = async () =>
         const queueData = await queueResponse.json();
         await displayQueue(queueData);
 
-        if(queueData.length > 0)
+        if (queueData.length > 0)
         {
             // if our queue_is is found at the top of the queue, the backend is processing our request so we
             // need to start the countdown timer (unless it's already running)

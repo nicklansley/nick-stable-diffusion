@@ -197,6 +197,7 @@ const authorParametersListForWeb = (libraryItem) =>
     return text;
 
 }
+
 const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     const urlencoded_image_src = encodeURIComponent(image_src);

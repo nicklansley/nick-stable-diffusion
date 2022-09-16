@@ -322,8 +322,8 @@ preset so you can manipulate it further.
 2. Click to send the request.
 3. Review the images as they appear on the page and adjust the prompt to tune the results.
 4. Once you are getting close to the art you are looking for, expand the number of images up to a maximum of 30.
-5. If you are happy with the direction the images are going in,, click on the 'Library' page button to review them in the library.
-6. Click on an image in the library to open a new advanced page with all the settings used to create that image pre-filled, and the image set as the input image for further manipulation.
+5. If you are happy with the direction the images are going in, click on an image to use it as the input image for further manipulation.
+6. You can also click on images in the Library which will open a new Advanced page with all the settings pre=filled that created that image.
 7. Adjust the number of images to be created to, say 10 and click to send the request. The first result will be close to the chosen image because the same seed was used that originally created it.
 8. Start reducing the amount of change allowed by the AI by adjusting the 'Change' slider to closer to a lower percentage value. The images will be very similar to the original image.
 9. If you want greater variety, remove the seed value, so a random seed starts being used.
