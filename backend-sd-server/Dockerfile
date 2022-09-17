@@ -3,7 +3,7 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu22.04
 # set working directory
 WORKDIR /app
 
-# install python package dependencies using Ubunt's APT
+# install python package dependencies using Ubuntu's APT
 RUN apt-get update && apt-get install -y python3-pip
 RUN apt-get install -y git python3-setuptools curl ffmpeg libsm6 libxext6
 

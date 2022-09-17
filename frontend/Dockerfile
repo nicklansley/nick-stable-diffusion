@@ -2,6 +2,7 @@
 FROM python:3.10-alpine
 
 RUN apk update && apk upgrade && apk add --no-cache curl nginx
+
 WORKDIR /app
 COPY ./requirements.txt /app/requirements.txt
 RUN pip3 install -r requirements.txt
