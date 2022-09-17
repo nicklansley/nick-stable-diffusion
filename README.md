@@ -1,6 +1,7 @@
 # Stable Diffusion Web Playground
 
-### A multi-user web application powered by Docker Desktop running on your own Windows 10/11 Workstation (as long as it has an NVidia CUDA graphics card).
+### A multi-user web application powered by Docker Desktop running on your own Nvidia GPU-enabled Windows 10/11 Workstation 
+
 #### Access with your web browser via http://localhost:8000 - and enable over your local network (and even the internet) for family and friends to play on together!
 
 <hr>
@@ -89,7 +90,7 @@ Currently, this only applies when you do not supply an input image. I'm working 
 ## Make sure your computer has everything ready
 This section enables you to check that your computer has everything you need to run the application.
 1. Make sure you have an NVidia graphics card and a NVidia's GPU driver installed. This is how the backend will render
-   the images.
+   the images. You'll need an NVidia graphics card installed with onboard CUDA cores (such as their RTX-series) - see https://www.studio1productions.com/Articles/NVidia-GPU-Chart.htm).
 2. The graphics card needs to have at least 8 GB of GPU memory of contiguous memory. I use an RTX 3090 Ti but should work on 3080s, 3070s
    and 2080s.
 3. Check you have both WSL2 and a Linux distro such as Ubuntu installed. I use Ubuntu 20.04 LTS with 'bash' as the default shell. 
