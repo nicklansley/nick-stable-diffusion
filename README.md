@@ -1,6 +1,6 @@
 # Stable Diffusion Web Playground
 
-### A multi-user web application powered by Docker Desktop running on your own Windows 10/11 Workstation
+### A multi-user web application powered by Docker Desktop running on your own Windows 10/11 Workstation (as long as it has an NVidia CUDA graphics card).
 #### Access with your web browser via http://localhost:8000 - and enable over your local network (and even the internet) for family and friends to play on together!
 
 <hr>
