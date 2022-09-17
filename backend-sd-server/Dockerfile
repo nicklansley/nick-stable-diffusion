@@ -51,7 +51,6 @@ RUN pip3 install --upgrade torchmetrics==0.6.0
 RUN pip3 install -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
 RUN pip3 install -e git+https://github.com/openai/CLIP.git@main#egg=clip
 
-
 # add our backend operations app
 COPY . /app
 

@@ -6,8 +6,6 @@ WORKDIR /app
 COPY ./requirements.txt /app/requirements.txt
 RUN pip3 install -r requirements.txt
 
-EXPOSE 8000
-
 COPY public /app/public
 COPY run.sh /app
 COPY server.py /app
