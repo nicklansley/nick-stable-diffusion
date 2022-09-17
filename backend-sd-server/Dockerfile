@@ -25,7 +25,7 @@ RUN pip3 install "jax[cuda11_cudnn82]" -f https://storage.googleapis.com/jax-rel
 RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
 # Install Jupyter so this build can be set running on its own if necessary
-RUN pip3 install --upgrade jupyter
+# RUN pip3 install --upgrade jupyter
 # install python packageswe know works
 
 RUN pip3 install --upgrade cython
@@ -34,7 +34,7 @@ RUN pip3 install --upgrade matplotlib
 RUN pip3 install --upgrade opencv-python==4.5.4.60
 
 RUN pip3 install --upgrade more_itertools~=8.12.0
-RUN pip3 install --upgrade youtokentome~=1.0.6
+# RUN pip3 install --upgrade youtokentome~=1.0.6
 RUN pip3 install --upgrade omegaconf>=2.0.0
 RUN pip3 install --upgrade einops~=0.3.2
 RUN pip3 install --upgrade segmentation-models-pytorch==0.1.3
