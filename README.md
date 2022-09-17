@@ -1,9 +1,13 @@
 # Stable Diffusion Web Playground
 
+### A multi-user web application powered by Docker Desktop running on your own Windows 10/11 Workstation
+#### Access with your web browser via http://localhost:8000 - and enable over your local network (and even the internet) for family and friends to play on together!
+
+<hr>
 This project is a clone of https://github.com/CompVis/stable-diffusion.git
 I place this link here so that nobody forgets that I have simply stood on the shoulder of giants in making this interactive web version of Stable Diffusion.
 
-I've built a docker-based web service around the original project, which incorporates a few extra features, and assumes
+I've built a docker-based multi-user web-based application around the original project which allows for extra features, and assumes
 you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
