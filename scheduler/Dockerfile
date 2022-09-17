@@ -1,3 +1,11 @@
+# The Scheduler uses:
+#  REDIS server to store the jobs in the queue
+#  Python server to:
+ #    - process API commands,
+ #    - manage the queue,
+ #    - send jobs to the backend
+ #    - update the Library index with the latest images and metadata
+
 FROM redis:7.0.2-alpine3.16
 COPY redis.conf /usr/local/etc/redis/redis.conf
 COPY redis.conf /data/db/dummy.txt
