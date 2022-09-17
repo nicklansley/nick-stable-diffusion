@@ -281,7 +281,7 @@ more control in a session.
 ### Library Page
 
 The UI includes a library page where you can view the images created so far.
-Images are grouped by prompt and date/time with the latest at the top of the page.
+Images are grouped by prompt and date20-year-old guy, sporty, topless, beautiful face, face stubble, hairy chest, crew cut hair, wearing army trousers, sat leaning back against a tree in a forest/time with the latest at the top of the page.
 The group header also displays the various settings that either the AI used, or you used if you prompted vi the advanced
 page.
 
@@ -322,12 +322,16 @@ preset so you can manipulate it further.
 2. Click to send the request.
 3. Review the images as they appear on the page and adjust the prompt to tune the results.
 4. Once you are getting close to the art you are looking for, expand the number of images up to a maximum of 30.
-5. If you are happy with the direction the images are going in, click on an image to use it as the input image for further manipulation.
+5. If you are happy with the direction the images are going in, click on an image which will open an 'Advanced' and use it as the input image for further manipulation.
+6. <B>TIP</B>: If you are going to keep the same starting seed value and text prompt in step 5, you may wish to click 'Remove Input Image' to clear the input image, or the first generated image 
+will be a 'double-generated' version of the input image. However, if you substantially change the prompt, you may wish to keep the input image as the first generated image will likely be a little different.
 6. You can also click on images in the Library which will open a new Advanced page with all the settings pre=filled that created that image.
 7. Adjust the number of images to be created to, say 10 and click to send the request. The first result will be close to the chosen image because the same seed was used that originally created it.
 8. Start reducing the amount of change allowed by the AI by adjusting the 'Change' slider to closer to a lower percentage value. The images will be very similar to the original image.
 9. If you want greater variety, remove the seed value, so a random seed starts being used.
 10. As you finesse the images, you can start increasing its size by adjusting the 'height' and 'width' sliders to a higher value. The images will be larger and more detailed.
+11. <B>TIP</B>: Always use an input image if you are going to increase the size of the images above 512x512 as that was the size of the training images used by the AI. If you go larger, you
+may get weird art effects, such as a bizarre merging of two people into one. But hey, this is art so by all means experiment!
 11. Adjust the 'scale' control to vary the 'polish' of the images. The higher the value, the more 'polished' the images will be (although this is subjective!)
 12. If a 'better' image arrives but you want to finesses it, refresh the Library page then click on that image, and return to step 6.
 12. Keep reducing the value of the 'Change' slider to tune the final look.
