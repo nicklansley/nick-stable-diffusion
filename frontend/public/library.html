@@ -23,8 +23,9 @@
             font-family: "Lucida Sans", sans-serif;
         }
 
-        img {
+        .divImage {
             border: 5px solid #ffffff;
+            float: left;
         }
 
         .label {
@@ -80,7 +81,7 @@
     }
     </style>
 </head>
-<body onload="setDarkModeFromLocalStorage();retrieveImages()">
+<body onload="setDarkModeFromLocalStorage();formatLibraryEntries()">
 <h2>Stable Diffusion Web Playground - Library</h2>
 <h3>Library of images created so far</h3>
 
@@ -97,8 +98,8 @@
 
 </div>
 <div>
-    Filter Library: <input type="text" id="searchText" size="30" onkeyup="retrieveImages()">
-    <button onclick="document.getElementById('searchText').value = '';retrieveImages()">Clear Filters</button>
+    Filter Library: <input type="text" id="searchText" size="30" onkeyup="formatLibraryEntries()">
+    <button onclick="document.getElementById('searchText').value = '';formatLibraryEntries()">Clear Filters</button>
     &nbsp;&nbsp;&nbsp;&nbsp;Check for new images every 10 seconds: <input type="checkbox" id="autoRefresh"
                                                                           onchange="setAutoRefresh()"><br>
     <small>

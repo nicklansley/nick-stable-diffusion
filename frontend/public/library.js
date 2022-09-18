@@ -75,7 +75,7 @@ const upscale = async (image_list) =>
 }
 
 
-const retrieveImages = async () =>
+const formatLibraryEntries = async () =>
 {
     let imageCount = 0;
     let libraryEntryCount = 0;
@@ -93,20 +93,24 @@ const retrieveImages = async () =>
 
     for(const libraryItem of library)
     {
+        const divLibraryItem = document.createElement('div');
+        divLibraryItem.style.float = 'left';
+
         if (searchText.length === 0 || libraryItem['text_prompt'].toLowerCase().includes(searchText.toLowerCase()))
         {
             libraryEntryCount += 1;
             const hr = document.createElement("hr");
-            document.getElementById("output").appendChild(hr);
+            divLibraryItem.appendChild(hr);
 
             const h3 = document.createElement("h3");
             h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
-            document.getElementById("output").appendChild(h3);
+            h3.style.float = 'inline-start';
+            divLibraryItem.appendChild(h3);
 
             const p = document.createElement("p");
             p.classList.add('parameters-display');
             p.innerHTML = authorParametersListForWeb(libraryItem);
-            document.getElementById("output").appendChild(p);
+            divLibraryItem.appendChild(p);
 
 
             // Add master image placeholder
@@ -122,30 +126,21 @@ const retrieveImages = async () =>
                     masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
                 }
 
+               // Master image for group
                 masterImage.id = `master_image_${libraryItem['queue_id']}`;
                 masterImage.alt = libraryItem['text_prompt'];
                 masterImage.height = libraryItem['height'];
                 masterImage.width = libraryItem['width'];
                 masterImage.style.zIndex = "0";
-                document.getElementById("output").appendChild(masterImage);
+                divLibraryItem.appendChild(masterImage);
 
-                //Upscale button for master image
-                const upscaleButton = document.createElement("button");
-                upscaleButton.id = `upscale_button_${libraryItem['queue_id']}`;
-                upscaleButton.innerHTML = "Upscale and Enhance this image (2x)";
-                upscaleButton.className = "button-9"
-                upscaleButton.onclick = () => {
-                    const imageList = [];
-                    const imageRelativePath = masterImage.src.split("/").slice(3).join("/");
-                    imageList.push(imageRelativePath);
-                    upscale(imageList)
-                };
-                output.appendChild(upscaleButton);
-
-                // Caption for master image
+               // Caption for master image
                 const masterImageCaption = document.createElement("p")
                 masterImageCaption.id = `master_image_caption_${libraryItem['queue_id']}`;
-                output.appendChild(masterImageCaption);
+                masterImageCaption.style.float = 'inline-start';
+                divLibraryItem.appendChild(masterImageCaption);
+
+
             }
 
             for(const image_entry of libraryItem['generated_images'])
@@ -153,14 +148,17 @@ const retrieveImages = async () =>
                 imageCount += 1;
                 const imageName = image_entry.split("/")[2];
 
-                const image = document.createElement("img");
-                image.src = image_entry;
-                if(image.src.includes('_upscaled.png'))
+                const divImageAndButtons = document.createElement("div");
+                divImageAndButtons.classList.add('divImage');
+                if (imageName.includes('_upscaled.png'))
                 {
-                    image.style.borderColor = "gold";
-                    image.style.borderWidth = "5px";
+                    divImageAndButtons.style.borderColor = "gold";
+                    divImageAndButtons.style.borderWidth = "5px";
                 }
+
+                const image = document.createElement("img");
                 image.id = imageName.split('.')[0];
+                image.src = image_entry;
                 image.alt = libraryItem['text_prompt'];
                 image.height = 150;
                 image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
@@ -180,7 +178,7 @@ const retrieveImages = async () =>
 
                 image.onmouseover = function ()
                 {
-                    this.style.transform = `scale(1.5)`;
+                    this.style.transform = `scale(1.1)`;
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "100";
                     const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
@@ -194,17 +192,38 @@ const retrieveImages = async () =>
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "0";
                 };
-
-
                 image.oncontextmenu = function (ev)
                 {
                     ev.preventDefault();
                     deleteImage(this);
                 };
+                divImageAndButtons.appendChild(image);
 
-                output.appendChild(image);
+                const imageUpscaleButton = document.createElement("button");
+                imageUpscaleButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
+                imageUpscaleButton.innerHTML = "Upscale/Enhance";
+                //imageUpscaleButton.className = "button-9"
+                imageUpscaleButton.onclick = () =>
+                {
+                    const imageList = [];
+                    const imageRelativePath = image.src.split("/").slice(3).join("/");
+                    imageList.push(imageRelativePath);
+                    if(imageUpscaleButton.innerHTML === "Upscale/Enhance")
+                    {
+                        imageUpscaleButton.innerHTML = 'Upscaling...';
+                        upscale(imageList);
+                    }
+                };
+
+                divImageAndButtons.appendChild(document.createElement('br'))
+                if(!imageName.includes('_upscaled.png'))
+                {
+                    divImageAndButtons.appendChild(imageUpscaleButton);
+                }
+                divLibraryItem.appendChild(divImageAndButtons);
 
             }
+            output.appendChild(divLibraryItem)
 
         }
     }
@@ -318,7 +337,7 @@ const setAutoRefresh = async () =>
         await listLibrary();
         autoRefreshId = setInterval(function ()
         {
-            retrieveImages().then();
+            formatLibraryEntries().then();
         }, 10000);
     }
     else

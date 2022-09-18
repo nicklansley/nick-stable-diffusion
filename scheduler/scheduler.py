@@ -105,12 +105,25 @@ def update_library_catalogue(queue_id):
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             add_image_list_entries_to_library_entry(files, library_entry, root)
 
-        # add the library entry to the library catalogue
-        library.append(json.loads(json.dumps(library_entry)))
+        # check if the queue_id is already in the library catalogue and replace the entry if it is
+        new_library = []
+        replaced = False
+        for existing_library_entry in library:
+            if existing_library_entry["queue_id"] == queue_id:
+                print("SCHEDULER: Replacing existing library entry for queue_id:", queue_id)
+                new_library.append(json.loads(json.dumps(library_entry)))
+                replaced = True
+            else:
+                print("SCHEDULER: Keeping existing library entry for queue_id:", existing_library_entry["queue_id"])
+                new_library.append(existing_library_entry)
+
+        if not replaced:
+            print("SCHEDULER: Adding new library entry for queue_id:", queue_id)
+            new_library.append(json.loads(json.dumps(library_entry)))
 
         # write the library catalogue
         with open("/app/library/library.json", "w", encoding="utf8") as outfile:
-            outfile.write(json.dumps(library, indent=4, sort_keys=True))
+            outfile.write(json.dumps(new_library, indent=4, sort_keys=True))
 
         print('\nSCHEDULER: Update of library catalogue completed')
 

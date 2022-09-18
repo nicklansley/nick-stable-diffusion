@@ -155,7 +155,7 @@ class RelayServer(BaseHTTPRequestHandler):
         try:
             r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
             data['command'] = 'upscale'
-            data['queue_id'] = str(uuid.uuid4())
+            data['queue_id'] = data['image_list'][0].split('/')[1].split('.')[0] # gets queue_id from 1st image in list
             data['image_list'] = data['image_list']
             data['upscale_factor'] = int(data['upscale_factor'])
 

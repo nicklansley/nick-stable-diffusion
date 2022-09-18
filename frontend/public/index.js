@@ -207,9 +207,15 @@ const displayQueue = async (queueList) =>
             {
                 let queueItem = queueList[queueIndex];
                 const listItem = document.createElement("li");
-                listItem.innerText = `${queueItem.prompt} - (${queueItem.num_images} image${queueItem.num_images > 1 ? "s" : ""})`;
-                imageCount += queueItem.num_images;
-
+                if(queueItem['command'] === "prompt")
+                {
+                    listItem.innerText = `${queueItem.prompt} - (${queueItem.num_images} image${queueItem.num_images > 1 ? "s" : ""})`;
+                    imageCount += queueItem.num_images;
+                }
+                else if(queueItem['command'] === "upscale")
+                {
+                    listItem.innerText = `Processing an Upscale/Enhance request for (${queueItem.image_list.length} image${queueItem.image_list.length > 1 ? "s" : ""})`;
+                }
                 // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
                 if (queueItem.queue_id === global_currentQueueId)
                 {
