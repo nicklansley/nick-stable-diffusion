@@ -26,16 +26,17 @@ The DDIM step number will be added to each image's filename<pre>f"{image_counter
 - NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
-- NEW: Manipulate images you have already created that reside in the library. Click on an image in the library and a new
+- Manipulate images you have already created that reside in the library. Click on an image in the library and a new
   advanced page will open in a new tab with all the settings (seed, ddim_steps, scale, image link etc) used to create
   that image, so you can easily make variations by adjusting the controls.
-- NEW: (Advanced Page) Link to any image on the web and use that for the input image to the AI. You can adjust how much
+- Advanced Page: Link to any image on the web and use that for the input image to the AI. You can adjust how much
   the image can be changed from 0.01% (no change) to 100% (no original image). You can also choose any image in the
   library folder on your machine (just move it there if necessary). The only condition is that the image can be
   retrieved without login and the website at the far end won't mind Python's urllib library pulling the image. Images
   are resized internally to 512x512px without affecting the original image's aspect ratio (black bands will appear on
   the top/bottom or left/right side of the longer edge to make it square). This aids the AI as it is finicky about sizes
   and size ratios.
+- NEW: Enhance and rescale images using latest GPFGAN AI processing including face restoration, performed from Library page.
 - The 'advanced.html' page gives you creative access to use input images, lock in the seed value, image size, DDIM
   Steps, Scale and Downsampling Factor. Bear in mind some settings can cause errors on the backend, so watch the backend
   server logs should your request disappear from the queue almost immediately with no results.
@@ -74,17 +75,7 @@ This project is being improved daily throughout September 2022, so check back of
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
-* NEW: DDIM Steps now works with input images as well as just text prompts.
-* NEW: Fixed bug that sometimes caused partial or corrupted images to appear during processing.
-* NEW: Massive reduction in backend's general memory requirements - down from 20GB to 8GB, and image disk size down from 17.2 GB to 13.6 GB achieved by changing container image to runtime version of Nvidia/Cuda. No longer any need to increase WSL2 memory size. 
-* NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
-* Create a DDIM-step series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
-The DDIM step number will be added to each image's filename so it has format<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
-Currently, this only applies when you do not supply an input image. I'm working on a way to do this with input images too.
-* Massively improved UI which can now display images as they appear during processing rather than waiting until the end.
-* Improved, refactored and simplified index.js dumps original countdown and created an estimate on a per-image basis.
-* Scheduler now updates the library catalogue instantly rather than rebuilding it - ideal when library grows massively.
-* Various bug fixes and improvements
+* NEW: Enhance and rescale images using latest GPFGAN AI processing including face restoration, performed from Library page.
 
 
 ## Make sure your computer has everything ready

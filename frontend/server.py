@@ -46,11 +46,14 @@ class RelayServer(BaseHTTPRequestHandler):
         data = json.loads(body)
         print("\nFRONTEND:", data)
 
-        if api_command == '/prompt':
+        if api_command == '/prompt' or api_command == '/upscale':
             result = 'X'
             ok_flag, message, data = self.quality_assure(data)
             if ok_flag:
-                result = self.queue_request_to_redis(data)
+                if api_command == '/prompt':
+                    result = self.queue_prompt_request_to_redis(data)
+                else:
+                    result = self.queue_upscale_request_to_redis(data)
             else:
                 self.send_response(400)
                 self.end_headers()
@@ -64,6 +67,7 @@ class RelayServer(BaseHTTPRequestHandler):
                 self.end_headers()
                 response_body = '{"queue_id": "' + result + '"}'
                 self.wfile.write(response_body.encode())
+
 
         elif api_command == '/deleteimage':
             if self.process_deleteimage(data):
@@ -132,19 +136,36 @@ class RelayServer(BaseHTTPRequestHandler):
 
         return True, 'OK', data
 
-    def queue_request_to_redis(self, data):
+    def queue_prompt_request_to_redis(self, data):
         try:
             r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
+            data['command'] = 'prompt'
             data['queue_id'] = str(uuid.uuid4())
             data['num_images'] = int(data['num_images'])
             data['seed'] = int(data['seed'])
 
             r.lpush('queue', json.dumps(data))
-            print("\nFRONTEND: Request queued to redis with queue_id:", data['queue_id'])
+            print("\nFRONTEND: Prompt request queued to redis with queue_id:", data['queue_id'])
             return data['queue_id']
         except Exception as e:
-            print("\nFRONTEND: queue_request_to_redis Error:", e)
+            print("\nFRONTEND: queue_prompt_request_to_redis Error:", e)
             return 'X'
+
+    def queue_upscale_request_to_redis(self, data):
+        try:
+            r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
+            data['command'] = 'upscale'
+            data['queue_id'] = str(uuid.uuid4())
+            data['image_list'] = data['image_list']
+            data['upscale_factor'] = int(data['upscale_factor'])
+
+            r.lpush('queue', json.dumps(data))
+            print("\nFRONTEND: Upscale request queued to redis with queue_id:", data['queue_id'])
+            return data['queue_id']
+        except Exception as e:
+            print("\nFRONTEND: queue_upscale_request_to_redis Error:", e)
+            return 'X'
+
 
     def get_image_list(self, queue_id):
         image_data = {

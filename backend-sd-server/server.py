@@ -1,14 +1,15 @@
 import base64
 import gzip
-import os
 import random
 import urllib.request
 import cv2
 import torch
-import numpy as np
 from omegaconf import OmegaConf
-import PIL
-from PIL import Image, ImageDraw
+import numpy as np
+import os
+from basicsr.utils import imwrite
+
+from PIL import Image
 from tqdm import tqdm, trange
 from imwatermark import WatermarkEncoder
 from itertools import islice
@@ -24,6 +25,8 @@ from ldm.models.diffusion.ddim import DDIMSampler
 
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from transformers import AutoFeatureExtractor
+
+from gfpgan import GFPGANer
 
 import uuid
 import json
@@ -194,7 +197,9 @@ def check_safety(x_image):
 
 
 def danger_will_robinson(x_image):
-    print("Danger, Will Robinson! NSFW content detected but not suppressed!")
+    x_checked_image, has_nsfw_concept = check_safety(x_image)
+    if len(has_nsfw_concept) > 0:
+        print("Danger, Will Robinson! NSFW content detected but not suppressed!")
     return x_image, []
 
 
@@ -337,6 +342,124 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
     return image_counter
 
 
+def upscale_image(image_list, queue_id, upscale_factor=2):
+    # replacements for default arguments
+    bg_upsampler = "realesrgan"
+    bg_tile = 400
+    version = '1.4'  # I've included "1.3" model in this repo as well
+    upscale = upscale_factor
+    file_suffix = "upscaled"  # The new image will sit alongside the original in the library with a '_upscaled' suffix
+    only_centre_face = False
+    aligned_faces = False
+    weight = 0.5
+
+    response  = {'success': False, 'queue_id': queue_id}
+
+    os.chdir('/app/GFPGAN')
+    try:
+        # ------------------------ set up background upsampler ------------------------
+        if bg_upsampler == 'realesrgan':
+            if not torch.cuda.is_available():  # CPU
+                import warnings
+                warnings.warn('The unoptimized RealESRGAN is slow on CPU. We do not use it. '
+                              'If you really want to use it, please modify the corresponding codes.')
+                bg_upsampler = None
+            else:
+                from basicsr.archs.rrdbnet_arch import RRDBNet
+                from realesrgan import RealESRGANer
+                model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
+                bg_upsampler = RealESRGANer(
+                    scale=2,
+                    model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
+                    model=model,
+                    tile=bg_tile,
+                    tile_pad=10,
+                    pre_pad=0,
+                    half=True)  # need to set False in CPU mode
+        else:
+            bg_upsampler = None
+
+        # ------------------------ set up GFPGAN restorer ------------------------
+        if version == '1':
+            arch = 'original'
+            channel_multiplier = 1
+            model_name = 'GFPGANv1'
+            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v0.1.0/GFPGANv1.pth'
+        elif version == '1.2':
+            arch = 'clean'
+            channel_multiplier = 2
+            model_name = 'GFPGANCleanv1-NoCE-C2'
+            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v0.2.0/GFPGANCleanv1-NoCE-C2.pth'
+        elif version == '1.3':
+            arch = 'clean'
+            channel_multiplier = 2
+            model_name = 'GFPGANv1.3'
+            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.3.pth'
+        elif version == '1.4':
+            arch = 'clean'
+            channel_multiplier = 2
+            model_name = 'GFPGANv1.4'
+            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
+        elif version == 'RestoreFormer':
+            arch = 'RestoreFormer'
+            channel_multiplier = 2
+            model_name = 'RestoreFormer'
+            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth'
+        else:
+            raise ValueError(f'Wrong model version {version}.')
+
+        # determine model paths
+        model_path = os.path.join('/app/GFPGAN/experiments/pretrained_models', model_name + '.pth')
+        if not os.path.isfile(model_path):
+            model_path = os.path.join('gfpgan/weights', model_name + '.pth')
+        if not os.path.isfile(model_path):
+            # download pre-trained models from url
+            model_path = url
+
+        restorer = GFPGANer(
+            model_path=model_path,
+            upscale=upscale,
+            arch=arch,
+            channel_multiplier=channel_multiplier,
+            bg_upsampler=bg_upsampler)
+
+        # ------------------------ restore ------------------------
+        for img_path in image_list:
+
+            if img_path.startswith('library/'):
+                img_path = "/" + img_path
+
+            # read image
+            img_name = os.path.basename(img_path)
+            output_path = os.path.dirname(img_path)
+            print(f'Processing {img_name} ...')
+            basename, ext = os.path.splitext(img_name)
+            input_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+
+            # restore faces and background if necessary
+            cropped_faces, restored_faces, restored_img = restorer.enhance(
+                input_img,
+                has_aligned=aligned_faces,
+                only_center_face=only_centre_face,
+                paste_back=True,
+                weight=weight)
+
+            # save restored img
+            if restored_img is not None:
+                save_restore_path = os.path.join(output_path, f'{basename}_{file_suffix}.png')
+                imwrite(restored_img, save_restore_path)
+                response['success'] = True
+            else:
+                print('No image to restore!')
+
+
+    except Exception  as e:
+        print("Error", e)
+
+    os.chdir('/app')
+    return response
+
+
 def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale):
     # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png
     for x_sample in x_samples:
@@ -421,9 +544,11 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                     c = model.get_learned_conditioning(prompts)
 
                                     # encode (scaled latent)
-                                    z_enc = sampler.stochastic_encode(init_latent, torch.tensor([t_enc] * N_SAMPLES).to(device))
+                                    z_enc = sampler.stochastic_encode(init_latent,
+                                                                      torch.tensor([t_enc] * N_SAMPLES).to(device))
                                     # decode it
-                                    samples = sampler.decode(z_enc, c, t_enc, unconditional_guidance_scale=options['scale'],
+                                    samples = sampler.decode(z_enc, c, t_enc,
+                                                             unconditional_guidance_scale=options['scale'],
                                                              unconditional_conditioning=uc, )
 
                                     x_samples = model.decode_first_stage(samples)
@@ -431,12 +556,12 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
 
                                     # save the newly created images
                                     image_counter = save_image_samples(each_ddim_step,
-                                                       image_counter,
-                                                       library_dir_name,
-                                                       wm_encoder,
-                                                       x_samples,
-                                                       chosen_seed,
-                                                       options['scale'])
+                                                                       image_counter,
+                                                                       library_dir_name,
+                                                                       wm_encoder,
+                                                                       x_samples,
+                                                                       chosen_seed,
+                                                                       options['scale'])
 
                                     end = time.time()
                                     time_taken = end - start
@@ -506,6 +631,24 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         if api_command == '/prompt':
             self.process_prompt(data)
+        elif api_command == '/upscale':
+            self.upscale(data)
+
+    def upscale(self, data):
+        image_list = data['image_list']
+        upscale_factor = data['upscale_factor']
+        queue_id = data['queue_id']
+        response = upscale_image(image_list, queue_id, upscale_factor)
+        if response['success']:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+        else:
+            self.send_response(500)
+            self.end_headers()
+
+        response_body = json.dumps(response)
+        self.wfile.write(response_body.encode())
 
     def process_prompt(self, data):
         # Get the mandatory prompt data from the request
@@ -635,6 +778,7 @@ if __name__ == "__main__":
     if not SAFETY_FLAG:
         print('Note: Safety checks are disabled - take responsibility for your own actions!')
     else:
-        print('Note: Safety checks are are enabled. A NSFW-replacement image will be used if an image is deemed naughty')
+        print(
+            'Note: Safety checks are are enabled. A NSFW-replacement image will be used if an image is deemed naughty')
 
     httpd.serve_forever()

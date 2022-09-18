@@ -1,5 +1,6 @@
 let library = [];
 let autoRefreshId;
+let defaultUpscaleFactor = 4;
 
 const listLibrary = async () =>
 {
@@ -32,6 +33,47 @@ const listLibrary = async () =>
         return [];
     }
 }
+
+
+const upscale = async (image_list) =>
+{
+    const upscaleObj = {
+        "image_list": image_list,
+        "upscale_factor": defaultUpscaleFactor
+    }
+
+    let rawResponse;
+    document.getElementById('status').innerText = "Sending Upscale request...";
+
+    try
+    {
+        rawResponse = await fetch('/upscale', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(upscaleObj)
+        });
+    }
+    catch (e)
+    {
+        document.getElementById('status').innerText = "Sorry, service offline for upscaling request";
+        return false;
+    }
+
+    if (rawResponse.status === 200)
+    {
+        document.getElementById('status').innerText = "Upscale request sent to queue";
+        return await rawResponse.json();
+    }
+    else
+    {
+        document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred when upscaling - check again shortly!`;
+        return [];
+    }
+}
+
 
 const retrieveImages = async () =>
 {
@@ -66,8 +108,9 @@ const retrieveImages = async () =>
             p.innerHTML = authorParametersListForWeb(libraryItem);
             document.getElementById("output").appendChild(p);
 
-            const masterImage = document.createElement("img");
 
+            // Add master image placeholder
+            const masterImage = document.createElement("img");
             if (libraryItem['generated_images'].length > 0)
             {
                 if (libraryItem['generated_images'][0].endsWith('00-original.png'))
@@ -85,6 +128,21 @@ const retrieveImages = async () =>
                 masterImage.width = libraryItem['width'];
                 masterImage.style.zIndex = "0";
                 document.getElementById("output").appendChild(masterImage);
+
+                //Upscale button for master image
+                const upscaleButton = document.createElement("button");
+                upscaleButton.id = `upscale_button_${libraryItem['queue_id']}`;
+                upscaleButton.innerHTML = "Upscale and Enhance this image (2x)";
+                upscaleButton.className = "button-9"
+                upscaleButton.onclick = () => {
+                    const imageList = [];
+                    const imageRelativePath = masterImage.src.split("/").slice(3).join("/");
+                    imageList.push(imageRelativePath);
+                    upscale(imageList)
+                };
+                output.appendChild(upscaleButton);
+
+                // Caption for master image
                 const masterImageCaption = document.createElement("p")
                 masterImageCaption.id = `master_image_caption_${libraryItem['queue_id']}`;
                 output.appendChild(masterImageCaption);
@@ -97,6 +155,11 @@ const retrieveImages = async () =>
 
                 const image = document.createElement("img");
                 image.src = image_entry;
+                if(image.src.includes('_upscaled.png'))
+                {
+                    image.style.borderColor = "gold";
+                    image.style.borderWidth = "5px";
+                }
                 image.id = imageName.split('.')[0];
                 image.alt = libraryItem['text_prompt'];
                 image.height = 150;
@@ -131,6 +194,7 @@ const retrieveImages = async () =>
                     this.style.transition = "transform 0.25s ease";
                     this.style.zIndex = "0";
                 };
+
 
                 image.oncontextmenu = function (ev)
                 {
@@ -169,7 +233,8 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
     const ddimSteps = imageNameSections[1].replace('D', '')
     const scale = imageNameSections[2].replace('S', '');
     const seedValue = imageNameSections[3].replace('R', '');
-    return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
+    const upscaledImage = imageFileName.includes('_upscaled.png');
+    return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue} ${upscaledImage ? ' - (upscaled)' : ''}`;
 }
 
 const authorParametersListForWeb = (libraryItem) =>
@@ -177,6 +242,7 @@ const authorParametersListForWeb = (libraryItem) =>
     let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
     let text = `Images created ${creationDate.toLocaleString()},<br>`;
     text += `Processing took ${libraryItem['time_taken'].toFixed(2)} seconds (${(libraryItem['time_taken'] / libraryItem['generated_images'].length).toFixed((2))} secs/image)`;
+    text += `<br>Library folder: ${libraryItem['queue_id']}`;
     text += `<br>parameters:`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;Seed: ${libraryItem['seed']}`;
     text += `<br>&nbsp;&nbsp;&nbsp;&nbsp;height: ${libraryItem['height']}px`;

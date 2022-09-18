@@ -51,6 +51,20 @@ RUN pip3 install --upgrade torchmetrics==0.6.0
 RUN pip3 install -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
 RUN pip3 install -e git+https://github.com/openai/CLIP.git@main#egg=clip
 
+# for GFPGAN
+RUN pip3 install --upgrade basicsr>=1.4.2
+RUN pip3 install --upgrade facexlib>=0.2.5
+RUN pip3 install --upgrade lmdb
+RUN pip3 install --upgrade numpy
+# RUN pip3 install --upgrade opencv-python
+RUN pip3 install --upgrade pyyaml
+RUN pip3 install --upgrade scipy
+RUN pip3 install --upgrade tb-nightly
+RUN pip3 install --upgrade torch>=1.7
+RUN pip3 install --upgrade tqdm
+RUN pip3 install --upgrade yapf
+RUN pip3 install --upgrade realesrgan
+
 # add our backend operations app
 COPY . /app
 

@@ -13,6 +13,9 @@ services:
       - app-cache-on-s:/root/.cache
       - library-on-s:/library
       - model-on-s:/app/models/ldm/stable-diffusion-v1
+      - model-on-s:/usr/local/lib/python3.10/dist-packages/realesrgan/weights
+      - model-on-s:/app/GFPGAN/gfpgan/weights
+      - model-on-s:/app/GFPGAN/experiments/pretrained_models
     deploy:
       resources:
         reservations:

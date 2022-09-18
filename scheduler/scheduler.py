@@ -47,18 +47,33 @@ def delete_request_from_redis_queue(queue_data):
         return False
 
 
-def send_request_to_sd_engine(prompt_info):
+def send_prompt_request_to_sd_engine(prompt_info):
     try:
         prompt_json = json.dumps(prompt_info)
-        print('\nSCHEDULER: Sending json request to SD Engine:', prompt_json)
+        print('\nSCHEDULER: Sending prompt request to SD Engine:', prompt_json)
         r = requests.post('http://sd-backend:8080/prompt', json=prompt_json)
         response = r.json()
-        print('\nSCHEDULER: send_request_to_sd_engine - Response from SD Engine:', response)
+        print('\nSCHEDULER: send_prompt_request_to_sd_engine - Response from SD Engine:', response)
         return response
     except Exception as e:
-        print("SCHEDULER: send_request_to_sd_engine - Error:", e)
+        print("SCHEDULER: send_prompt_request_to_sd_engine - Error:", e)
         return {'queue_id': 'X', 'success': False}
 
+def send_upscale_request_to_sd_engine(data):
+    try:
+        upscale_json = {
+            "image_list": data['image_list'],
+            "upscale_factor": data['upscale_factor'],
+            "queue_id": data['queue_id']
+        }
+        print('\nSCHEDULER: Sending upscale request to SD Engine:', upscale_json)
+        r = requests.post('http://sd-backend:8080/upscale', json=upscale_json)
+        response = r.json()
+        print('\nSCHEDULER: send_upscale_request_to_sd_engine - Response from SD Engine:', response)
+        return response
+    except Exception as e:
+        print("SCHEDULER: send_upscale_request_to_sd_engine - Error:", e)
+        return {'queue_id': 'X', 'success': False}
 
 def update_library_catalogue(queue_id):
     print('\nSCHEDULER: Updating library catalogue')
@@ -258,8 +273,13 @@ if __name__ == "__main__":
         time.sleep(1)
         queue_item = get_next_queue_request()
         if queue_item['queue_id'] != 'X':
-            request_data = send_request_to_sd_engine(queue_item)
+            if queue_item['command'] == 'prompt':
+                request_data = send_prompt_request_to_sd_engine(queue_item)
+            elif queue_item['command'] == 'upscale':
+                request_data = send_upscale_request_to_sd_engine(queue_item)
+
             delete_request_from_redis_queue(queue_item)
+
             if request_data['queue_id'] == queue_item['queue_id']:
                 update_library_catalogue(queue_item['queue_id'])
 

@@ -1,0 +1,78 @@
+version: '3.6'
+
+services:
+  sd-backend:
+    container_name: sd-backend
+    build:
+      context: ./backend-sd-server
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - app-cache-on-s:/root/.cache
+      - library-on-s:/library
+      - model-on-s:/app/models/ldm/stable-diffusion-v1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    networks:
+      - sd-net
+
+
+  scheduler:
+    container_name: scheduler
+    build:
+      context: ./scheduler
+      dockerfile: Dockerfile
+    restart: always
+    stdin_open: true
+    tty: true
+    ports:
+      - '6379:6379'
+    volumes:
+      - library-on-s:/app/library
+    networks:
+      - sd-net
+
+  frontend:
+    container_name: frontend
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - '8000:3000'
+    stdin_open: true
+    tty: true
+    volumes:
+      - library-on-s:/app/library
+    networks:
+      - sd-net
+
+
+networks:
+  sd-net:
+    name: sd-net
+
+volumes:
+  app-cache-on-s:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: S:\nick-stable-diffusion-data\cache
+  model-on-s:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: S:\nick-stable-diffusion-data\model
+  library-on-s:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: S:\nick-stable-diffusion-data\library
