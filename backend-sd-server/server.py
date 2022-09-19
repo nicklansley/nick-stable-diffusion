@@ -197,9 +197,6 @@ def check_safety(x_image):
 
 
 def danger_will_robinson(x_image):
-    x_checked_image, has_nsfw_concept = check_safety(x_image)
-    if len(has_nsfw_concept) > 0:
-        print("Danger, Will Robinson! NSFW content detected but not suppressed!")
     return x_image, []
 
 
@@ -595,6 +592,7 @@ def save_metadata_file(num_images, library_dir_name, options, queue_id, text_pro
             "num_images": num_images,
             "queue_id": queue_id,
             "time_taken": round(time_taken, 2),
+            "seed": options['seed'],
             "seed": options['seed'],
             "height": options['height'],
             "width": options['width'],

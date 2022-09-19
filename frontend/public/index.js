@@ -191,13 +191,23 @@ const displayQueue = async (queueList) =>
 
         const imageRequestCount = queueList[0].num_images * (maxDDIMSteps - minDDIMSteps + 1);
 
-        // The first item in the queue is the one that the AI is currently processing:
-        queueUI.innerHTML = `<p><b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
-
+        // The first item in the queue is the one that the AI is currently processing, so display the info
+        // separately from the queue list
         const processingDiv = document.createElement("div");
-        processingDiv.innerHTML = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+        let showText = '';
+        if(queueList[0]['command'] === 'prompt')
+        {
+            showText = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+            queueUI.innerHTML = `<p><b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
+        }
+        else if(queueList[0]['command'] === 'upscale')
+        {
+            `<b>Upscale/Enhance request for ${queueList[0]['image_list'].length} image${queueList[0]['image_list'].length > 1 ? "s" : ""}</b>`;
+        }
+        queueUI.innerHTML = `${showText}<br>Current queue:<br>`;
+        processingDiv.innerHTML = showText
 
-        // Add the rest of the queued list of requests to the UI:
+        // Now display the rest of the queue list:
         let queuePosition = 1;
         let imageCount = 0;
         if (queueList.length > 1)
@@ -214,7 +224,7 @@ const displayQueue = async (queueList) =>
                 }
                 else if(queueItem['command'] === "upscale")
                 {
-                    listItem.innerText = `Processing an Upscale/Enhance request for (${queueItem.image_list.length} image${queueItem.image_list.length > 1 ? "s" : ""})`;
+                    listItem.innerText = `Upscale/Enhance request for ${queueItem['image_list'].length} image${queueItem['image_list'].length > 1 ? "s" : ""}`;
                 }
                 // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
                 if (queueItem.queue_id === global_currentQueueId)

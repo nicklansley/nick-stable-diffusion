@@ -75,10 +75,41 @@ const upscale = async (image_list) =>
 }
 
 
+const getQueueAndListUpscaleRequests = async () =>
+{
+    const upscaleImageRequestList = [];
+    const queueResponse = await fetch('/queue_status', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+    });
+
+    if (queueResponse.status === 200)
+    {
+        // display the queue
+        const queueData = await queueResponse.json();
+        for(const queueItem of queueData)
+        {
+            if (queueItem['command'] === "upscale")
+            {
+                for(const image of queueItem['image_list'])
+                {
+                    upscaleImageRequestList.push(image);
+                }
+            }
+        }
+        return upscaleImageRequestList;
+    }
+}
+
 const formatLibraryEntries = async () =>
 {
     let imageCount = 0;
     let libraryEntryCount = 0;
+
+    const upscaleQueueImagesList = await getQueueAndListUpscaleRequests();
 
     // retrieve the library and sort by descending creation_unixtime
     library = await listLibrary();
@@ -126,7 +157,7 @@ const formatLibraryEntries = async () =>
                     masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
                 }
 
-               // Master image for group
+                // Master image for group
                 masterImage.id = `master_image_${libraryItem['queue_id']}`;
                 masterImage.alt = libraryItem['text_prompt'];
                 masterImage.height = libraryItem['height'];
@@ -134,7 +165,7 @@ const formatLibraryEntries = async () =>
                 masterImage.style.zIndex = "0";
                 divLibraryItem.appendChild(masterImage);
 
-               // Caption for master image
+                // Caption for master image
                 const masterImageCaption = document.createElement("p")
                 masterImageCaption.id = `master_image_caption_${libraryItem['queue_id']}`;
                 masterImageCaption.style.float = 'inline-start';
@@ -147,6 +178,7 @@ const formatLibraryEntries = async () =>
             {
                 imageCount += 1;
                 const imageName = image_entry.split("/")[2];
+                const imageInUpscaleQueue = !!upscaleQueueImagesList.find((image) => image === image_entry);
 
                 const divImageAndButtons = document.createElement("div");
                 divImageAndButtons.classList.add('divImage');
@@ -173,7 +205,7 @@ const formatLibraryEntries = async () =>
 
                 image.onclick = function ()
                 {
-                    window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
+                    window.open(image.src, '_blank');
                 }
 
                 image.onmouseover = function ()
@@ -199,27 +231,52 @@ const formatLibraryEntries = async () =>
                 };
                 divImageAndButtons.appendChild(image);
 
-                const imageUpscaleButton = document.createElement("button");
-                imageUpscaleButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
-                imageUpscaleButton.innerHTML = "Upscale/Enhance";
-                //imageUpscaleButton.className = "button-9"
-                imageUpscaleButton.onclick = () =>
+                const imageUpscaleOrViewButton = document.createElement("button");
+                imageUpscaleOrViewButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
+                imageUpscaleOrViewButton.className = "button-image-action"
+                if (imageName.includes('_upscaled.png'))
                 {
-                    const imageList = [];
-                    const imageRelativePath = image.src.split("/").slice(3).join("/");
-                    imageList.push(imageRelativePath);
-                    if(imageUpscaleButton.innerHTML === "Upscale/Enhance")
+                    // Button will view image in new browser window
+                    imageUpscaleOrViewButton.innerText = "View Upscaled";
+                    imageUpscaleOrViewButton.onclick = () =>
                     {
-                        imageUpscaleButton.innerHTML = 'Upscaling...';
-                        upscale(imageList);
+                        window.open(`${image.src}`, '_blank');
                     }
-                };
+                }
+                else
+                {
+                    // Button will push an upscale request to the queue via the upscale() function
+                    const alreadyUpscaled = checkIfImageAlreadyUpscaled(image.src, libraryItem['generated_images']);
+                    imageUpscaleOrViewButton.innerText = alreadyUpscaled ? "View Original" : imageInUpscaleQueue ? "Upscaling" : "Upscale";
+                    imageUpscaleOrViewButton.onclick = () =>
+                    {
+                        if (imageUpscaleOrViewButton.innerText === "Upscale")
+                        {
+                            imageUpscaleOrViewButton.innerText = 'Queued';
+                            imageUpscaleOrViewButton.disabled = true;
+                            const imageList = [];
+                            const imageRelativePath = image.src.split("/").slice(3).join("/");
+                            imageList.push(imageRelativePath);
+                            upscale(imageList);
+                        }
+                        else
+                        {
+                            window.open(`${image.src}`, '_blank');
+                        }
+                    }
+
+                }
+
+                // Create an Edit button
+                const imageEditButton = document.createElement("button");
+                imageEditButton.className = "button-image-action"
+                imageEditButton.innerText = "Edit";
+                imageEditButton.onclick = () => window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
+
 
                 divImageAndButtons.appendChild(document.createElement('br'))
-                if(!imageName.includes('_upscaled.png'))
-                {
-                    divImageAndButtons.appendChild(imageUpscaleButton);
-                }
+                divImageAndButtons.appendChild(imageEditButton);
+                divImageAndButtons.appendChild(imageUpscaleOrViewButton);
                 divLibraryItem.appendChild(divImageAndButtons);
 
             }
@@ -232,10 +289,21 @@ const formatLibraryEntries = async () =>
 }
 
 
+const checkIfImageAlreadyUpscaled = (imagePath, imageList) =>
+{
+    return !!imageList.find(image => image.includes(`${imagePath.split("/").slice(3).join("/").replace('.png', '')}_upscaled.png`));
+}
+
 const getSeedValueFromImageFileName = (imageFileName) =>
 {
-    if(imageFileName.includes("blank.png")) return '';
-    if(imageFileName.includes("original.png")) return '';
+    if (imageFileName.includes("blank.png"))
+    {
+        return '';
+    }
+    if (imageFileName.includes("original.png"))
+    {
+        return '';
+    }
     const srcElements = imageFileName.split("/");
     const imageNameSections = srcElements[2].split("-");
     return imageNameSections[3].replace('R', '');
@@ -243,8 +311,14 @@ const getSeedValueFromImageFileName = (imageFileName) =>
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
-    if(imageFileName.includes("blank.png")) return '';
-    if(imageFileName.includes("original.png")) return 'Original input image'
+    if (imageFileName.includes("blank.png"))
+    {
+        return '';
+    }
+    if (imageFileName.includes("original.png"))
+    {
+        return 'Original input image'
+    }
 
     const srcElements = imageFileName.split("/");
     const imageNameSections = srcElements[5].split("-");
@@ -288,7 +362,10 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
     const urlencoded_image_src = encodeURIComponent(image_src);
     const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
     let seedValue = getSeedValueFromImageFileName(image_src);
-    if (seedValue === '') seedValue = libraryItem['seed'];
+    if (seedValue === '')
+    {
+        seedValue = libraryItem['seed'];
+    }
     const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${seedValue}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
     return link;
 }

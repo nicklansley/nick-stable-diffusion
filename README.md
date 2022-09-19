@@ -5,14 +5,20 @@
 #### Access with your web browser via http://localhost:8000 - and enable over your local network (and even the internet) for family and friends to play on together!
 
 <hr>
-This project is a clone of https://github.com/CompVis/stable-diffusion.git
-I place this link here so that nobody forgets that I have simply stood on the shoulder of giants in making this interactive web version of Stable Diffusion.
+This project is formed from:
 
+- https://github.com/CompVis/stable-diffusion - for Stable Diffusion image creation
+- https://github.com/TencentARC/GFPGAN - for upscaling, enhancing and face restoration
+
+I place these links here so that nobody forgets that I have simply stood on the shoulders of giants in making this interactive web version of Stable Diffusion.
+
+<hr>
 I've built a docker-based multi-user web-based application around the original project which allows for extra features, and assumes
 you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
+- NEW: Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page.
 - Designed as a multi-user web application - get your family trying it on your home network, or set up your workstation
   as a internet-accessible server using ngrok or similar tunneling tool for your friends to try.
 - Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
@@ -50,25 +56,6 @@ people are not called 'Nick' and it's a bit more descriptive. The original name 
 private project which I have only later realised may be of help to others. I should have thought of a decent name like
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
-## Simple UI
-Type in a prompt, choose the number of images and 'Click to send request'. The images will appear on the page as they are created: 
-
-![](simple.png)
-
-
-## Advanced UI
-Add an input prompt then fiddle with the controls! Drag and drop an image into the box to use it as the input image for the prompt.
-Choose a min and max range of DDIM steps to create a series of images with different DDIM steps. The DDIM step number will be added to each image's filename.
-Alter the classifier scale, and even choose your own starting seed for image creation consistency.
-
-![](advanced.png)
-
-## Library UI
-Images created by this application will appear in the library. 
-Hover over an image for a close up. Click on an image to open a new Advanced page with 
-all the settings used to create that image pre-filled, and the image set as the input image for further manipulation.
-
-![](library.png)
 
 ## Daily updates!
 This project is being improved daily throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
@@ -153,7 +140,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
 
 <hr>
 
-## FAST START
+## INSTALLATION PLAYBOOK
 1. Read docker-compose.yml and adjust the three volumes to those suitable for your PC. On my S: hard drive I have created a folder '
    nick-stable-diffusion-data' and then created three empty sub-folders: 'cache', 'model' and 'library'.
    Docker will connect these physical locations to the internal volumes of the containers. You can change the 'device:'
@@ -211,8 +198,15 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
    and download this file.
 3. Copy the downloaded file to the 'model' folder you have setup in step 1. 
    You will need to place the .ckpt file there and rename it from <b>sd-v1-4.ckpt</b> to <b>model.ckpt</b> - so in my case I now have:<pre>S:\nick-stable-diffusion-data\model\model.ckpt</pre> 
+4. To use the GFPGAN AI to upscale your images and enhance the faces of any people featured, you will need to download these models which detect faces and enhance them as well as upscale the whole image. Follow these links to download:
+- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/detection_Resnet50_Final.pth (104 MB)
+- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/RealESRGAN_x4plus.pth (64 MB)
+- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/parsing_parsenet.pth (82 MB)
+- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/GFPGANv1.4.pth (332 MB)
 
-4. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
+- ... and save these files to the 'model' external folder you set up in step 1, alongside the Stable Diffusion model you downloaded in step 2 and copied in step 3. So now your model folder looks like this:
+ ![](nsd-model-folder.png)
+5. Run docker-compose to build the project then start the backend, scheduler and frontend. Downloading the container
    images is a one-time operation but takes time and several GB of download. If you ran the 'Test your computer' section
    above then the backend container image is already downloaded which will speed things up.
   I am happy to accept that right now the backend build is a bit overkill - I'm even having it download the Rust language 
@@ -221,7 +215,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
     
    <pre>docker compose up -d --build</pre>
 
-5. At first start the backend will then download another 2.73 GB of data
+6. At first start the backend will then download another 2.73 GB of data
    which it will store in the 'cache' folder you set up on your drive and set up in docker compose.
    This will only happen the first time - it doesn't do this every time you start the backend.
    The second and subsequent times you start the backend it will be live within about 30 seconds, sometimes sooner.
@@ -231,7 +225,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
     Backend Server ready for processing on port 8080
     </pre>
 
-6. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's
+7. You can now start the UI by going to this web address on your web browser: <pre>http://localhost:8000</pre> - that's
    port 8000
 
 ## Notes
@@ -243,7 +237,10 @@ I've written the scheduler and frontend web server in Python. The Scheduler uses
 prompts with Redis as the queuing database. I've used a class based on BaseHTTPRequestHandler to handle the requests
 from the UI.
 
-### Home page
+## Simple UI / Home Page
+Type in a prompt, choose the number of images and 'Click to send request'. The images will appear on the page as they are created: 
+
+![The simple prompt page](nsd-simple-prompt-page.png)
 
 This page enables you to type in a prompt, choose the number of images you wish to create from 1 to 30,
 and set the AI processing!
@@ -274,44 +271,61 @@ if you wish to change them,
 but these seem to work best and are suggested by the authors of the model. Use the advanced page to override them for
 more control in a session.
 
-### Library Page
 
-The UI includes a library page where you can view the images created so far.
-Images are grouped by prompt and date20-year-old guy, sporty, topless, beautiful face, face stubble, hairy chest, crew cut hair, wearing army trousers, sat leaning back against a tree in a forest/time with the latest at the top of the page.
-The group header also displays the various settings that either the AI used, or you used if you prompted vi the advanced
+## Library page
+Images created by this application will appear in the library, where they can be upscaled (including having faces improved!) 
+
+![The Library page](nsd-library-page.png)
+
+Images are grouped by prompt and date/time with the latest at the top of the page.
+The group header also displays the various settings that either the AI used, or you set manually if you prompted vi the advanced
 page.
 
 Check a box at the top of the page to allow it to refresh itself every 10 seconds.
 
 The library page has been updated to improve the user experience with images:
 
-* Hover over an image to enlarge it.
+* Hover over an image to see it in the larger 'master' view for that group.
 * Drag image to your desktop to save it outside the libray folders.
-* Click to open a new advanced page with the settings that made this image already preset so you can manipulate it
+* Click 'Edit' to open a new advanced page with the settings that made this image already preset so you can manipulate it
   further.
-* Right-click to delete the image from the library (agree 'OK' to confirm).
+* Click 'Upscale' to use AI to carefully upscale the image to become four times in size, and also enhance the faces in the image.
+  This is done using the GFPGAN AI. The image will be upscaled and the faces enhanced, and the result will be saved in the
+  library alongside the original image. The original image will not be changed.
+* When you click to upscale, your request actually joins the queue of requests waiting for the SD engine to process them. 
+   This is because the SD engine processes one request at a time. You will need to refresh the Library page (or set the 'refresh every 10 seconds' checkbox) to see the result.
+   
+
+Queued for upscaling - click 'View Original' and 'View Upscaled' to see the results in a new browser window.
+
+![Queued for upscaling](nsd-upscale-queued.png)
+
+Result of upscaling in library:
+
+![Library after upscaling has completed](nsd-upscaled.png)
+
+Example of upscale / face-enhancement processing:
+
+![Before and after Upscaling and Face fnhancement processing](nsd_before_and_after.png)
 
 If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete
 everything in it.
-If you want to delete a specific image, right-click it in the library page, and select 'OK' to the alert prompt.
 
-The library page is also useful for observing how many seconds it took to generate each image, as it is displayed above
-each group of images. My PC always has it at around 4 secs/image. If yours is different,
-you can adjust the value in the JavaScript at the top of index.js - change the very first line - const SECS_PER_IMAGE =
-4; - to the number of seconds per image you are experiencing.
-This will make the countdown on the UI more accurate when waiting for your prompt to be processed.
 
-### Advanced Page
-
+## Advanced Page
 The Advanced page allows you to set the parameters for the AI to use when generating the image.
 You can use this page to link to a source image on the web, or in your library folder.
 
+![](nsd-advanced1.png)
+
+Add an input prompt then fiddle with the controls! Drag and drop an image into the box to use it as the input image for the prompt.
+Choose a min and max range of DDIM steps to create a series of images with different DDIM steps. The DDIM step number will be added to each image's filename.
+Alter the classifier scale, and even choose your own starting seed for image creation consistency.
+
 If you specify an image, it will be included as the first image '00-original.png' in the output.
 <i>Note that you do not have copyright over the original image, only the AI-created images as long as they 
-are 'substantially' different to the original.</i>
+are 'substantially' different to the original. The only exception is of course if the original image was itself substantially created by this AI!</i>
 
-If you click an image in the library, it will open a new advanced page with the settings that made that image already
-preset so you can manipulate it further.
 
 ## Example Workflow
 1. Start with the 'simple' page and type in a prompt and keep the default creation of 3 images. 
@@ -330,7 +344,9 @@ will be a 'double-generated' version of the input image. However, if you substan
 may get weird art effects, such as a bizarre merging of two people into one. But hey, this is art so by all means experiment!
 11. Adjust the 'scale' control to vary the 'polish' of the images. The higher the value, the more 'polished' the images will be (although this is subjective!)
 12. If a 'better' image arrives but you want to finesses it, refresh the Library page then click on that image, and return to step 6.
-12. Keep reducing the value of the 'Change' slider to tune the final look.
+13. Keep reducing the value of the 'Change' slider to tune the final look.
+14. Finally, go the library and click 'Upscale' to use AI to carefully upscale the image to become four times in size, and also enhance the faces in the image.
+15. Once you have completed your session, drag any images from the Library page to an external folder to keep, then go the /library folder and delete everything in it to start again.
 
 ## API
 
@@ -366,3 +382,6 @@ The favicon used by this application was generated using the following graphics 
 - Graphics Source: https://github.com/twitter/twemoji/blob/master/assets/svg/1f929.svg
 - Graphics License: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 
+### Original PTH Model files source (where known - the original project downloaded them from an internal link!):
+- https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth
+- https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth 
