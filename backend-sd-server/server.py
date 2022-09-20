@@ -69,8 +69,8 @@ SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image wi
 
 # IMAGE QUALITY SETTINGS
 # IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
-# IMAGE_QUALITY = "MED"    # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
-IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
+IMAGE_QUALITY = "MED"    # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
+# IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
 
 # GLOBAL VARS
 global_device = None
