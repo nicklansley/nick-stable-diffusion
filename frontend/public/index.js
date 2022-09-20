@@ -754,9 +754,7 @@ const setupImageDragDrop = () =>
 const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     // Remove the domain name before '/library'
-    let adjustedImageSrc = image_src.replace(image_src.substring(0, image_src.indexOf('/library') + 1), '');
-    // Remove the ?timestamp=.... end part
-    adjustedImageSrc = adjustedImageSrc.replace(adjustedImageSrc.substring(adjustedImageSrc.indexOf('?'), adjustedImageSrc.length), '');
+    const adjustedImageSrc = image_src.replace(image_src.substring(0, image_src.indexOf('/library') + 1), '');
     const urlencoded_image_src = encodeURIComponent(adjustedImageSrc);
     const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
     let seedValue = getSeedValueFromImageFileName(image_src);
