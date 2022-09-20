@@ -511,9 +511,9 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         if IMAGE_QUALITY == "MAX":
             resized_image.save(os.path.join(library_dir_name, '00-original.png'))
         elif IMAGE_QUALITY == "MED":
-            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), format='JPG', quality='web_high')
+            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), quality='web_high')
         elif IMAGE_QUALITY == "LOW":
-            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), format='JPG', quality='web_low')
+            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), quality='web_low')
 
         init_image = init_image.to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
