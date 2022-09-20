@@ -148,7 +148,7 @@ const formatLibraryEntries = async () =>
             const masterImage = document.createElement("img");
             if (libraryItem['generated_images'].length > 0)
             {
-                if (libraryItem['generated_images'][0].endsWith('00-original.png'))
+                if (libraryItem['generated_images'][0].includes('00-original.'))
                 {
                     masterImage.src = libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
                 }
@@ -182,7 +182,7 @@ const formatLibraryEntries = async () =>
 
                 const divImageAndButtons = document.createElement("div");
                 divImageAndButtons.classList.add('divImage');
-                if (imageName.includes('_upscaled.png'))
+                if (imageName.includes('_upscaled.'))
                 {
                     divImageAndButtons.style.borderColor = "gold";
                     divImageAndButtons.style.borderWidth = "5px";
@@ -234,13 +234,13 @@ const formatLibraryEntries = async () =>
                 const imageUpscaleOrViewButton = document.createElement("button");
                 imageUpscaleOrViewButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
                 imageUpscaleOrViewButton.className = "button-image-action"
-                if (imageName.includes('_upscaled.png'))
+                if (imageName.includes('_upscaled.'))
                 {
                     // Button will view image in new browser window
                     imageUpscaleOrViewButton.innerText = "View Upscaled";
                     imageUpscaleOrViewButton.onclick = () =>
                     {
-                        window.open(`${image.src}`, '_blank');
+                        window.open(image.src, '_blank');
                     }
                 }
                 else
@@ -261,7 +261,7 @@ const formatLibraryEntries = async () =>
                         }
                         else
                         {
-                            window.open(`${image.src}`, '_blank');
+                            window.open(image.src, '_blank');
                         }
                     }
 
@@ -291,16 +291,18 @@ const formatLibraryEntries = async () =>
 
 const checkIfImageAlreadyUpscaled = (imagePath, imageList) =>
 {
-    return !!imageList.find(image => image.includes(`${imagePath.split("/").slice(3).join("/").replace('.png', '')}_upscaled.png`));
+    let fileFormat = 'png'
+    if(imagePath.endsWith('.jpg'))
+    {
+        fileFormat = 'jpg';
+    }
+    return !!imageList.find(image => image.includes(`${imagePath.split("/").slice(3).join("/").replace('.' + fileFormat, '')}_upscaled.${fileFormat}`));
 }
 
 const getSeedValueFromImageFileName = (imageFileName) =>
 {
-    if (imageFileName.includes("blank.png"))
-    {
-        return '';
-    }
-    if (imageFileName.includes("original.png"))
+    if (imageFileName.includes("blank.") ||
+        imageFileName.includes("blank."))
     {
         return '';
     }
@@ -311,11 +313,11 @@ const getSeedValueFromImageFileName = (imageFileName) =>
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
-    if (imageFileName.includes("blank.png"))
+    if (imageFileName.includes("blank."))
     {
         return '';
     }
-    if (imageFileName.includes("original.png"))
+    if( imageFileName.includes("original."))
     {
         return 'Original input image'
     }
@@ -326,7 +328,7 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
     const ddimSteps = imageNameSections[1].replace('D', '')
     const scale = imageNameSections[2].replace('S', '');
     const seedValue = imageNameSections[3].replace('R', '');
-    const upscaledImage = imageFileName.includes('_upscaled.png');
+    const upscaledImage = imageFileName.includes('_upscaled.');
     return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue} ${upscaledImage ? ' - (upscaled)' : ''}`;
 }
 

@@ -174,7 +174,7 @@ class RelayServer(BaseHTTPRequestHandler):
         }
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
-                if image_name.endswith('.png'):
+                if image_name.endswith('.png') or image_name.endswith('.jpg'):
                     image_data['images'].append('/library/' + queue_id + '/' + image_name)
                 elif image_name == 'index.json':
                     image_data['completed'] = True

@@ -67,6 +67,11 @@ PORT = 8080
 WATERMARK_FLAG = False  # set to True to enable watermarking
 SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
 
+# IMAGE QUALITY SETTINGS
+# IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
+# IMAGE_QUALITY = "MED"    # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
+IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
+
 # GLOBAL VARS
 global_device = None
 global_model = None
@@ -443,7 +448,11 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
 
             # save restored img
             if restored_img is not None:
-                save_restore_path = os.path.join(output_path, f'{basename}_{file_suffix}.png')
+                if IMAGE_QUALITY == "MAX":
+                    save_restore_path = os.path.join(output_path, f'{basename}_{file_suffix}.png')
+                else:
+                    save_restore_path = os.path.join(output_path, f'{basename}_{file_suffix}.jpg')
+
                 imwrite(restored_img, save_restore_path)
                 response['success'] = True
             else:
@@ -458,15 +467,19 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
 
 
 def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale):
-    # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png
+    # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png/.jpg
     for x_sample in x_samples:
         x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
         img = Image.fromarray(x_sample.astype(np.uint8))
         img = put_watermark(img, wm_encoder)
         print(f"Saving image #{image_counter} with DDIM step {ddim_steps}, scale {scale} and seed {seed_value}")
-        img.save(
-            os.path.join(library_dir_name,
-                         f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png"))
+        image_name = f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}"
+        if IMAGE_QUALITY == "MAX":
+            img.save(os.path.join(library_dir_name, image_name + ".png"), optimize=True, progressive=True)
+        elif IMAGE_QUALITY == "MED":
+            img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_maximum')
+        elif IMAGE_QUALITY == "LOW":
+            img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_low')
         image_counter += 1
     return image_counter
 
@@ -495,7 +508,12 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         resized_image, init_image = load_and_format_image(original_image_path, options['width'], options['height'])
 
         # save the resized original image
-        resized_image.save(os.path.join(library_dir_name, '00-original.png'))
+        if IMAGE_QUALITY == "MAX":
+            resized_image.save(os.path.join(library_dir_name, '00-original.png'))
+        elif IMAGE_QUALITY == "MED":
+            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), format='JPG', quality='web_high')
+        elif IMAGE_QUALITY == "LOW":
+            resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), format='JPG', quality='web_low')
 
         init_image = init_image.to(device)
         init_image = repeat(init_image, '1 ... -> b ...', b=N_SAMPLES)
@@ -778,5 +796,12 @@ if __name__ == "__main__":
     else:
         print(
             'Note: Safety checks are are enabled. A NSFW-replacement image will be used if an image is deemed naughty')
+
+    if IMAGE_QUALITY == "MAX":
+        print("Note: Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB")
+    elif IMAGE_QUALITY == "MED":
+        print("Note: Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB")
+    elif IMAGE_QUALITY == "LOW":
+        print("Note: Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb")
 
     httpd.serve_forever()

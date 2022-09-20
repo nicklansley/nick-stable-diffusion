@@ -169,7 +169,7 @@ def rebuild_library_catalogue():
         for root, dirs, files in os.walk("/app/library", topdown=False):
             for image_name in files:
                 image_path = os.path.join(root, image_name)
-                if 'drag_and_drop_images' not in image_path and (image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png')):
+                if 'drag_and_drop_images' not in image_path and (image_name.endswith('.jpg') or image_name.endswith('.png')):
 
                     # if the image has a metadata section then add it to the
                     # end of the image file if ADD_METADATA_TO_FILES is enabled
@@ -197,7 +197,7 @@ def rebuild_library_catalogue():
 def add_image_list_entries_to_library_entry(files, library_entry, root):
     # Used by update_library_catalogue() and rebuild_library_catalogue() to add the generated images to library entry
     for image_name in files:
-        if image_name.endswith('.jpeg') or image_name.endswith('.jpg') or image_name.endswith('.png'):
+        if image_name.endswith('.jpg') or image_name.endswith('.png'):
             image_file_path = os.path.join(root, image_name)
 
             # if the image has a metadata section then add it to the

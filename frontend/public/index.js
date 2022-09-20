@@ -325,11 +325,11 @@ const validateImageCountInput = () =>
 
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
-    if (imageFileName.includes("blank.png"))
+    if (imageFileName.includes("blank."))
     {
         return '';
     }
-    if (imageFileName.includes("original.png"))
+    if (imageFileName.includes("original."))
     {
         return 'Original input image'
     }
@@ -349,12 +349,11 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
  */
 const displayImages = async (imageList) =>
 {
-    const timestamp = new Date().getTime();
     const masterImage = document.getElementById("master_image");
     const masterImageCaption = document.getElementById("master_image_caption");
 
-    masterImage.src = imageList.length > 0 ? `${imageList[imageList.length - 1]}?timestamp=${timestamp}` : "/blank.png";
-    if (!masterImage.src.includes("blank.png") && !masterImage.src.includes("original.png"))
+    masterImage.src = imageList.length > 0 ? imageList[imageList.length - 1] : "/blank.png";
+    if (!masterImage.src.includes("blank.") && !masterImage.src.includes("original."))
     {
         masterImageCaption.innerText = authorDescriptionFromImageFileName(masterImage.src)
     }
@@ -365,7 +364,7 @@ const displayImages = async (imageList) =>
     for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
-        image.src = imageList[imageIndex] ? `${imageList[imageIndex]}?timestamp=${timestamp}` : "/blank.png";
+        image.src = imageList[imageIndex] ? imageList[imageIndex] : "/blank.png";
         image.width = image.height / widthHeightRatio;
         global_imageLoading = true;
         while (global_imageLoading)
@@ -771,11 +770,11 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
 
 const getSeedValueFromImageFileName = (imageFileName) =>
 {
-    if (imageFileName.includes("blank.png"))
+    if (imageFileName.includes("blank."))
     {
         return '';
     }
-    if (imageFileName.includes("original.png"))
+    if (imageFileName.includes("original."))
     {
         return '';
     }
