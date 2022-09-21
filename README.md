@@ -26,6 +26,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of
   results.
 - NEW: Images appear as they are created rather than waiting for the whole batch to be created.
+- New: API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
 - NEW: Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
 The DDIM step number will be added to each image's filename<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
 - NEW: DDIM-Steps now works with input images as well as just text prompts.
@@ -57,12 +58,13 @@ private project which I have only later realised may be of help to others. I sho
 DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of the GitHub repo though, as that would cause version control issues.
 
 
-## Daily updates!
-This project is being improved daily throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
+## Frequent updates!
+This project is being improved throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
 * NEW: Enhance and rescale images using latest GPFGAN AI processing including face restoration, performed from Library page.
+* NEW: API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
 
 
 ## Make sure your computer has everything ready
@@ -350,10 +352,9 @@ may get weird art effects, such as a bizarre merging of two people into one. But
 
 ## API
 
-The API is a simple RESTful API that can be used by the UI to send requests to the backend.
-I will document it here but for a quick glance, look at the go() function in the frontend's index.js file and see its
-fetch() call.
-Good luck setting this up on your PC - let me know how you get on.
+The API is a simple RESTful API that can be used by the UI to send requests into the application.
+It is documented here (Postman compatible): https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
+
 
 ## Safety Catch / NSFW images
 

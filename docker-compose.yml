@@ -7,6 +7,7 @@ services:
       context: ./backend-sd-server
       dockerfile: Dockerfile
     restart: always
+
     volumes:
       - app-cache-on-s:/root/.cache
       - library-on-s:/library

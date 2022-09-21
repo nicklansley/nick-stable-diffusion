@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT_NUMBER = 3000
 
+
 class RelayServer(BaseHTTPRequestHandler):
     def do_GET(self):
         api_command = unquote(self.path)
@@ -68,19 +69,6 @@ class RelayServer(BaseHTTPRequestHandler):
                 response_body = '{"queue_id": "' + result + '"}'
                 self.wfile.write(response_body.encode())
 
-
-        elif api_command == '/deleteimage':
-            if self.process_deleteimage(data):
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(b'{"success": true}')
-            else:
-                self.send_response(500)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(b'{"success": false}')
-
         elif api_command == '/imagelist':
             if 'queue_id' in data:
                 image_list = self.get_image_list(data['queue_id'])
@@ -95,6 +83,29 @@ class RelayServer(BaseHTTPRequestHandler):
 
         return
 
+    def do_DELETE(self):
+        api_command = unquote(self.path)
+        print("\nFRONTEND: DELETE >> API command =", api_command)
+        content_length = int(self.headers['Content-Length'])
+        body = self.rfile.read(content_length)
+        data = json.loads(body)
+        print("\nFRONTEND:", data)
+
+        if api_command == '/image':
+            if self.process_deleteimage(data):
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(b'{"success": true}')
+            else:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(b'{"success": false}')
+        else:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"success": false}')
 
     # take base64 string and save it to a file as binary
     # the image string starts 'data:image/png;base64,iVBORw....' in base64 encoding
@@ -110,7 +121,7 @@ class RelayServer(BaseHTTPRequestHandler):
                 image_name = str(uuid.uuid4())[:8] + '.' + image_suffix
 
                 # if a folder does not exist, create it
-                if not os.path.exists('/app/library/drag_and_drop_images'):    # if the folder does not exist
+                if not os.path.exists('/app/library/drag_and_drop_images'):  # if the folder does not exist
                     os.makedirs('/app/library/drag_and_drop_images')
 
                 # save the image file
@@ -127,7 +138,8 @@ class RelayServer(BaseHTTPRequestHandler):
             return 'ERROR: Could not process image string'
 
     def quality_assure(self, data):
-        if 'original_image_path' in data and data['original_image_path'] != '' and 'data:image' in data['original_image_path']:
+        if 'original_image_path' in data and data['original_image_path'] != '' and 'data:image' in data[
+            'original_image_path']:
             image_path = self.convert_base64_to_image_binary_and_save_file(data['original_image_path'])
             if image_path.startswith('ERROR'):
                 return False, image_path, data
@@ -155,7 +167,7 @@ class RelayServer(BaseHTTPRequestHandler):
         try:
             r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
             data['command'] = 'upscale'
-            data['queue_id'] = data['image_list'][0].split('/')[1].split('.')[0] # gets queue_id from 1st image in list
+            data['queue_id'] = data['image_list'][0].split('/')[1].split('.')[0]  # gets queue_id from 1st image in list
             data['image_list'] = data['image_list']
             data['upscale_factor'] = int(data['upscale_factor'])
 
@@ -165,7 +177,6 @@ class RelayServer(BaseHTTPRequestHandler):
         except Exception as e:
             print("\nFRONTEND: queue_upscale_request_to_redis Error:", e)
             return 'X'
-
 
     def get_image_list(self, queue_id):
         image_data = {
@@ -227,7 +238,6 @@ class RelayServer(BaseHTTPRequestHandler):
             response_content_type = 'text/plain'
 
         file_path = '/app' + path
-
 
         try:
             with open(file_path, 'rb') as data_file:

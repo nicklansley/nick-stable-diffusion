@@ -377,8 +377,8 @@ const deleteImage = async (img) =>
 {
     if (window.confirm(`Are you sure you want to delete image "${img.alt}"?`))
     {
-        const rawResponse = await fetch('/deleteimage', {
-            method: 'POST',
+        const rawResponse = await fetch('/image', {
+            method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
