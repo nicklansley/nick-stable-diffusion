@@ -97,7 +97,7 @@ const formatLibraryEntries = async () =>
             // IN this case the library entry already displays on the page, so we just need to update the images
             // Check if there are any new images to add to the library entry - if so, rebuild the library entry
             // and replace the existing one:
-            const imageList = document.getElementById(divLibraryEntryId).getElementsByClassName("image");
+            const imageList = document.getElementById(divLibraryEntryId).getElementsByClassName("divImage");
             if (imageList.length < libraryEntry['generated_images'].length)
             {
                 const divRebuiltLibraryEntry = createNewDivLibraryEntry(libraryEntry, upscaleQueueImagesList);
@@ -189,6 +189,7 @@ const libraryEntry_authorMasterImagePlaceHolder = (div, thisLibraryEntry) =>
         // Caption for master image
         const masterImageCaption = document.createElement("p")
         masterImageCaption.id = `master_image_caption_${thisLibraryEntry['queue_id']}`;
+        masterImageCaption.classList.add("label");
         masterImageCaption.style.float = 'inline-start';
         div.appendChild(masterImageCaption);
     }
