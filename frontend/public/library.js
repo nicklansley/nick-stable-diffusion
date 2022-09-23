@@ -2,6 +2,7 @@ let library = [];
 let autoRefreshId;
 let defaultUpscaleFactor = 4;
 
+// Get the library index file and return the list of library entries
 const listLibrary = async () =>
 {
     let rawResponse;
@@ -35,46 +36,7 @@ const listLibrary = async () =>
 }
 
 
-const upscale = async (image_list) =>
-{
-    const upscaleObj = {
-        "image_list": image_list,
-        "upscale_factor": defaultUpscaleFactor
-    }
-
-    let rawResponse;
-    document.getElementById('status').innerText = "Sending Upscale request...";
-
-    try
-    {
-        rawResponse = await fetch('/upscale', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(upscaleObj)
-        });
-    }
-    catch (e)
-    {
-        document.getElementById('status').innerText = "Sorry, service offline for upscaling request";
-        return false;
-    }
-
-    if (rawResponse.status === 200)
-    {
-        document.getElementById('status').innerText = "Upscale request sent to queue";
-        return await rawResponse.json();
-    }
-    else
-    {
-        document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred when upscaling - check again shortly!`;
-        return [];
-    }
-}
-
-
+// Read all the queue entries and get all the images that are currently in the queue for upscaling.
 const getQueueAndListUpscaleRequests = async () =>
 {
     const upscaleImageRequestList = [];
@@ -104,201 +66,307 @@ const getQueueAndListUpscaleRequests = async () =>
     }
 }
 
+// Format for display all the library entries currently in the library
+// Only new entries and images will be added to the web page layout
+// to avoid unnecessary re-rendering of the page and image.src calls to the server
+// (even if the image is already in the browser cache, the browser will still
+// make a request to the server to check if the image has changed)
 const formatLibraryEntries = async () =>
 {
-    let imageCount = 0;
-    let libraryEntryCount = 0;
+    let libraryImageCount = 0;
+
+    // retrieve the library and sort by descending 'creation_unixtime'
+    const library = await listLibrary();
+
+    const sortedLibrary = library.sort((a, b) => a['creation_unixtime'] > b['creation_unixtime'] ? -1 : 1);
+
+    // output is where we display the authored library entries with their info headers and images
+    const output = document.getElementById("output");
 
     const upscaleQueueImagesList = await getQueueAndListUpscaleRequests();
 
-    // retrieve the library and sort by descending creation_unixtime
-    library = await listLibrary();
-    library = library.sort((a, b) => a.creation_unixtime > b.creation_unixtime ? -1 : 1);
-
-    //get the searchText value (if any)
-    const searchText = document.getElementById('searchText').value;
-
-    // Clear the listing
-    const output = document.getElementById("output");
-    output.innerHTML = "";
-
-    for(const libraryItem of library)
+    for(const libraryEntryIndex in sortedLibrary)
     {
-        const divLibraryItem = document.createElement('div');
-        divLibraryItem.style.float = 'left';
+        const libraryEntry = sortedLibrary[libraryEntryIndex];
+        libraryImageCount += libraryEntry['generated_images'].length;
 
-        if (searchText.length === 0 || libraryItem['text_prompt'].toLowerCase().includes(searchText.toLowerCase()))
+        // Check if this library item has already been rendered:
+        const divLibraryEntryId = "div_" + libraryEntry['queue_id'];
+        if (document.getElementById(divLibraryEntryId))
         {
-            libraryEntryCount += 1;
-            const hr = document.createElement("hr");
-            divLibraryItem.appendChild(hr);
-
-            const h3 = document.createElement("h3");
-            h3.innerHTML = `<i>${libraryItem['text_prompt']}</i>`;
-            h3.style.float = 'inline-start';
-            divLibraryItem.appendChild(h3);
-
-            const p = document.createElement("p");
-            p.classList.add('parameters-display');
-            p.innerHTML = authorParametersListForWeb(libraryItem);
-            divLibraryItem.appendChild(p);
-
-
-            // Add master image placeholder
-            const masterImage = document.createElement("img");
-            if (libraryItem['generated_images'].length > 0)
+            // IN this case the library entry already displays on the page, so we just need to update the images
+            // Check if there are any new images to add to the library entry - if so, rebuild the library entry
+            // and replace the existing one:
+            const imageList = document.getElementById(divLibraryEntryId).getElementsByClassName("image");
+            if (imageList.length < libraryEntry['generated_images'].length)
             {
-                if (libraryItem['generated_images'][0].includes('00-original.'))
-                {
-                    masterImage.src = libraryItem['generated_images'][1]; // the second image is the first generated image when using an input image
-                }
-                else
-                {
-                    masterImage.src = libraryItem['generated_images'][0]; // the first image is the first generated image
-                }
-
-                // Master image for group
-                masterImage.id = `master_image_${libraryItem['queue_id']}`;
-                masterImage.alt = libraryItem['text_prompt'];
-                masterImage.height = libraryItem['height'];
-                masterImage.width = libraryItem['width'];
-                masterImage.style.zIndex = "0";
-                divLibraryItem.appendChild(masterImage);
-
-                // Caption for master image
-                const masterImageCaption = document.createElement("p")
-                masterImageCaption.id = `master_image_caption_${libraryItem['queue_id']}`;
-                masterImageCaption.style.float = 'inline-start';
-                divLibraryItem.appendChild(masterImageCaption);
-
-
+                const divRebuiltLibraryEntry = createNewDivLibraryEntry(libraryEntry, upscaleQueueImagesList);
+                output.replaceChild(divRebuiltLibraryEntry, document.getElementById(divLibraryEntryId));
             }
-
-            for(const image_entry of libraryItem['generated_images'])
+        }
+        else
+        {
+            // In this case the library entry does not display on the page, so we need to create a new div for it
+            const divLibraryEntry = createNewDivLibraryEntry(libraryEntry, upscaleQueueImagesList);
+            // Now we need to work out where it must go! We want to sort by descending creation time, so we need to
+            // find the first library entry that was created before this one and insert it after that one.
+            console.log('Adding new library entry');
+            let inserted = false;
+            for(const existingLibraryEntry of output.children)
             {
-                imageCount += 1;
-                const imageName = image_entry.split("/")[2];
-                const imageInUpscaleQueue = !!upscaleQueueImagesList.find((image) => image === image_entry);
-
-                const divImageAndButtons = document.createElement("div");
-                divImageAndButtons.classList.add('divImage');
-                if (imageName.includes('_upscaled.'))
+                if (existingLibraryEntry.dataset['creation_unixtime'] < libraryEntry['creation_unixtime'])
                 {
-                    divImageAndButtons.style.borderColor = "gold";
-                    divImageAndButtons.style.borderWidth = "5px";
+                    output.insertBefore(divLibraryEntry, existingLibraryEntry);
+                    inserted = true;
+                    break;
                 }
-
-                const image = document.createElement("img");
-                image.id = imageName.split('.')[0];
-                image.src = image_entry;
-                image.alt = libraryItem['text_prompt'];
-                image.height = 150;
-                image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
-                image.style.zIndex = "0";
-                image.style.position = "relative";
-
-                // Add data-image-details attribute to image using the
-                // libraryItem object with generated_images list deleted.
-                const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
-                delete dataImageDetails['generated_images'];
-                dataImageDetails.path = image_entry;
-
-                image.onclick = function ()
-                {
-                    window.open(image.src, '_blank');
-                }
-
-                image.onmouseover = function ()
-                {
-                    this.style.transform = `scale(1.1)`;
-                    this.style.transition = "transform 0.25s ease";
-                    this.style.zIndex = "100";
-                    const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
-                    masterImage.src = this.src;
-                    const masterImageCaption = document.getElementById(`master_image_caption_${libraryItem['queue_id']}`);
-                    masterImageCaption.innerText = authorDescriptionFromImageFileName(this.src);
-                };
-                image.onmouseleave = function ()
-                {
-                    this.style.transform = "scale(1)";
-                    this.style.transition = "transform 0.25s ease";
-                    this.style.zIndex = "0";
-                };
-                image.oncontextmenu = function (ev)
-                {
-                    ev.preventDefault();
-                    deleteImage(this);
-                };
-                divImageAndButtons.appendChild(image);
-
-                const imageUpscaleOrViewButton = document.createElement("button");
-                imageUpscaleOrViewButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
-                imageUpscaleOrViewButton.className = "button-image-action"
-                if (imageName.includes('_upscaled.'))
-                {
-                    // Button will view image in new browser window
-                    imageUpscaleOrViewButton.innerText = "View Upscaled";
-                    imageUpscaleOrViewButton.onclick = () =>
-                    {
-                        window.open(image.src, '_blank');
-                    }
-                }
-                else
-                {
-                    // Button will push an upscale request to the queue via the upscale() function
-                    const alreadyUpscaled = checkIfImageAlreadyUpscaled(image.src, libraryItem['generated_images']);
-                    imageUpscaleOrViewButton.innerText = alreadyUpscaled ? "View Original" : imageInUpscaleQueue ? "Upscaling" : "Upscale";
-                    imageUpscaleOrViewButton.onclick = () =>
-                    {
-                        if (imageUpscaleOrViewButton.innerText === "Upscale")
-                        {
-                            imageUpscaleOrViewButton.innerText = 'Queued';
-                            imageUpscaleOrViewButton.disabled = true;
-                            const imageList = [];
-                            const imageRelativePath = image.src.split("/").slice(3).join("/");
-                            imageList.push(imageRelativePath);
-                            upscale(imageList);
-                        }
-                        else
-                        {
-                            window.open(image.src, '_blank');
-                        }
-                    }
-
-                }
-
-                // Create an Edit button
-                const imageEditButton = document.createElement("button");
-                imageEditButton.className = "button-image-action"
-                imageEditButton.innerText = "Edit";
-                imageEditButton.onclick = () => window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
-
-
-                divImageAndButtons.appendChild(document.createElement('br'))
-                divImageAndButtons.appendChild(imageEditButton);
-                divImageAndButtons.appendChild(imageUpscaleOrViewButton);
-                divLibraryItem.appendChild(divImageAndButtons);
-
             }
-            output.appendChild(divLibraryItem)
-
+            // If we didn't find an existing library entry that was created before this one, then we need to insert
+            // this one at the end of the list
+            if (!inserted)
+            {
+                output.appendChild(divLibraryEntry);
+            }
         }
     }
+    filterVisibleEntries();
     const dateNow = new Date();
-    document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${imageCount} images within ${libraryEntryCount} library entries`;
+    document.getElementById('status').innerText = `Updated ${dateNow.toLocaleString()} - Found ${libraryImageCount} images within ${sortedLibrary.length} library entries`;
 }
 
 
+const filterVisibleEntries = () =>
+{
+    const filterText = document.getElementById('filter').value.toLowerCase();
+    const output = document.getElementById("output");
+    if(filterText === "")
+    {
+        for(const libraryEntry of output.children)
+        {
+            libraryEntry.style.display = "block";
+        }
+    }
+    else
+    {
+        for(const libraryEntry of output.children)
+        {
+            if (libraryEntry.dataset['text_prompt'].toLowerCase().includes(filterText))
+            {
+                libraryEntry.style.display = "block";
+            }
+            else
+            {
+                libraryEntry.style.display = "none";
+            }
+        }
+    }
+}
+
+
+// Author the large master image that features in each library entry
+const libraryEntry_authorMasterImagePlaceHolder = (div, thisLibraryEntry) =>
+{
+    const masterImage = document.createElement("img");
+    if (thisLibraryEntry['generated_images'].length > 0)
+    {
+        if (thisLibraryEntry['generated_images'][0].includes('00-original.'))
+        {
+            masterImage.src = thisLibraryEntry['generated_images'][1]; // the second image is the first generated image when using an input image
+        }
+        else
+        {
+            masterImage.src = thisLibraryEntry['generated_images'][0]; // the first image is the first generated image
+        }
+
+        // Master image for group
+        masterImage.id = `master_image_${thisLibraryEntry['queue_id']}`;
+        masterImage.alt = thisLibraryEntry['text_prompt'];
+        masterImage.height = thisLibraryEntry['height'];
+        masterImage.width = thisLibraryEntry['width'];
+        masterImage.style.zIndex = "0";
+        div.appendChild(masterImage);
+
+        // Caption for master image
+        const masterImageCaption = document.createElement("p")
+        masterImageCaption.id = `master_image_caption_${thisLibraryEntry['queue_id']}`;
+        masterImageCaption.style.float = 'inline-start';
+        div.appendChild(masterImageCaption);
+    }
+}
+
+// Author an image for the library entry
+const libraryEntry_addSingleImage = (imageName, image_entry, libraryItem) =>
+{
+    const image = document.createElement("img");
+    image.id = imageName.split('.')[0];
+    image.src = image_entry;
+    image.alt = libraryItem['text_prompt'];
+    image.height = 150;
+    image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
+    image.style.zIndex = "0";
+    image.style.position = "relative";
+
+    // Add data-image-details attribute to image using the
+    // libraryItem object with generated_images list deleted.
+    const dataImageDetails = JSON.parse(JSON.stringify(libraryItem));
+    delete dataImageDetails['generated_images'];
+    dataImageDetails.path = image_entry;
+
+    image.onclick = function ()
+    {
+        window.open(image.src, '_blank');
+    }
+
+    image.onmouseover = function ()
+    {
+        this.style.transform = `scale(1.1)`;
+        this.style.transition = "transform 0.25s ease";
+        this.style.zIndex = "100";
+        const masterImage = document.getElementById(`master_image_${libraryItem['queue_id']}`);
+        masterImage.src = this.src;
+        const masterImageCaption = document.getElementById(`master_image_caption_${libraryItem['queue_id']}`);
+        masterImageCaption.innerText = authorDescriptionFromImageFileName(this.src);
+    };
+    image.onmouseleave = function ()
+    {
+        this.style.transform = "scale(1)";
+        this.style.transition = "transform 0.25s ease";
+        this.style.zIndex = "0";
+    };
+    image.oncontextmenu = function (ev)
+    {
+        ev.preventDefault();
+        deleteImage(this);
+    };
+    return image;
+}
+
+// Author a single image and its control buttons for a library entry
+const  libraryEntry_authorImageAndControls = (imageName, image_entry, libraryItem, imageInUpscaleQueue) =>
+{
+    const divImageAndButtons = document.createElement("div");
+    divImageAndButtons.classList.add('divImage');
+    if (imageName.includes('_upscaled.'))
+    {
+        divImageAndButtons.style.borderColor = "gold";
+        divImageAndButtons.style.borderWidth = "5px";
+    }
+
+    const image = libraryEntry_addSingleImage(imageName, image_entry, libraryItem);
+    divImageAndButtons.appendChild(image);
+
+    const imageUpscaleOrViewButton = document.createElement("button");
+    imageUpscaleOrViewButton.id = `upscale_button_${libraryItem['queue_id']}_${imageName.split('.')[0]}`;
+    imageUpscaleOrViewButton.className = "button-image-action"
+    if (imageName.includes('_upscaled.'))
+    {
+        // Button will view image in new browser window
+        imageUpscaleOrViewButton.innerText = "View Upscaled";
+        imageUpscaleOrViewButton.onclick = () =>
+        {
+            window.open(image.src, '_blank');
+        }
+    }
+    else
+    {
+        // Button will push an upscale request to the queue via the upscale() function
+        const alreadyUpscaled = checkIfImageAlreadyUpscaled(image.src, libraryItem['generated_images']);
+        imageUpscaleOrViewButton.innerText = alreadyUpscaled ? "View Original" : imageInUpscaleQueue ? "Upscaling" : "Upscale";
+        imageUpscaleOrViewButton.onclick = () =>
+        {
+            if (imageUpscaleOrViewButton.innerText === "Upscale")
+            {
+                imageUpscaleOrViewButton.innerText = 'Queued';
+                imageUpscaleOrViewButton.disabled = true;
+                const imageList = [];
+                const imageRelativePath = image.src.split("/").slice(3).join("/");
+                imageList.push(imageRelativePath);
+                upscale(imageList);
+            }
+            else
+            {
+                window.open(image.src, '_blank');
+            }
+        }
+
+    }
+
+    // Create an Edit button
+    const imageEditButton = document.createElement("button");
+    imageEditButton.className = "button-image-action"
+    imageEditButton.innerText = "Edit";
+    imageEditButton.onclick = () => window.open(`${createLinkToAdvancedPage(image_entry, libraryItem)}`, '_blank');
+
+
+    divImageAndButtons.appendChild(document.createElement('br'))
+    divImageAndButtons.appendChild(imageEditButton);
+    divImageAndButtons.appendChild(imageUpscaleOrViewButton);
+    return divImageAndButtons;
+}
+
+// Create a div for each image in the library item
+const libraryEntry_authorImageDivs = (div, thisLibraryEntry, imageCount, upscaleQueueImagesList) =>
+{
+    for(const image_entry of thisLibraryEntry['generated_images'])
+    {
+        imageCount += 1;
+        const imageName = image_entry.split("/")[2];
+        const imageInUpscaleQueue = !!upscaleQueueImagesList.find((image) => image === image_entry);
+        const divImageAndButtons = libraryEntry_authorImageAndControls(imageName, image_entry, thisLibraryEntry, imageInUpscaleQueue);
+        div.appendChild(divImageAndButtons);
+    }
+}
+
+// Author the header section for this library Entry
+const libraryEntry_authorHeader = (divLibraryEntry, libraryEntry) =>
+{
+    const hr = document.createElement("hr");
+    divLibraryEntry.appendChild(hr);
+
+    const h3 = document.createElement("h3");
+    h3.innerHTML = `<i>${libraryEntry['text_prompt']}</i>`;
+    h3.classList.add('h3TextPrompt')
+    h3.style.float = 'inline-start';
+    divLibraryEntry.appendChild(h3);
+
+    const p = document.createElement("p");
+    p.classList.add('parameters-display');
+    p.innerHTML = authorParametersListForWeb(libraryEntry);
+    divLibraryEntry.appendChild(p);
+}
+
+// Author the library entry for this library
+const createNewDivLibraryEntry = (libraryEntry, upscaleQueueImagesList) =>
+{
+    let imageCount = 0;
+
+    const divLibraryEntry = document.createElement('div');
+    divLibraryEntry.id = "div_" + libraryEntry['queue_id'];
+    divLibraryEntry.dataset['creation_unixtime'] = libraryEntry['creation_unixtime']; // Allowing for insertion in the correct display order
+    divLibraryEntry.dataset['text_prompt'] = libraryEntry['text_prompt']; // Allowing for filtering by text prompt
+    divLibraryEntry.style.float = 'left';
+
+    // These three functions create and append their various sections to divLibraryEntry
+    libraryEntry_authorHeader(divLibraryEntry, libraryEntry);
+    libraryEntry_authorMasterImagePlaceHolder(divLibraryEntry, libraryEntry);
+    libraryEntry_authorImageDivs(divLibraryEntry, libraryEntry, imageCount, upscaleQueueImagesList);
+
+    return divLibraryEntry;
+}
+
+// Check if there exists an image path in the imageList for the given (non-upscaled) image that includes '_upscaled.'
+// in the name. If so, return true. Otherwise, return false.
 const checkIfImageAlreadyUpscaled = (imagePath, imageList) =>
 {
     let fileFormat = 'png'
-    if(imagePath.endsWith('.jpg'))
+    if (imagePath.endsWith('.jpg'))
     {
         fileFormat = 'jpg';
     }
     return !!imageList.find(image => image.includes(`${imagePath.split("/").slice(3).join("/").replace('.' + fileFormat, '')}_upscaled.${fileFormat}`));
 }
 
+// scrape the seed value that is embedded in the image's name
 const getSeedValueFromImageFileName = (imageFileName) =>
 {
     if (imageFileName.includes("blank.") ||
@@ -311,13 +379,14 @@ const getSeedValueFromImageFileName = (imageFileName) =>
     return imageNameSections[3].replace('R', '');
 }
 
+// Write a description from th various embedded elements in the image name
 const authorDescriptionFromImageFileName = (imageFileName) =>
 {
     if (imageFileName.includes("blank."))
     {
         return '';
     }
-    if( imageFileName.includes("original."))
+    if (imageFileName.includes("original."))
     {
         return 'Original input image'
     }
@@ -332,6 +401,7 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
     return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue} ${upscaledImage ? ' - (upscaled)' : ''}`;
 }
 
+// Create a querystring from the parameters in the library entry that will be used to call the Advanced page.
 const authorParametersListForWeb = (libraryItem) =>
 {
     let creationDate = new Date(`${libraryItem['creation_unixtime']}`.split(".")[0] * 1000);
@@ -359,6 +429,7 @@ const authorParametersListForWeb = (libraryItem) =>
 
 }
 
+// Create link to the Advanced page with the parameters from the library entry
 const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
     const urlencoded_image_src = encodeURIComponent(image_src);
@@ -372,7 +443,7 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
     return link;
 }
 
-
+// delete an image
 const deleteImage = async (img) =>
 {
     if (window.confirm(`Are you sure you want to delete image "${img.alt}"?`))
@@ -408,36 +479,7 @@ const deleteImage = async (img) =>
     }
 }
 
-const setAutoRefresh = async () =>
-{
-    const checkBox = document.getElementById('autoRefresh');
-    if (checkBox.checked)
-    {
-        await listLibrary();
-        autoRefreshId = setInterval(function ()
-        {
-            formatLibraryEntries().then();
-        }, 10000);
-    }
-    else
-    {
-        clearInterval(autoRefreshId);
-    }
-
-}
-
-const toggleDarkMode = () =>
-{
-    let element = document.body;
-    element.classList.toggle('dark-mode');
-    localStorage.setItem("dark-mode", element.classList.contains('dark-mode') ? "Y" : "N");
-}
+// Refresh the library index every 5 seconds
+setInterval(function ()  { formatLibraryEntries().then(); }, 5000);
 
 
-const setDarkModeFromLocalStorage = () =>
-{
-    if (localStorage.getItem("dark-mode") === "Y")
-    {
-        document.body.classList.add('dark-mode');
-    }
-}

@@ -64,6 +64,8 @@ the project working on your machine. Check the commits list for the latest chang
 
 ### Latest:
 * NEW: Added new 'auto-upscale' option in Advanced page, which will automatically upscale all images just created.
+* Improved: 'Smarter' JavaScript in Library page only gets new images rather than the whole library every time you click the 'Refresh' button.
+Indeed, the 'Refresh' button is now removed as the library is updated automatically every 5 seconds.
 * NEW: Enhance and rescale images using latest GPFGAN AI processing including face restoration, performed from Library page.
 * NEW: API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
 

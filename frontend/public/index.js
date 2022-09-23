@@ -584,46 +584,6 @@ const startCountDown = async (requestedImageCount) =>
     }, 1000); // the countdown will trigger every 1 second
 }
 
-const upscale = async (image_list) =>
-{
-    const upscaleObj = {
-        "image_list": image_list,
-        "upscale_factor": defaultUpscaleFactor
-    }
-
-    let rawResponse;
-    document.getElementById('status').innerText = "Sending Upscale request...";
-
-    try
-    {
-        rawResponse = await fetch('/upscale', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(upscaleObj)
-        });
-    }
-    catch (e)
-    {
-        document.getElementById('status').innerText = "Sorry, service offline for upscaling request";
-        return false;
-    }
-
-    if (rawResponse.status === 200)
-    {
-        document.getElementById('status').innerText = "Upscale request sent to queue";
-        return await rawResponse.json();
-    }
-    else
-    {
-        document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred when upscaling - check again shortly!`;
-        return [];
-    }
-}
-
-
 
 const ensureDDIMStepsAreValid = (ddim_control) =>
 {
@@ -674,7 +634,6 @@ const populateControlsFromHref = () =>
     if (window.location.href.includes("?"))
     {
         const params = new URLSearchParams(window.location.search);
-        let checkForImageDDIMInconsistencyFlag = false;
 
         if (params.has('prompt'))
         {
@@ -720,13 +679,11 @@ const populateControlsFromHref = () =>
         {
             document.getElementById('min_ddim_steps').value = params.get('min_ddim_steps');
             document.getElementById('min_ddim_steps_value').innerText = params.get('min_ddim_steps');
-            checkForImageDDIMInconsistencyFlag = true;
         }
         if (params.has('max_ddim_steps'))
         {
             document.getElementById('max_ddim_steps').value = params.get('max_ddim_steps');
             document.getElementById('max_ddim_steps_value').innerText = params.get('max_ddim_steps');
-            checkForImageDDIMInconsistencyFlag = true;
         }
 
         if (params.has('scale'))
@@ -756,21 +713,6 @@ const populateControlsFromHref = () =>
     }
 }
 
-const toggleDarkMode = () =>
-{
-    let element = document.body;
-    element.classList.toggle('dark-mode');
-    localStorage.setItem("dark-mode", element.classList.contains('dark-mode') ? "Y" : "N");
-}
-
-
-const setDarkModeFromLocalStorage = () =>
-{
-    if (localStorage.getItem("dark-mode") === "Y")
-    {
-        document.body.classList.add('dark-mode');
-    }
-}
 
 
 const setupImageDragDrop = () =>
@@ -833,8 +775,7 @@ const createLinkToAdvancedPage = (image_src, libraryItem) =>
     {
         seedValue = libraryItem['seed'];
     }
-    const link = `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${seedValue}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
-    return link;
+    return `advanced.html?original_image_path=${urlencoded_image_src}&prompt=${urlEncodedPrompt}&seed=${seedValue}&height=${libraryItem['height']}&width=${libraryItem['width']}&min_ddim_steps=${libraryItem['min_ddim_steps']}&max_ddim_steps=${libraryItem['max_ddim_steps']}&ddim_eta=${libraryItem['ddim_eta']}&scale=${libraryItem['scale']}&downsampling_factor=${libraryItem['downsampling_factor']}`;
 }
 
 const getSeedValueFromImageFileName = (imageFileName) =>
@@ -856,7 +797,7 @@ const getSeedValueFromImageFileName = (imageFileName) =>
 /**
  * A useful sleep function
  * A calling function can use 'await sleep(1);' to pause for 1 second
- * @param seconds
+ * @param milliSeconds
  * @returns {Promise<unknown>}
  */
 const sleep = (milliSeconds) =>

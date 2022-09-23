@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Stable Diffusion Web Playground - Advanced Prompting Page</title>
+    <script src="common.js"></script>
     <script src="index.js"></script>
 </head>
 <style>
@@ -179,7 +180,7 @@
         <hr>
         Optional input image<br><small>Enter URL directly to the image on the web,<br>or choose one from the library
         folder using 'library/&lt;path-to-file&gt;'</small>:
-        <div><input id="original_image_path" type="text" size="150""/></div>
+        <div><input id="original_image_path" type="text" size="150"/></div>
         <p>or drag and drop an input image into this box:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
         <div id="image_drop_area" style="height: 330px; width: 330px">
             <img id="drag_drop_image" src="" style="height: 300px; width: auto"/>
@@ -361,5 +362,6 @@
         <div class="container" id="output"></div>
         <div class="container" id="queue">Current queue:</div>
     </div>
+</div>
 </body>
 </html>
