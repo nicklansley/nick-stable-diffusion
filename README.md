@@ -18,7 +18,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
-- NEW: Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page.
+- NEW: Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page, or use 'auto-upscale' option in Advanced page
 - Designed as a multi-user web application - get your family trying it on your home network, or set up your workstation
   as a internet-accessible server using ngrok or similar tunneling tool for your friends to try.
 - Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
@@ -63,6 +63,7 @@ This project is being improved throughout September 2022, so check back often fo
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
+* NEW: Added new 'auto-upscale' option in Advanced page, which will automatically upscale all images just created.
 * NEW: Enhance and rescale images using latest GPFGAN AI processing including face restoration, performed from Library page.
 * NEW: API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
 

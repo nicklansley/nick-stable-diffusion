@@ -139,6 +139,14 @@
         margin-top: 10px;
     }
 
+    .control_half_width_td {
+        width: 345px;
+        border: 1px solid #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
     #image_drop_area {
         width: 400px;
         height: 225px;
@@ -291,26 +299,35 @@
             </tr>
             <tr>
                  <td class="control_td">
-                    Downsampling Factor:
-                    <div>
-                        <input id="ds2"
-                               name="downsampling_factor"
-                               type="radio"
-                               value="2">2
-                        <input id="ds4"
-                               name="downsampling_factor"
-                               type="radio"
-                               value="4">4
-                        <input checked
-                               id="ds8"
-                               name="downsampling_factor"
-                               type="radio"
-                               value="8">8
-                        <input id="ds16"
-                               name="downsampling_factor"
-                               type="radio"
-                               value="16">16
+                     <div class="control_half_width_td" style="float: left">
+                            Downsampling Factor:
+                            <div>
+                                <input id="ds2"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="2">2
+                                <input id="ds4"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="4">4
+                                <input checked
+                                       id="ds8"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="8">8
+                                <input id="ds16"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="16">16
+                            </div>
                     </div>
+                    <div class="control_half_width_td" style="float: right">
+                     Auto Upscale:
+                        <input id="auto_upscale"
+                               type="checkbox"
+                               value="false">
+                    </div>
+
                 </td>
                  <td class="control_td">
                     <div>

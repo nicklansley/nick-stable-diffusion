@@ -4,6 +4,8 @@ let global_imagesRequested = 0;
 let global_countdownValue = 0;
 let global_countdownTimerIntervalId = null;
 let global_imageLoading = false;
+let defaultUpscaleFactor = 4;
+
 /**
  * Send the text prompt to the AI and get a queue_id back in 'queue_id' which will be used to track the request.
  * @returns {Promise<void>
@@ -67,6 +69,8 @@ const prepareRequestData = () =>
         {
             data['scale'] = 7.5;
         }
+
+        data['auto_upscale'] = document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false;
 
         data['original_image_path'] = document.getElementById("original_image_path").value;
 
@@ -333,6 +337,10 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
     {
         return 'Original input image'
     }
+    if (imageFileName.includes("_upscaled."))
+    {
+        return 'Upscaled version - click to view full size in a new browser window';
+    }
 
     const srcElements = imageFileName.split("/");
     const imageNameSections = srcElements[5].split("-");
@@ -340,7 +348,7 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
     const ddimSteps = imageNameSections[1].replace('D', '')
     const scale = imageNameSections[2].replace('S', '');
     const seedValue = imageNameSections[3].replace('R', '');
-    return `Image #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
+    return `New Image - click to edit in Advanced page - #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
 }
 
 /**
@@ -359,18 +367,22 @@ const displayImages = async (imageList) =>
     }
 
     // Now the master image had been updated, we can display the rest of the images in their correct aspect ratios:
-    const widthHeightRatio = masterImage.height / masterImage.width;
-
     for(let imageIndex = 0; imageIndex < imageList.length; imageIndex += 1)
     {
         const image = document.getElementById(`image_${imageIndex}`);
         image.src = imageList[imageIndex] ? imageList[imageIndex] : "/blank.png";
-        image.width = image.height / widthHeightRatio;
+        image.style.height = "150px";
+        image.style.width = "auto";
         global_imageLoading = true;
         while (global_imageLoading)
         {
             // We wait for this image's onload event to complete and set global_imageLoading to false before moving on to the next image:
             await sleep(100);
+        }
+        if (image.src.includes('_upscaled.'))
+        {
+            image.style.borderColor = "gold"; // Upscaled image -
+            image.style.borderWidth = "5px";
         }
 
     }
@@ -386,6 +398,8 @@ const createImagePlaceHolders = () =>
 
     const masterImage = document.createElement("img");
     masterImage.id = `master_image`;
+    masterImage.style.height = "512px"
+    masterImage.style.width = "auto";
     masterImage.style.zIndex = "0";
 
     // Update the master_image with teh most recent image in the list
@@ -402,6 +416,10 @@ const createImagePlaceHolders = () =>
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     let imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps);
+    if(document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
+    {
+        imageElementsToCreate = imageElementsToCreate * 2
+    }
     imageElementsToCreate = includesOriginalImage ? imageElementsToCreate + 1 : imageElementsToCreate;
 
 
@@ -422,19 +440,27 @@ const createImagePlaceHolders = () =>
 
         image.onclick = function ()
         {
-            const libraryItem = {
-                text_prompt: document.getElementById("prompt").value,
-                seed: getSeedValueFromImageFileName(this.src),
-                height: document.getElementById("height") ? document.getElementById("height").value : 512,
-                width: document.getElementById("width") ? document.getElementById("width").value : 512,
-                min_ddim_steps: document.getElementById("min_ddim_steps") ? document.getElementById("min_ddim_steps").value : 40,
-                max_ddim_steps: document.getElementById("max_ddim_steps") ? document.getElementById("max_ddim_steps").value : 40,
-                ddim_eta: 0,  // not used by the UI but available to the API
-                scale: document.getElementById("scale") ? document.getElementById("scale").value : 7.5,
-                downsampling_factor: getDownSamplingFactor()
+            if(image.src.includes('_upscaled.'))
+            {
+                // This is an upscaled image so clicking it will open it in a new browser window
+                window.open(image.src, '_blank');
             }
-            const urlencoded_image_src = this.src;
-            window.open(`${createLinkToAdvancedPage(urlencoded_image_src, libraryItem)}`, '_self');
+            else
+            {
+                const libraryItem = {
+                    text_prompt: document.getElementById("prompt").value,
+                    seed: getSeedValueFromImageFileName(this.src),
+                    height: document.getElementById("height") ? document.getElementById("height").value : 512,
+                    width: document.getElementById("width") ? document.getElementById("width").value : 512,
+                    min_ddim_steps: document.getElementById("min_ddim_steps") ? document.getElementById("min_ddim_steps").value : 40,
+                    max_ddim_steps: document.getElementById("max_ddim_steps") ? document.getElementById("max_ddim_steps").value : 40,
+                    ddim_eta: 0,  // not used by the UI but available to the API
+                    scale: document.getElementById("scale") ? document.getElementById("scale").value : 7.5,
+                    downsampling_factor: getDownSamplingFactor()
+                }
+                const urlencoded_image_src = this.src;
+                window.open(`${createLinkToAdvancedPage(urlencoded_image_src, libraryItem)}`, '_self');
+            }
         }
 
         image.onmouseover = function ()
@@ -522,7 +548,13 @@ const startCountDown = async (requestedImageCount) =>
             console.log("All images are ready - stopping countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
             clearInterval(global_countdownTimerIntervalId);
             global_countdownTimerIntervalId = null;
+
             document.getElementById("status").innerText = "Processing completed";
+            if(document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
+            {
+                document.getElementById("status").innerText += " - upscaled versions will appear automatically with 'gold' border";
+            }
+
             if (currentImageCount < requestedImageCount)
             {
                 document.getElementById("status").innerText += " - some DDIM steps failed to process";
@@ -550,9 +582,48 @@ const startCountDown = async (requestedImageCount) =>
             }
         }
     }, 1000); // the countdown will trigger every 1 second
-
-
 }
+
+const upscale = async (image_list) =>
+{
+    const upscaleObj = {
+        "image_list": image_list,
+        "upscale_factor": defaultUpscaleFactor
+    }
+
+    let rawResponse;
+    document.getElementById('status').innerText = "Sending Upscale request...";
+
+    try
+    {
+        rawResponse = await fetch('/upscale', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(upscaleObj)
+        });
+    }
+    catch (e)
+    {
+        document.getElementById('status').innerText = "Sorry, service offline for upscaling request";
+        return false;
+    }
+
+    if (rawResponse.status === 200)
+    {
+        document.getElementById('status').innerText = "Upscale request sent to queue";
+        return await rawResponse.json();
+    }
+    else
+    {
+        document.getElementById('status').innerText = `Sorry, an HTTP error ${rawResponse.status} occurred when upscaling - check again shortly!`;
+        return [];
+    }
+}
+
+
 
 const ensureDDIMStepsAreValid = (ddim_control) =>
 {

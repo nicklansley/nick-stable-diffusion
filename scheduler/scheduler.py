@@ -12,6 +12,7 @@ import requests
 METADATA_START = b'##STARTMETADATA##'
 METADATA_END = b'##ENDMETADATA##'
 ADD_METADATA_TO_FILES = True
+UPSCALE_FACTOR = 4
 
 
 def get_next_queue_request():
@@ -59,6 +60,7 @@ def send_prompt_request_to_sd_engine(prompt_info):
         print("SCHEDULER: send_prompt_request_to_sd_engine - Error:", e)
         return {'queue_id': 'X', 'success': False}
 
+
 def send_upscale_request_to_sd_engine(data):
     try:
         upscale_json = {
@@ -74,6 +76,7 @@ def send_upscale_request_to_sd_engine(data):
     except Exception as e:
         print("SCHEDULER: send_upscale_request_to_sd_engine - Error:", e)
         return {'queue_id': 'X', 'success': False}
+
 
 def update_library_catalogue(queue_id):
     print('\nSCHEDULER: Updating library catalogue')
@@ -169,7 +172,8 @@ def rebuild_library_catalogue():
         for root, dirs, files in os.walk("/app/library", topdown=False):
             for image_name in files:
                 image_path = os.path.join(root, image_name)
-                if 'drag_and_drop_images' not in image_path and (image_name.endswith('.jpg') or image_name.endswith('.png')):
+                if 'drag_and_drop_images' not in image_path and (
+                        image_name.endswith('.jpg') or image_name.endswith('.png')):
 
                     # if the image has a metadata section then add it to the
                     # end of the image file if ADD_METADATA_TO_FILES is enabled
@@ -191,7 +195,34 @@ def rebuild_library_catalogue():
         print('\nSCHEDULER: Rebuild of library catalogue completed')
 
     except Exception as e:
-        print('\nSCHEDULER: Rebuild of library catalogue failed, or there is no library until first images are created', e)
+        print('\nSCHEDULER: Rebuild of library catalogue failed, or there is no library until first images are created',
+              e)
+
+
+def process_auto_upscale(queue_id):
+    print('\nSCHEDULER: Processing auto-upscale for queue_id:', queue_id)
+    image_list = []
+
+    try:
+        # get a list of all the freshly created image files
+        for root, dirs, files in os.walk("/app/library/{}".format(queue_id), topdown=False):
+            for image_name in files:
+                if image_name.endswith('.jpg') or image_name.endswith('.png'):
+                    image_path = os.path.join(root, image_name).replace("/app/", "")
+                    image_list.append(image_path)
+
+        # Send the request to the backend:
+        data = {
+            "image_list": image_list,
+            "upscale_factor": UPSCALE_FACTOR,
+            "queue_id": queue_id
+        }
+        send_upscale_request_to_sd_engine(data)
+
+        print('\nSCHEDULER: Processing auto-upscale for queue_id {} completed'.format(queue_id))
+
+    except Exception as e:
+        print('\nSCHEDULER: Processing auto-upscale for queue_id {} failed'.format(queue_id), e)
 
 
 def add_image_list_entries_to_library_entry(files, library_entry, root):
@@ -288,13 +319,18 @@ if __name__ == "__main__":
         if queue_item['queue_id'] != 'X':
             if queue_item['command'] == 'prompt':
                 request_data = send_prompt_request_to_sd_engine(queue_item)
+
+                if 'auto_upscale' in queue_item and queue_item['auto_upscale']:
+                    process_auto_upscale(queue_item['queue_id'])
+
+                if request_data['queue_id'] == queue_item['queue_id']:
+                    update_library_catalogue(queue_item['queue_id'])
+
             elif queue_item['command'] == 'upscale':
                 request_data = send_upscale_request_to_sd_engine(queue_item)
+                rebuild_library_catalogue()  # temporary fix for library not updating after upscale
 
             delete_request_from_redis_queue(queue_item)
-
-            if request_data['queue_id'] == queue_item['queue_id']:
-                update_library_catalogue(queue_item['queue_id'])
 
             if request_data['success']:
                 print("SCHEDULER: Processing complete - library updated\n\n")
