@@ -63,6 +63,7 @@ This project is being improved throughout September 2022, so check back often fo
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
+* WORK IN PROGRESS: Creating video from evolving frames - incomplete but does not affect existing functionality so I'm pushing it to GitHub for backup reasons!
 * NEW: Added new 'auto-upscale' option in Advanced page, which will automatically upscale all images just created.
 * Improved: 'Smarter' JavaScript in Library page only gets new images rather than the whole library every time you click the 'Refresh' button.
 Indeed, the 'Refresh' button is now removed as the library is updated automatically every 5 seconds.
