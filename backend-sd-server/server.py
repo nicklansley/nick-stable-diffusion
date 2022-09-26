@@ -1,6 +1,7 @@
 import base64
 import gzip
 import random
+import subprocess
 import urllib.request
 import cv2
 import torch
@@ -69,7 +70,7 @@ SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image wi
 
 # IMAGE QUALITY SETTINGS
 # IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
-IMAGE_QUALITY = "MED"    # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
+IMAGE_QUALITY = "MED"  # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
 # IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
 
 # GLOBAL VARS
@@ -283,18 +284,18 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                                 print(f"Running DDIM step {each_ddim_step} with seed {chosen_seed}")
                                 seed_everything(chosen_seed)
 
-                                run_sampling(image_counter,
-                                             conditioning,
-                                             each_ddim_step,
-                                             library_dir_name,
-                                             model,
-                                             options,
-                                             sampler,
-                                             shape,
-                                             start_code,
-                                             unconditional_conditioning,
-                                             wm_encoder,
-                                             chosen_seed)
+                                image_counter, first_image_path = run_sampling(image_counter,
+                                                                               conditioning,
+                                                                               each_ddim_step,
+                                                                               library_dir_name,
+                                                                               model,
+                                                                               options,
+                                                                               sampler,
+                                                                               shape,
+                                                                               start_code,
+                                                                               unconditional_conditioning,
+                                                                               wm_encoder,
+                                                                               chosen_seed)
 
                             end = time.time()
                             time_taken = end - start
@@ -302,7 +303,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
                     save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 
-        return {'success': True, 'queue_id': queue_id}
+        return {'success': True, 'queue_id': queue_id, 'first_image_path': first_image_path}
 
     except Exception as e:
         print(e)
@@ -314,6 +315,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
 
 def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, model, options, sampler, shape, start_code,
                  unconditional_conditioning, wm_encoder, seed_value):
+    first_image_path = ''
     try:
         samples_ddim, _ = sampler.sample(S=ddim_steps,
                                          conditioning=conditioning,
@@ -335,13 +337,14 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
 
         x_samples = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
 
-        image_counter = save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples,
-                                           seed_value, options['scale'])
+        image_counter, first_image_path = save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder,
+                                                             x_samples,
+                                                             seed_value, options['scale'])
 
     except Exception as e:
         print('Error in run_sampling: ' + str(e))
 
-    return image_counter
+    return image_counter, first_image_path
 
 
 def upscale_image(image_list, queue_id, upscale_factor=2):
@@ -355,7 +358,7 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
     aligned_faces = False
     weight = 0.5
 
-    response  = {'success': False, 'queue_id': queue_id}
+    response = {'success': False, 'queue_id': queue_id}
 
     os.chdir('/app/GFPGAN')
     try:
@@ -381,34 +384,10 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
         else:
             bg_upsampler = None
 
-        # ------------------------ set up GFPGAN restorer ------------------------
-        if version == '1':
-            arch = 'original'
-            channel_multiplier = 1
-            model_name = 'GFPGANv1'
-            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v0.1.0/GFPGANv1.pth'
-        elif version == '1.2':
-            arch = 'clean'
-            channel_multiplier = 2
-            model_name = 'GFPGANCleanv1-NoCE-C2'
-            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v0.2.0/GFPGANCleanv1-NoCE-C2.pth'
-        elif version == '1.3':
-            arch = 'clean'
-            channel_multiplier = 2
-            model_name = 'GFPGANv1.3'
-            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.3.pth'
-        elif version == '1.4':
-            arch = 'clean'
-            channel_multiplier = 2
-            model_name = 'GFPGANv1.4'
-            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
-        elif version == 'RestoreFormer':
-            arch = 'RestoreFormer'
-            channel_multiplier = 2
-            model_name = 'RestoreFormer'
-            url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth'
-        else:
-            raise ValueError(f'Wrong model version {version}.')
+        arch = 'clean'
+        channel_multiplier = 2
+        model_name = 'GFPGANv1.4'
+        url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
 
         # determine model paths
         model_path = os.path.join('/app/GFPGAN/experiments/pretrained_models', model_name + '.pth')
@@ -459,7 +438,7 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
                 print('No image to restore!')
 
 
-    except Exception  as e:
+    except Exception as e:
         print("Error", e)
 
     os.chdir('/app')
@@ -468,6 +447,7 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
 
 def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale):
     # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png/.jpg
+    first_image_path = ''
     for x_sample in x_samples:
         x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
         img = Image.fromarray(x_sample.astype(np.uint8))
@@ -475,13 +455,19 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
         print(f"Saving image #{image_counter} with DDIM step {ddim_steps}, scale {scale} and seed {seed_value}")
         image_name = f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}"
         if IMAGE_QUALITY == "MAX":
+            if first_image_path == '':
+                first_image_path = os.path.join(library_dir_name, image_name + ".png")
             img.save(os.path.join(library_dir_name, image_name + ".png"), optimize=True, progressive=True)
         elif IMAGE_QUALITY == "MED":
+            if first_image_path == '':
+                first_image_path = os.path.join(library_dir_name, image_name + ".jpg")
             img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_maximum')
         elif IMAGE_QUALITY == "LOW":
+            if first_image_path == '':
+                first_image_path = os.path.join(library_dir_name, image_name + ".jpg")
             img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_low')
         image_counter += 1
-    return image_counter
+    return image_counter, first_image_path
 
 
 def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options):
@@ -570,13 +556,13 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                     x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
                                     # save the newly created images
-                                    image_counter = save_image_samples(each_ddim_step,
-                                                                       image_counter,
-                                                                       library_dir_name,
-                                                                       wm_encoder,
-                                                                       x_samples,
-                                                                       chosen_seed,
-                                                                       options['scale'])
+                                    image_counter, first_image_path = save_image_samples(each_ddim_step,
+                                                                                         image_counter,
+                                                                                         library_dir_name,
+                                                                                         wm_encoder,
+                                                                                         x_samples,
+                                                                                         chosen_seed,
+                                                                                         options['scale'])
 
                                     end = time.time()
                                     time_taken = end - start
@@ -587,7 +573,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
                            time_taken, '', original_image_path)
 
-        return {'success': True, 'queue_id': queue_id}
+        return {'success': True, 'queue_id': queue_id, 'first_image_path': first_image_path}
 
     except Exception as e:
         print(e)
@@ -597,9 +583,91 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                            original_image_path)
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
-    # gzip a string then convert to base64
-    def gzip_and_encode(self, string):
-        return base64.b64encode(gzip.compress(string.encode('utf-8'))).decode('utf-8')
+
+def check_api_request_properties(data, command):
+    options = {
+        'seed': 0,
+        'height': HEIGHT,
+        'width': WIDTH,
+        'max_ddim_steps': DDIM_STEPS,
+        'min_ddim_steps': DDIM_STEPS,
+        'ddim_eta': DDIM_ETA,
+        'scale': SCALE,
+        'downsampling_factor': DOWNSAMPLING_FACTOR,
+        'strength': STRENGTH
+    }
+
+    # Override the default options with any in the request:
+    try:
+        if 'seed' in data and len(str(data['seed']).strip()) > 0 and int(data['seed']) > 0:
+            options['seed'] = int(data['seed'])
+        # else use the seed generated when options was initialised
+
+    except ValueError:
+        # keep the seed at 0 to be generated within the process functions
+        options['seed'] = 0
+
+    if 'height' in data:
+        options['height'] = int(data['height'])
+    if 'width' in data:
+        options['width'] = int(data['width'])
+    if 'ddim_eta' in data:
+        options['ddim_eta'] = float(data['ddim_eta'])
+    if 'scale' in data:
+        options['scale'] = float(data['scale'])
+    if 'downsampling_factor' in data:
+        options['downsampling_factor'] = int(data['downsampling_factor'])
+
+    if 'ddim_steps' in data:
+        options['max_ddim_steps'] = int(data['ddim_steps'])
+    if 'max_ddim_steps' in data:
+        options['max_ddim_steps'] = int(data['max_ddim_steps'])
+    if 'min_ddim_steps' in data:
+        options['min_ddim_steps'] = int(data['min_ddim_steps'])
+
+    # safety feature - min_ddim_steps must be less than or equal to  max_ddim_steps
+    # otherwise make them the same value
+    if options['min_ddim_steps'] > options['max_ddim_steps']:
+        options['min_ddim_steps'] = options['max_ddim_steps']
+
+    if 'strength' in data:
+        options['strength'] = float(data['strength'])
+        if options['strength'] >= 1.0:
+            options['strength'] = 0.999
+        elif options['strength'] < 0.0:
+            options['strength'] = 0.001
+
+    if 'ddim_steps' in data:
+        if command == 'video':
+            # Only one value for ddim_steps is allowed for video
+            options['max_ddim_steps'] = int(data['ddim_steps'])
+            options['min_ddim_steps'] = options['max_ddim_steps']
+        else:
+            options['max_ddim_steps'] = int(data['min_ddim_steps'])
+            options['min_ddim_steps'] = int(data['max_ddim_steps'])
+            # Check that min_ddim_steps is less than or equal to max_ddim_steps
+            if options['min_ddim_steps'] > options['max_ddim_steps']:
+                options['min_ddim_steps'] = options['max_ddim_steps']
+
+    if 'strength' in data:
+        options['strength'] = float(data['strength'])
+        if options['strength'] >= 1.0:
+            options['strength'] = 0.999
+        elif options['strength'] < 0.0:
+            options['strength'] = 0.001
+
+    original_image_path = ''
+    if 'original_image_path' in data:
+        original_image_path = data['original_image_path'].strip()
+
+        # only image paths which are wither URLs or are sourced from the library are allowed.
+        if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
+            if original_image_path != '':
+                print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
+                    original_image_path))
+            original_image_path = ''
+
+    return options, original_image_path
 
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
@@ -610,7 +678,6 @@ def save_metadata_file(num_images, library_dir_name, options, queue_id, text_pro
             "num_images": num_images,
             "queue_id": queue_id,
             "time_taken": round(time_taken, 2),
-            "seed": options['seed'],
             "seed": options['seed'],
             "height": options['height'],
             "width": options['width'],
@@ -649,6 +716,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.process_prompt(data)
         elif api_command == '/upscale':
             self.upscale(data)
+        elif api_command == '/video':
+            self.create_video(data)
 
     def upscale(self, data):
         image_list = data['image_list']
@@ -681,68 +750,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         # Set up defaults for the optional extra properties which will
         # be overwritten should they be in the request
-        options = {
-            'seed': 0,
-            'height': HEIGHT,
-            'width': WIDTH,
-            'max_ddim_steps': DDIM_STEPS,
-            'min_ddim_steps': DDIM_STEPS,
-            'ddim_eta': DDIM_ETA,
-            'scale': SCALE,
-            'downsampling_factor': DOWNSAMPLING_FACTOR,
-            'strength': STRENGTH
-        }
 
-        # Override the default options with any in the request:
-        try:
-            if 'seed' in data and len(str(data['seed']).strip()) > 0 and int(data['seed']) > 0:
-                options['seed'] = int(data['seed'])
-            # else use the seed generated when options was initialised
+        options, original_image_path = check_api_request_properties(data, "prompt")
 
-        except ValueError:
-            # keep the seed at 0 to be generated within the process functions
-            pass
-
-        if 'height' in data:
-            options['height'] = int(data['height'])
-        if 'width' in data:
-            options['width'] = int(data['width'])
-        if 'ddim_eta' in data:
-            options['ddim_eta'] = float(data['ddim_eta'])
-        if 'scale' in data:
-            options['scale'] = float(data['scale'])
-        if 'downsampling_factor' in data:
-            options['downsampling_factor'] = int(data['downsampling_factor'])
-
-        if 'ddim_steps' in data:
-            options['max_ddim_steps'] = int(data['ddim_steps'])
-        if 'max_ddim_steps' in data:
-            options['max_ddim_steps'] = int(data['max_ddim_steps'])
-        if 'min_ddim_steps' in data:
-            options['min_ddim_steps'] = int(data['min_ddim_steps'])
-
-        # safety feature - min_ddim_steps must be less than or equal to  max_ddim_steps
-        # otherwise make them the same value
-        if options['min_ddim_steps'] > options['max_ddim_steps']:
-            options['min_ddim_steps'] = options['max_ddim_steps']
-
-        if 'strength' in data:
-            options['strength'] = float(data['strength'])
-            if options['strength'] >= 1.0:
-                options['strength'] = 0.999
-            elif options['strength'] < 0.0:
-                options['strength'] = 0.001
-
-        original_image_path = ''
-        if 'original_image_path' in data:
-            original_image_path = data['original_image_path'].strip()
-
-            # only image paths which are wither URLs or are sourced from the library are allowed.
-            if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
-                if original_image_path != '':
-                    print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
-                        original_image_path))
-                original_image_path = ''
         # process!
         if original_image_path != '':
             result = process_image(original_image_path, prompt, global_device, global_model,
@@ -763,6 +773,78 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response_body = json.dumps(result)
             self.wfile.write(response_body.encode())
 
+    def create_video(self, data):
+        # Get the mandatory prompt data from the request
+        try:
+            prompt = data['prompt'].strip()
+            queue_id = data['queue_id']
+            num_video_frames = data['num_video_frames']
+            num_frames_per_second = data['frames_per_second']
+
+        except KeyError as e:
+            print(e)
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(
+                b'{"error": "Bad request: missing prompt, queue_id, num_video_frames, or num_frames_per_second"}')
+            return
+
+        # Set up defaults for the optional extra properties which will
+        # be overwritten should they be in the request
+        options, original_image_path = check_api_request_properties(data, "video")
+
+        video_frame_paths_list = []
+
+        # First run with or without an original image to get the first frame
+        if original_image_path != '':
+            result = process_image(original_image_path=original_image_path, text_prompt=prompt,
+                                   device=global_device, model=global_model, wm_encoder=global_wm_encoder,
+                                   queue_id=queue_id, num_images=1, options=options)
+        else:
+            result = process(text_prompt=prompt, device=global_device, model=global_model,
+                             wm_encoder=global_wm_encoder, queue_id=queue_id, num_images=1, options=options)
+
+        video_frame_paths_list.append(result['first_image_path'])
+
+        for video_frame_count in range(1, num_video_frames):
+            result = process_image(original_image_path=result['first_image_path'], text_prompt=prompt,
+                                   device=global_device, model=global_model, wm_encoder=global_wm_encoder,
+                                   queue_id=queue_id, num_images=1, options=options)
+            video_frame_paths_list.append(result['first_image_path'])
+
+        # Now use ffmpeg to create the video
+        video_path = create_video_from_frames(video_frame_paths_list, queue_id, num_frames_per_second)
+        del result['first_image_path']
+        result['video_path'] = video_path
+
+        # Send the response back to the calling request
+        if result == 'X':
+            self.send_response(500)
+            self.end_headers()
+        else:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            response_body = json.dumps(result)
+            self.wfile.write(response_body.encode())
+
+
+def create_video_from_frames(video_frame_paths_list, queue_id, num_frames_per_second):
+    print("Creating video from", len(video_frame_paths_list), "with", num_frames_per_second, "frames per second")
+    video_path = os.path.join(OUTPUT_PATH, queue_id + '/video.mp4')
+    frame_input_list_file = os.path.join(OUTPUT_PATH, queue_id + '/input.txt')
+
+    with open(frame_input_list_file, 'w') as f:
+        for video_frame_path in video_frame_paths_list:
+            f.write("file '" + video_frame_path + "'\n")
+
+    print("Creating video at", video_path)
+    ffmpeg_command = ['ffmpeg', '-y', '-r', str(num_frames_per_second), '-f', 'concat', '-safe', '0', '-i',
+                      frame_input_list_file, '-c:v', 'libx264', '-profile:v', 'high', '-crf', '20',
+                      '-pix_fmt', 'yuv420p', video_path]
+    subprocess.run(ffmpeg_command)
+    print("COMPETED:", len(video_frame_paths_list), "with", num_frames_per_second, "fps -> ", video_path)
+    return video_path
 
 def exit_signal_handler(self, sig):
     # Shutdown the server gracefully when Docker requests it

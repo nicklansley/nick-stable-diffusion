@@ -32,6 +32,29 @@ const go = async () =>
     await processPromptRequestResponse(rawResponse);
 }
 
+const go_video = async () =>
+{
+    document.getElementById('status').innerText = "Creating Video..."
+    document.getElementById('buttonGo').innerText = "Creating Video...";
+    document.getElementById('buttonGo').enabled = false;
+
+    global_imagesRequested = parseInt(document.getElementById('num_video_frames').value);
+
+    //If the timer is already running and the button is clicked again, the user is sending a new request
+    //to be added to the queue. So we need to stop the countdown timer, as the countdown is no longer
+    //applicable to this new current request.
+    if (global_countdownTimerIntervalId)
+    {
+        clearInterval(global_countdownTimerIntervalId);
+        global_countdownTimerIntervalId = null;
+    }
+
+    const data = prepareVideoRequestData();
+    const rawResponse = await sendVideoRequest(data);
+    await processPromptRequestResponse(rawResponse);
+}
+
+
 
 const prepareRequestData = () =>
 {
@@ -61,8 +84,66 @@ const prepareRequestData = () =>
             data['width'] = 512;
         }
 
-        data['min_ddim_steps'] = parseInt(document.getElementById("min_ddim_steps").value);
+        data['ddim_steps'] = parseInt(document.getElementById("ddim_steps").value);
         data['max_ddim_steps'] = parseInt(document.getElementById("max_ddim_steps").value);
+
+        data['scale'] = parseFloat(document.getElementById("scale").value);
+        if (data['scale'] === '')
+        {
+            data['scale'] = 7.5;
+        }
+
+        data['auto_upscale'] = document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false;
+
+        data['original_image_path'] = document.getElementById("original_image_path").value;
+
+        // Note that the strength slider represents a value fomo 0.01 - 99.9% whereas strength is a float from 0.0 to 0.999
+        // I used percentage because it is easier to understand for the user.
+        data['strength'] = parseFloat(document.getElementById("strength").value) / 100;
+        if (data['strength'] === '')
+        {
+            data['strength'] = 0.75;
+        }
+
+
+        data['downsampling_factor'] = getDownSamplingFactor();
+    }
+    return data;
+}
+
+
+const prepareVideoRequestData = () =>
+{
+    const data = {
+        prompt: document.getElementById("prompt").value,
+        num_video_frames: global_imagesRequested,
+        seed: 0
+    }
+    if (document.body.innerText.includes("DDIM Steps:"))
+    {
+        //We have the advanced options incoming for the request from advanced.html
+        data['seed'] = parseInt(document.getElementById("seed").value);
+        if (data['seed'] === '')
+        {
+            data['seed'] = 0;
+        }
+
+        data['num_video_frames'] = parseInt(document.getElementById("num_video_frames").value);
+        data['frames_per_second'] = parseInt(document.getElementById("frames_per_second").value);
+
+        data['height'] = parseInt(document.getElementById("height").value);
+        if (data['height'] === '')
+        {
+            data['height'] = 512;
+        }
+
+        data['width'] = parseInt(document.getElementById("width").value);
+        if (data['width'] === '')
+        {
+            data['width'] = 512;
+        }
+
+        data['min_ddim_steps'] = parseInt(document.getElementById("ddim_steps").value);
 
         data['scale'] = parseFloat(document.getElementById("scale").value);
         if (data['scale'] === '')
@@ -116,6 +197,21 @@ const sendPromptRequest = async (data) =>
     document.getElementById("output").innerText = "";
 
     const rawResponse = await fetch('/prompt', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    });
+    return rawResponse;
+}
+
+const sendVideoRequest = async (data) =>
+{
+    document.getElementById("output").innerText = "";
+
+    const rawResponse = await fetch('/video', {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -384,9 +480,17 @@ const displayImages = async (imageList) =>
             image.style.borderColor = "gold"; // Upscaled image -
             image.style.borderWidth = "5px";
         }
-
     }
 }
+
+
+const displayVideoFrame = async (imageList) =>
+{
+    const masterImage = document.getElementById("master_image");
+    masterImage.src = imageList[0];
+}
+
+
 
 /**
  * Creates the image placeholders in the UI which will be populated with actual images as processing progresses
@@ -416,7 +520,12 @@ const createImagePlaceHolders = () =>
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     let imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps);
-    if(document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
+    if(document.getElementById("frames_per_second"))
+    {
+        // This is the video page
+        imageElementsToCreate = 1;
+    }
+    else if(document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
     {
         imageElementsToCreate = imageElementsToCreate * 2
     }
@@ -541,7 +650,14 @@ const startCountDown = async (requestedImageCount) =>
             countdownSeconds = secsPerImage * (requestedImageCount - currentImageCount);
             previousImageCount = currentImageCount;
             previousImageTime = currentImageTime;
-            await displayImages(currentImageListData['images']);
+            if(document.getElementById("frames_per_second"))
+            {
+                await displayVideoFrame(currentImageListData['images']);
+            }
+            else
+            {
+                await displayImages(currentImageListData['images']);
+            }
         }
         else if (currentImageCount === requestedImageCount || currentImageListData['completed'])
         {

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Stable Diffusion Web Playground - Advanced Prompting Page</title>
+    <script src="common.js"></script>
+    <script src="index.js"></script>
+</head>
+<style>
+    body {
+        padding: 25px;
+        background-color: white;
+        color: black;
+        font-size: 25px;
+    }
+
+    .dark-mode {
+        background-color: black;
+        color: white;
+    }
+
+    html {
+        font-family: "Lucida Sans", sans-serif;
+    }
+
+    .container {
+        border-collapse: collapse;
+        width: 90%;
+    }
+
+    img {
+        border: 5px solid #ffffff;
+    }
+
+    textarea {
+        font-size: 36px;
+    }
+
+    .label {
+        color: white;
+        padding: 8px;
+        background-color: darkslategray;
+        width: 98.5%;
+    }
+
+    input {
+        font-size: 20px;
+    }
+
+    .button-9 {
+        appearance: auto;
+        backface-visibility: hidden;
+        background-color: #888888;
+        border-radius: 6px;
+        border-width: 0;
+        box-shadow: rgba(50, 50, 93, .1) 0 0 0 1px inset, rgba(50, 50, 93, .1) 0 2px 5px 0, rgba(0, 0, 0, .07) 0 1px 1px 0;
+        box-sizing: border-box;
+        color: #fff;
+        cursor: pointer;
+        font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+        font-size: 100%;
+        height: 44px;
+        line-height: 1.15;
+        margin: 12px 0 0;
+        outline: none;
+        overflow: hidden;
+        padding: 0 25px;
+        position: relative;
+        text-align: center;
+        text-transform: none;
+        transform: translateZ(0);
+        transition: all .2s, box-shadow .08s ease-in;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        width: 100%;
+    }
+
+    .button-9:disabled {
+        cursor: default;
+    }
+
+    .button-9:focus {
+        box-shadow: rgba(50, 50, 93, .1) 0 0 0 1px inset, rgba(50, 50, 93, .2) 0 6px 15px 0, rgba(0, 0, 0, .1) 0 2px 2px 0, rgba(50, 151, 211, .3) 0 0 0 4px;
+    }
+
+    .slidecontainer {
+        width: 100%; /* Width of the outside container */
+    }
+
+    /* The slider itself */
+    .slider {
+        -webkit-appearance: none; /* Override default CSS styles */
+        appearance: none;
+        width: 100%; /* Full-width */
+        height: 25px; /* Specified height */
+        background: #d3d3d3; /* Grey background */
+        outline: none; /* Remove outline */
+        opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+        -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+        transition: opacity .2s;
+    }
+
+    /* Mouse-over effects */
+    .slider:hover {
+        opacity: 1; /* Fully shown on mouse-over */
+    }
+
+    /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #04AA6D; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+    }
+
+    .slider::-moz-range-thumb {
+        width: 25px; /* Set a specific slider handle width */
+        height: 25px; /* Slider handle height */
+        background: #04AA6D; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+    }
+
+    .input_div {
+        width: 1800px;
+        border: 1px solid #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    .control_td {
+        width: 870px;
+        border: 1px solid #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    .control_half_width_td {
+        width: 345px;
+        border: 1px solid #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    #image_drop_area {
+        width: 400px;
+        height: 225px;
+        border: 10px solid #f0f0f0;
+        background-position: center;
+        background-size: cover;
+        box-sizing: border-box;
+    }
+
+</style>
+<body onload="setDarkModeFromLocalStorage();populateControlsFromHref();setupImageDragDrop()">
+<h1>Stable Diffusion Web Playground - Video Maker</h1>
+<div class="input_div">
+    <p>
+        <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far
+        </button>
+        <button class="button-9" onclick="window.open('index.html', '_blank')">Prompt with simple controls</button>
+        <button class="button-9" onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts
+        </button>
+        <button class="button-9" onclick="toggleDarkMode()">Toggle dark mode</button>
+    </p>
+</div>
+<div class="input_div">
+
+    <div>
+        <div>Enter a prompt:</div>
+        <div><textarea cols="88" id="prompt" rows="6" type="text"/></textarea></div>
+    </div>
+    <div>
+        <hr>
+        Optional input starting image<br><small>Enter URL directly to the image on the web,<br>or choose one from the library
+        folder using 'library/&lt;path-to-file&gt;'</small>:
+        <div><input id="original_image_path" type="text" size="150"/></div>
+        <p>or drag and drop an input starting image into this box:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+        <div id="image_drop_area" style="height: 330px; width: 330px">
+            <img id="drag_drop_image" src="" style="height: 300px; width: auto"/>
+        </div>
+        <p id="file_name"></p>
+        <button id="button_remove_image" class="button-9" onclick="buttonClearImage_Clicked(this);">Remove Input Image
+        </button>
+        <hr>
+        <table>
+            <tr>
+                <td class="control_td">
+                    Choose percentage each subsequent frame can be changed by the AI:
+                    <div class="slidecontainer"><input class="slider" id="strength" min="0.1" max="99.9"
+                                                       oninput="document.getElementById('strength_value').innerText = `${this.value}%`"
+                                                       step="0.1" type="range"
+                                                       value="40">
+                    </div>
+                    <div id="strength_value">40%</div>
+                </td>
+                <td  class="control_td">
+                    Choose number of video frame images to create:
+                    <div class="slidecontainer"><input class="slider" id="num_video_frames" max="1000" min="1"
+                                                       oninput="document.getElementById('num_video_frames_value').innerText = `${this.value} frames`"
+                                                       step="1" type="range"
+                                                       value="100">
+                    </div>
+                    <div id="num_video_frames_value">100 images</div>
+                </td>
+            </tr>
+            <tr>
+                 <td class="control_td">
+                    Enter an optional seed value: (leave at zero for random seed)
+                    <div class="slidecontainer"><input class="slider" id="seed" max="4294967296"
+                                                       min="0"
+                                                       oninput="document.getElementById('seed_value').innerText = this.value"
+                                                       onblur="this.value = parseInt(this.value) || 0;"
+                                                       type="number"
+                                                       value="0">
+                    </div>
+                    <div id="seed_value">0</div>
+                </td>
+                 <td class="control_td">
+                    Scale for classifier-free guidance from 1.0 to 20.0 - 7.5 recommended
+                    <div class="slidecontainer">
+                        <input class="slider"
+                               id="scale"
+                               max="20.0"
+                               min="1.0"
+                               oninput="document.getElementById('scale_value').innerText = this.value"
+                               step="0.1"
+                               type="range"
+                               value="7.5">
+                    </div>
+                    <div id="scale_value">
+                        7.5
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                 <td class="control_td">
+                    Height: (pixels between 256 and 1024)
+                    <div class="slidecontainer"><input class="slider"
+                                                       id="height" max="1024"
+                                                       min="256"
+                                                       oninput="document.getElementById('height_value').innerText = this.value"
+                                                       step="64"
+                                                       type="range"
+                                                       value="512">
+                    </div>
+                    <div id="height_value">512</div>
+                </td>
+                 <td class="control_td">
+                    Width: (pixels between 256 and 1024)
+                    <div class="slidecontainer"><input
+                            class="slider" id="width"
+                            max="1024" min="256"
+                            oninput="document.getElementById('width_value').innerText = this.value;"
+                            step="64" type="range"
+                            value="512">
+                    </div>
+                    <div id="width_value">512</div>
+                </td>
+            </tr>
+            <tr>
+                 <td class="control_td">
+                    DDIM Steps: (Number of steps to diffuse each frame)
+                    <div class="slidecontainer">
+                        <input class="slider"
+                               id="ddim_steps"
+                               max="250"
+                               min="1"
+                               step="1"
+                               type="range"
+                               oninput="document.getElementById('ddim_steps_value').innerText = this.value;"
+                               value="40">
+                    </div>
+                    <div id="ddim_steps_value">
+                        50
+                    </div>
+                </td>
+                 <td class="control_td">
+                    How many frames-per-second should the video play at?
+                    <div class="slidecontainer">
+                        <input class="slider"
+                               id="frames_per_second"
+                               max="30"
+                               min="1"
+                               step="1"
+                               type="range"
+                               oninput="document.getElementById('frames_per_seconds_value').innerText =  `${this.value} frames/sec`"
+                               value="10">
+                    </div>
+                    <div id="frames_per_seconds_value">
+                        10
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                 <td class="control_td">
+                     <div class="control_half_width_td" style="float: left">
+                            Downsampling Factor:
+                            <div>
+                                <input id="ds2"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="2">2
+                                <input id="ds4"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="4">4
+                                <input checked
+                                       id="ds8"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="8">8
+                                <input id="ds16"
+                                       name="downsampling_factor"
+                                       type="radio"
+                                       value="16">16
+                            </div>
+                    </div>
+                    <div class="control_half_width_td" style="float: right">
+                     Auto Upscale:
+                        <input id="auto_upscale"
+                               type="checkbox"
+                               value="false">
+                    </div>
+
+                </td>
+                 <td class="control_td">
+                    <div>
+                        <button class="button-9"
+                                id="buttonGo"
+                                onclick="go_video()"
+                                role="button">
+                            Click
+                            to
+                            send
+                            request
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                 <td class="control_td">
+
+                </td>
+                 <td class="control_td">
+
+                </td>
+            </tr>
+
+
+        </table>
+
+
+        <p class="label" id="status"></p>
+
+        <div class="container" id="output"></div>
+        <div class="container" id="queue">Current queue:</div>
+    </div>
+</div>
+</body>
+</html>

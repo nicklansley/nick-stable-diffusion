@@ -61,6 +61,19 @@ def send_prompt_request_to_sd_engine(prompt_info):
         return {'queue_id': 'X', 'success': False}
 
 
+def send_video_request_to_sd_engine(prompt_info):
+    try:
+        prompt_json = json.dumps(prompt_info)
+        print('\nSCHEDULER: Sending video request to SD Engine:', prompt_json)
+        r = requests.post('http://sd-backend:8080/video', json=prompt_json)
+        response = r.json()
+        print('\nSCHEDULER: send_video_request_to_sd_engine - Response from SD Engine:', response)
+        return response
+    except Exception as e:
+        print("SCHEDULER: send_video_request_to_sd_engine - Error:", e)
+        return {'queue_id': 'X', 'success': False}
+
+
 def send_upscale_request_to_sd_engine(data):
     try:
         upscale_json = {
@@ -329,6 +342,9 @@ if __name__ == "__main__":
             elif queue_item['command'] == 'upscale':
                 request_data = send_upscale_request_to_sd_engine(queue_item)
                 rebuild_library_catalogue()  # temporary fix for library not updating after upscale
+
+            if queue_item['command'] == 'video':
+                request_data = send_video_request_to_sd_engine(queue_item)
 
             delete_request_from_redis_queue(queue_item)
 
