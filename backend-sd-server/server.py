@@ -116,7 +116,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def load_and_format_image(path, output_width, output_height):
+def load_and_format_image(path, output_width, output_height, zoom_amount=1.0):
     # load an image from a URL
     if path.startswith("http"):
         # get image name from URL
@@ -145,7 +145,7 @@ def load_and_format_image(path, output_width, output_height):
     else:
         ratio = float(output_height) / max(old_size)
 
-    new_size = tuple([int(x * ratio) for x in old_size])
+    new_size = tuple([int(x * ratio * zoom_amount) for x in old_size])
 
     resized_image = image.resize(new_size, Image.ANTIALIAS)
 
@@ -482,7 +482,7 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
         return video_frame_number, first_image_path
 
 
-def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0):
+def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0, zoom_amount=1.0):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
 
@@ -503,7 +503,9 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         data = [N_SAMPLES * [text_prompt]]
 
         # load the image
-        resized_image, init_image = load_and_format_image(original_image_path, options['width'], options['height'])
+        resized_image, init_image = load_and_format_image(original_image_path,
+                                                          options['width'], options['height'],
+                                                          zoom_amount=zoom_amount)
 
         # save the resized original image
         if IMAGE_QUALITY == "MAX":
@@ -792,7 +794,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         if original_image_path != '':
             result = process_image(original_image_path=original_image_path, text_prompt=prompt,
                                    device=global_device, model=global_model, wm_encoder=global_wm_encoder,
-                                   queue_id=queue_id, num_images=1, options=options)
+                                   queue_id=queue_id, num_images=1, options=options, zoom_amount=1.0)
         else:
             result = process(text_prompt=prompt, device=global_device, model=global_model,
                              wm_encoder=global_wm_encoder, queue_id=queue_id, num_images=1, options=options)
@@ -805,7 +807,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             result = process_image(original_image_path=result['first_image_path'], text_prompt=prompt,
                                    device=global_device, model=global_model, wm_encoder=global_wm_encoder,
                                    queue_id=queue_id, num_images=1, options=options,
-                                   video_frame_number=video_frame_count)
+                                   video_frame_number=video_frame_count, zoom_amount=1.1)
 
             video_frame_paths_list.append(result['first_image_path'])
 
