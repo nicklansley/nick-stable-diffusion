@@ -445,32 +445,44 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
     return response
 
 
-def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale):
+def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale, video_frame_number=0):
     # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png/.jpg
     first_image_path = ''
     for x_sample in x_samples:
         x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
         img = Image.fromarray(x_sample.astype(np.uint8))
         img = put_watermark(img, wm_encoder)
-        print(f"Saving image #{image_counter} with DDIM step {ddim_steps}, scale {scale} and seed {seed_value}")
-        image_name = f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}"
+
+        if video_frame_number == 0:
+            print(f"Saving image_number: {image_counter + 1}")
+            image_name = f"{image_counter + 1:03d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}"
+        else:
+            print(f"Saving video frame number: {video_frame_number}")
+            image_name = f"{video_frame_number:04d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}"
+
         if IMAGE_QUALITY == "MAX":
             if first_image_path == '':
                 first_image_path = os.path.join(library_dir_name, image_name + ".png")
             img.save(os.path.join(library_dir_name, image_name + ".png"), optimize=True, progressive=True)
+
         elif IMAGE_QUALITY == "MED":
             if first_image_path == '':
                 first_image_path = os.path.join(library_dir_name, image_name + ".jpg")
             img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_maximum')
+
         elif IMAGE_QUALITY == "LOW":
             if first_image_path == '':
                 first_image_path = os.path.join(library_dir_name, image_name + ".jpg")
             img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_low')
+
+    if video_frame_number == 0:
         image_counter += 1
-    return image_counter, first_image_path
+        return image_counter, first_image_path
+    else:
+        return video_frame_number, first_image_path
 
 
-def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options):
+def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
 
@@ -562,7 +574,8 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                                                                          wm_encoder,
                                                                                          x_samples,
                                                                                          chosen_seed,
-                                                                                         options['scale'])
+                                                                                         options['scale'],
+                                                                                         video_frame_number)
 
                                     end = time.time()
                                     time_taken = end - start
@@ -609,45 +622,30 @@ def check_api_request_properties(data, command):
 
     if 'height' in data:
         options['height'] = int(data['height'])
+
     if 'width' in data:
         options['width'] = int(data['width'])
+
     if 'ddim_eta' in data:
         options['ddim_eta'] = float(data['ddim_eta'])
+
     if 'scale' in data:
         options['scale'] = float(data['scale'])
+
     if 'downsampling_factor' in data:
         options['downsampling_factor'] = int(data['downsampling_factor'])
 
     if 'ddim_steps' in data:
         options['max_ddim_steps'] = int(data['ddim_steps'])
+
     if 'max_ddim_steps' in data:
         options['max_ddim_steps'] = int(data['max_ddim_steps'])
+
     if 'min_ddim_steps' in data:
         options['min_ddim_steps'] = int(data['min_ddim_steps'])
 
-    # safety feature - min_ddim_steps must be less than or equal to  max_ddim_steps
-    # otherwise make them the same value
-    if options['min_ddim_steps'] > options['max_ddim_steps']:
+    if options['min_ddim_steps'] > options['max_ddim_steps'] or command == 'video':
         options['min_ddim_steps'] = options['max_ddim_steps']
-
-    if 'strength' in data:
-        options['strength'] = float(data['strength'])
-        if options['strength'] >= 1.0:
-            options['strength'] = 0.999
-        elif options['strength'] < 0.0:
-            options['strength'] = 0.001
-
-    if 'ddim_steps' in data:
-        if command == 'video':
-            # Only one value for ddim_steps is allowed for video
-            options['max_ddim_steps'] = int(data['ddim_steps'])
-            options['min_ddim_steps'] = options['max_ddim_steps']
-        else:
-            options['max_ddim_steps'] = int(data['min_ddim_steps'])
-            options['min_ddim_steps'] = int(data['max_ddim_steps'])
-            # Check that min_ddim_steps is less than or equal to max_ddim_steps
-            if options['min_ddim_steps'] > options['max_ddim_steps']:
-                options['min_ddim_steps'] = options['max_ddim_steps']
 
     if 'strength' in data:
         options['strength'] = float(data['strength'])
@@ -660,7 +658,7 @@ def check_api_request_properties(data, command):
     if 'original_image_path' in data:
         original_image_path = data['original_image_path'].strip()
 
-        # only image paths which are wither URLs or are sourced from the library are allowed.
+        # only image paths which are either URLs or are sourced from the library are allowed.
         if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
             if original_image_path != '':
                 print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
@@ -715,11 +713,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         if api_command == '/prompt':
             self.process_prompt(data)
         elif api_command == '/upscale':
-            self.upscale(data)
+            self.process_upscale(data)
         elif api_command == '/video':
-            self.create_video(data)
+            self.process_video(data)
 
-    def upscale(self, data):
+    def process_upscale(self, data):
         image_list = data['image_list']
         upscale_factor = data['upscale_factor']
         queue_id = data['queue_id']
@@ -748,9 +746,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"error": "Bad request: missing prompt, queue_id or num_images"}')
             return
 
-        # Set up defaults for the optional extra properties which will
-        # be overwritten should they be in the request
-
         options, original_image_path = check_api_request_properties(data, "prompt")
 
         # process!
@@ -773,7 +768,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             response_body = json.dumps(result)
             self.wfile.write(response_body.encode())
 
-    def create_video(self, data):
+    def process_video(self, data):
         # Get the mandatory prompt data from the request
         try:
             prompt = data['prompt'].strip()
@@ -789,8 +784,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 b'{"error": "Bad request: missing prompt, queue_id, num_video_frames, or num_frames_per_second"}')
             return
 
-        # Set up defaults for the optional extra properties which will
-        # be overwritten should they be in the request
         options, original_image_path = check_api_request_properties(data, "video")
 
         video_frame_paths_list = []
@@ -807,9 +800,13 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         video_frame_paths_list.append(result['first_image_path'])
 
         for video_frame_count in range(1, num_video_frames):
+            print("Creating video frame {}/{}".format(video_frame_count + 1, num_video_frames))
+
             result = process_image(original_image_path=result['first_image_path'], text_prompt=prompt,
                                    device=global_device, model=global_model, wm_encoder=global_wm_encoder,
-                                   queue_id=queue_id, num_images=1, options=options)
+                                   queue_id=queue_id, num_images=1, options=options,
+                                   video_frame_number=video_frame_count)
+
             video_frame_paths_list.append(result['first_image_path'])
 
         # Now use ffmpeg to create the video
