@@ -51,7 +51,7 @@ class RelayServer(BaseHTTPRequestHandler):
             result = 'X'
             ok_flag, message, data = self.quality_assure(data)
             if ok_flag:
-                if api_command == '/prompt':
+                if api_command == '/image':
                     result = self.queue_prompt_request_to_redis(data)
                 elif api_command == '/video':
                     result = self.queue_video_request_to_redis(data)
