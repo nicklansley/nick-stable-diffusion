@@ -18,19 +18,20 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
-- NEW: Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page, or use 'auto-upscale' option in Advanced page
+- NEW: Create a video from evolving frames, each image frame created acts as the input to the next image frame.
+- Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page, or use 'auto-upscale' option in Advanced page
 - Designed as a multi-user web application - get your family trying it on your home network, or set up your workstation
   as a internet-accessible server using ngrok or similar tunneling tool for your friends to try.
 - Redis-based scheduler and queue management of prompts, so the backend only processes one prompt at a time.
 - Simple non-framework UI that can be adapted as desired. The UI looks 'early 1990s' right now but it does its job.
 - A simple API called by the JavaScript in the UI to send prompt requests, check the queue and see the library of
   results.
-- NEW: Images appear as they are created rather than waiting for the whole batch to be created.
-- New: API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
-- NEW: Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
+- Images appear as they are created rather than waiting for the whole batch to be created.
+- API published at https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
+- Create a DDIM-steps series of images by setting a minimum and maximum DDIM step value in the Advanced page. The images will be created in sequence from the minimum to the maximum value.
 The DDIM step number will be added to each image's filename<pre>f"{image_counter + 1:02d}-D{ddim_steps:03d}-S{scale:.1f}-R{seed_value:0>4}-{str(uuid.uuid4())[:8]}.png")</pre>. This new feature unlocks all sorts of extra variations for the same prompt!
-- NEW: DDIM-Steps now works with input images as well as just text prompts.
-- NEW: Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
+- DDIM-Steps now works with input images as well as just text prompts.
+- Drag and drop an image into a box in the Advanced page to use it as the input image for the prompt. 
 - docker compose volumes can be adjusted to save the pretrained image model, caches and output library of images on a
   disk outside of Docker.
 - Manipulate images you have already created that reside in the library. Click on an image in the library and a new
@@ -63,7 +64,7 @@ This project is being improved throughout September 2022, so check back often fo
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
-* WORK IN PROGRESS: Creating video from evolving frames - incomplete but does not affect existing functionality so I'm pushing it to GitHub for backup reasons!
+* WEW: Create a video from evolving frames!
 * NEW: Added new 'auto-upscale' option in Advanced page, which will automatically upscale all images just created.
 * Improved: 'Smarter' JavaScript in Library page only gets new images rather than the whole library every time you click the 'Refresh' button.
 Indeed, the 'Refresh' button is now removed as the library is updated automatically every 5 seconds.
@@ -332,6 +333,13 @@ If you specify an image, it will be included as the first image '00-original.png
 <i>Note that you do not have copyright over the original image, only the AI-created images as long as they 
 are 'substantially' different to the original. The only exception is of course if the original image was itself substantially created by this AI!</i>
 
+## NEW! Video Page
+![](nsd-example-video.mp4)
+Create a video from a series of evolving images - each newly created image acts as the input to the next image in the series.
+* Use a Zoom function to create a 'journey' through the images. 
+* Decide how many images to create, and the frames per second that teh video should playback at.
+* You can decide by what percentage each frame can be different from the previous frame. The default is 40%.
+* Provide your own input image as a starting frame.
 
 ## Example Workflow
 1. Start with the 'simple' page and type in a prompt and keep the default creation of 3 images. 

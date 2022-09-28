@@ -265,11 +265,14 @@ const displayQueue = async (queueList) =>
         if (queueList[0]['command'] === 'prompt')
         {
             showText = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
-            queueUI.innerHTML = `<p><b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b></p><br>Current queue:<br>`;
         }
         else if (queueList[0]['command'] === 'upscale')
         {
-            `<b>Upscale/Enhance request for ${queueList[0]['image_list'].length} image${queueList[0]['image_list'].length > 1 ? "s" : ""}</b>`;
+            showText = `<b>Upscale/Enhance request for ${queueList[0]['image_list'].length} image${queueList[0]['image_list'].length > 1 ? "s" : ""}</b>`;
+        }
+        else if (queueList[0]['command'] === 'video')
+        {
+            showText = `<b>Creating video with prompt '${queueList[0]['prompt']}' (${queueList[0]['num_video_frames']} frames)</b>`;
         }
         queueUI.innerHTML = `${showText}<br>Current queue:<br>`;
         processingDiv.innerHTML = showText
@@ -292,6 +295,10 @@ const displayQueue = async (queueList) =>
                 else if (queueItem['command'] === "upscale")
                 {
                     listItem.innerText = `Upscale/Enhance request for ${queueItem['image_list'].length} image${queueItem['image_list'].length > 1 ? "s" : ""}`;
+                }
+                else if (queueList['command'] === 'video')
+                {
+                    queueUI.innerHTML = `<b>Creating video with prompt '${queueList['prompt']}' (${queueList['num_video_frames']} frames)</b>`;
                 }
                 // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
                 if (queueItem.queue_id === global_currentQueueId)
@@ -455,16 +462,7 @@ const displayVideoFrame = async (imageList) =>
 {
     // We only display the most recent frame, re-used as '00-original' when creating the next frame.
     const masterImage = document.getElementById("master_image");
-    for(const imagePath in imageList)
-    {
-        if (imagePath.includes('original'))
-        {
-            masterImage.src = imagePath;
-            console.log(`Displaying latest video frame frame: ${imagePath}`);
-            break;
-        }
-    }
-
+    masterImage.src = imageList[imageList.length - 1];
 }
 
 const displayFinishedVideo = async (imageList) =>
@@ -492,8 +490,6 @@ const displayFinishedVideo = async (imageList) =>
         }
     }
 
-    // Wait an extra 2 seconds for the video to load
-    await sleep(2000);
     //replace the document element 'master_image' with the video element
     document.getElementById('output').innerHTML = "";
     document.getElementById('output').appendChild(videoElement);

@@ -263,10 +263,10 @@
                     <div id="width_value">512</div>
                 </td>
                  <td class="control_td">
-                    Zoom factor: (from -5 to 5 in 0.01 steps)
+                    Zoom factor: (from 1.0 to 5.0 in 0.01 steps)
                     <div class="slidecontainer"><input
                             class="slider" id="zoom_factor"
-                            max="5.0" min="-5.0"
+                            max="5.0" min="1.0"
                             oninput="document.getElementById('zoom_value').innerText = this.value;"
                             step="0.01" type="range"
                             value="1.1">
@@ -332,12 +332,6 @@
                                        type="radio"
                                        value="16">16
                             </div>
-                    </div>
-                    <div class="control_half_width_td" style="float: right">
-                     Auto Upscale:
-                        <input id="auto_upscale"
-                               type="checkbox"
-                               value="false">
                     </div>
 
                 </td>
