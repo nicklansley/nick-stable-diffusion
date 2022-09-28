@@ -334,7 +334,7 @@ If you specify an image, it will be included as the first image '00-original.png
 are 'substantially' different to the original. The only exception is of course if the original image was itself substantially created by this AI!</i>
 
 ## NEW! Video Page
-![](nsd-example-video.mp4)
+See example in this project at <a href="https://github.com/nicklansley/nick-stable-diffusion/blob/master/nsd-example-video.mp4" target="_blank"> (download only)
 Create a video from a series of evolving images - each newly created image acts as the input to the next image in the series.
 * Use a Zoom function to create a 'journey' through the images. 
 * Decide how many images to create, and the frames per second that the video should playback at.
