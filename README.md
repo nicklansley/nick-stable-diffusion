@@ -337,7 +337,7 @@ are 'substantially' different to the original. The only exception is of course i
 ![](nsd-example-video.mp4)
 Create a video from a series of evolving images - each newly created image acts as the input to the next image in the series.
 * Use a Zoom function to create a 'journey' through the images. 
-* Decide how many images to create, and the frames per second that teh video should playback at.
+* Decide how many images to create, and the frames per second that the video should playback at.
 * You can decide by what percentage each frame can be different from the previous frame. The default is 40%.
 * Provide your own input image as a starting frame.
 
