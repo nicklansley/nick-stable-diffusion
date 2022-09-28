@@ -69,8 +69,8 @@ WATERMARK_FLAG = False  # set to True to enable watermarking
 SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
 
 # IMAGE QUALITY SETTINGS
-# IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
-IMAGE_QUALITY = "MED"  # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
+IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
+# IMAGE_QUALITY = "MED"  # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
 # IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
 
 # GLOBAL VARS
@@ -116,7 +116,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def load_and_format_image(path, output_width, output_height, zoom_amount=1.0):
+def load_and_format_image(path, output_width, output_height, zoom_factor=1.0):
     # load an image from a URL
     if path.startswith("http"):
         # get image name from URL
@@ -145,7 +145,7 @@ def load_and_format_image(path, output_width, output_height, zoom_amount=1.0):
     else:
         ratio = float(output_height) / max(old_size)
 
-    new_size = tuple([int(x * ratio * zoom_amount) for x in old_size])
+    new_size = tuple([int(x * ratio * zoom_factor) for x in old_size])
 
     resized_image = image.resize(new_size, Image.ANTIALIAS)
 
@@ -225,7 +225,7 @@ def setup():
     return device, model, wm_encoder
 
 
-def process(text_prompt, device, model, wm_encoder, queue_id, num_images, options):
+def process(text_prompt, device, model, wm_encoder, queue_id, num_images, options, action="prompt"):
     print('Running Prompt Processing')
 
     chosen_seed = options['seed']
@@ -301,7 +301,8 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             time_taken = end - start
                             image_counter += 1
 
-                    save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
+                    if action == "prompt":
+                        save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
 
         return {'success': True, 'queue_id': queue_id, 'first_image_path': first_image_path}
 
@@ -482,7 +483,7 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
         return video_frame_number, first_image_path
 
 
-def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0, zoom_amount=1.0):
+def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0, zoom_factor=1.0):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
 
@@ -505,7 +506,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         # load the image
         resized_image, init_image = load_and_format_image(original_image_path,
                                                           options['width'], options['height'],
-                                                          zoom_amount=zoom_amount)
+                                                          zoom_factor=zoom_factor)
 
         # save the resized original image
         if IMAGE_QUALITY == "MAX":
@@ -585,8 +586,17 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
             except Exception as e:
                 print('Error in process_image: ' + str(e))
 
-        save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt,
-                           time_taken, '', original_image_path)
+        if video_frame_number == 0:
+            # We are saving a conventional image metadate index file
+            save_metadata_file(num_images=image_counter,
+                               library_dir_name=library_dir_name,
+                               options=options,
+                               queue_id=queue_id,
+                               text_prompt=text_prompt,
+                               time_taken=time_taken,
+                               error='',
+                               original_image_path=original_image_path,
+                               format='image')
 
         return {'success': True, 'queue_id': queue_id, 'first_image_path': first_image_path}
 
@@ -594,8 +604,30 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         print(e)
         end = time.time()
         time_taken = end - start
-        save_metadata_file(image_counter, library_dir_name, options, queue_id, text_prompt, time_taken, str(e),
-                           original_image_path)
+        if video_frame_number > 0:
+            save_metadata_file(num_images=0,
+                               library_dir_name=library_dir_name,
+                               options=options,
+                               queue_id=queue_id,
+                               text_prompt=text_prompt,
+                               time_taken=time_taken,
+                               error=str(e),
+                               original_image_path=original_image_path,
+                               zoom_factor=zoom_factor,
+                               format='video')
+
+        else:
+            save_metadata_file(num_images=0,
+                               library_dir_name=library_dir_name,
+                               options=options,
+                               queue_id=queue_id,
+                               text_prompt=text_prompt,
+                               time_taken=time_taken,
+                               error=str(e),
+                               original_image_path=original_image_path,
+                               format='image')
+
+
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
@@ -637,6 +669,9 @@ def check_api_request_properties(data, command):
     if 'downsampling_factor' in data:
         options['downsampling_factor'] = int(data['downsampling_factor'])
 
+    if 'zoom_factor' in data:
+        options['zoom_factor'] = float(data['zoom_factor'])
+
     if 'ddim_steps' in data:
         options['max_ddim_steps'] = int(data['ddim_steps'])
 
@@ -671,7 +706,7 @@ def check_api_request_properties(data, command):
 
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
-                       original_image_path):
+                       original_image_path, zoom_factor=0.0, format="image"):
     with open(library_dir_name + '/index.json', 'w', encoding="utf8") as outfile:
         metadata = {
             "text_prompt": text_prompt,
@@ -777,6 +812,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             queue_id = data['queue_id']
             num_video_frames = data['num_video_frames']
             num_frames_per_second = data['frames_per_second']
+            zoom_factor = data['zoom_factor']
 
         except KeyError as e:
             print(e)
@@ -789,32 +825,69 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         options, original_image_path = check_api_request_properties(data, "video")
 
         video_frame_paths_list = []
+        video_frame_count = 0
+        start = time.time()
 
         # First run with or without an original image to get the first frame
         if original_image_path != '':
-            result = process_image(original_image_path=original_image_path, text_prompt=prompt,
-                                   device=global_device, model=global_model, wm_encoder=global_wm_encoder,
-                                   queue_id=queue_id, num_images=1, options=options, zoom_amount=1.0)
+            result = process_image(original_image_path=original_image_path,
+                                   text_prompt=prompt,
+                                   device=global_device,
+                                   model=global_model,
+                                   wm_encoder=global_wm_encoder,
+                                   queue_id=queue_id,
+                                   num_images=1,
+                                   options=options,
+                                   zoom_factor=1.0)
         else:
-            result = process(text_prompt=prompt, device=global_device, model=global_model,
-                             wm_encoder=global_wm_encoder, queue_id=queue_id, num_images=1, options=options)
+            result = process(text_prompt=prompt,
+                             device=global_device,
+                             model=global_model,
+                             wm_encoder=global_wm_encoder,
+                             queue_id=queue_id,
+                             num_images=1,
+                             options=options,
+                             action="video")
 
         video_frame_paths_list.append(result['first_image_path'])
 
+        # loop through the video frames, creating a new image based on the previous image
         for video_frame_count in range(1, num_video_frames):
-            print("Creating video frame {}/{}".format(video_frame_count + 1, num_video_frames))
+            print("### Creating video frame {}/{}".format(video_frame_count + 1, num_video_frames))
+            result = process_image(original_image_path=result['first_image_path'],
+                                   text_prompt=prompt,
+                                   device=global_device,
+                                   model=global_model,
+                                   wm_encoder=global_wm_encoder,
+                                   queue_id=queue_id,
+                                   num_images=1,
+                                   options=options,
+                                   video_frame_number=video_frame_count,
+                                   zoom_factor=zoom_factor)
 
-            result = process_image(original_image_path=result['first_image_path'], text_prompt=prompt,
-                                   device=global_device, model=global_model, wm_encoder=global_wm_encoder,
-                                   queue_id=queue_id, num_images=1, options=options,
-                                   video_frame_number=video_frame_count, zoom_amount=1.1)
-
+            print("### Video frame result", result)
             video_frame_paths_list.append(result['first_image_path'])
 
         # Now use ffmpeg to create the video
         video_path = create_video_from_frames(video_frame_paths_list, queue_id, num_frames_per_second)
         del result['first_image_path']
         result['video_path'] = video_path
+
+        end = time.time()
+        time_taken = end - start
+
+        # Saving the metadata file here is important, as it signals to the client that
+        # processing is complete and the video is ready
+        save_metadata_file(num_images=video_frame_count,
+                           library_dir_name=os.path.join(OUTPUT_PATH, queue_id),
+                           options=options,
+                           queue_id=queue_id,
+                           text_prompt=prompt,
+                           time_taken=time_taken,
+                           error='',
+                           original_image_path=original_image_path,
+                           zoom_factor=zoom_factor,
+                           format='video')
 
         # Send the response back to the calling request
         if result == 'X':
@@ -842,7 +915,7 @@ def create_video_from_frames(video_frame_paths_list, queue_id, num_frames_per_se
                       frame_input_list_file, '-c:v', 'libx264', '-profile:v', 'high', '-crf', '20',
                       '-pix_fmt', 'yuv420p', video_path]
     subprocess.run(ffmpeg_command)
-    print("COMPETED:", len(video_frame_paths_list), "with", num_frames_per_second, "fps -> ", video_path)
+    print("COMPLETED:", len(video_frame_paths_list), "with", num_frames_per_second, "fps -> ", video_path)
     return video_path
 
 def exit_signal_handler(self, sig):

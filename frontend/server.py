@@ -26,7 +26,7 @@ class RelayServer(BaseHTTPRequestHandler):
             api_command = api_command.split('?')[0]
 
         print("\nFRONTEND: GET >> API command =", api_command)
-        if api_command.endswith('/getlibrary'):
+        if api_command.endswith('/get_library'):
             self.process_ui('/library/library.json')
 
         elif api_command == '/queue_status':
@@ -47,7 +47,7 @@ class RelayServer(BaseHTTPRequestHandler):
         data = json.loads(body)
         print("\nFRONTEND:", data)
 
-        if api_command == '/prompt' or api_command == '/video' or api_command == '/upscale':
+        if api_command == '/image' or api_command == '/video' or api_command == '/upscale':
             result = 'X'
             ok_flag, message, data = self.quality_assure(data)
             if ok_flag:
@@ -71,7 +71,7 @@ class RelayServer(BaseHTTPRequestHandler):
                 response_body = '{"queue_id": "' + result + '"}'
                 self.wfile.write(response_body.encode())
 
-        elif api_command == '/imagelist':
+        elif api_command == '/image_list':
             if 'queue_id' in data:
                 image_list = self.get_image_list(data['queue_id'])
                 self.send_response(200)
@@ -93,7 +93,7 @@ class RelayServer(BaseHTTPRequestHandler):
         data = json.loads(body)
         print("\nFRONTEND:", data)
 
-        if api_command == '/image':
+        if api_command == '/image_path':
             if self.process_deleteimage(data):
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
@@ -202,7 +202,7 @@ class RelayServer(BaseHTTPRequestHandler):
         }
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
-                if image_name.endswith('.png') or image_name.endswith('.jpg'):
+                if image_name.endswith('.png') or image_name.endswith('.jpg') or image_name.endswith('.mp4'):
                     image_data['images'].append('/library/' + queue_id + '/' + image_name)
                 elif image_name == 'index.json':
                     image_data['completed'] = True

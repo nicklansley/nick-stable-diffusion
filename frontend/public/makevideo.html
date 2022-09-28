@@ -165,6 +165,7 @@
         <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far
         </button>
         <button class="button-9" onclick="window.open('index.html', '_blank')">Prompt with simple controls</button>
+        <button class="button-9" onclick="window.open('advanced.html', '_blank')">Prompt with advanced controls</button>
         <button class="button-9" onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts
         </button>
         <button class="button-9" onclick="toggleDarkMode()">Toggle dark mode</button>
@@ -243,16 +244,14 @@
                  <td class="control_td">
                     Height: (pixels between 256 and 1024)
                     <div class="slidecontainer"><input class="slider"
-                                                       id="height" max="1024"
-                                                       min="256"
-                                                       oninput="document.getElementById('height_value').innerText = this.value"
-                                                       step="64"
-                                                       type="range"
-                                                       value="512">
+                           id="height" max="1024"
+                           min="256"
+                           oninput="document.getElementById('height_value').innerText = this.value"
+                           step="64"
+                           type="range"
+                           value="512">
                     </div>
                     <div id="height_value">512</div>
-                </td>
-                 <td class="control_td">
                     Width: (pixels between 256 and 1024)
                     <div class="slidecontainer"><input
                             class="slider" id="width"
@@ -263,6 +262,18 @@
                     </div>
                     <div id="width_value">512</div>
                 </td>
+                 <td class="control_td">
+                    Zoom factor: (from -5 to 5 in 0.01 steps)
+                    <div class="slidecontainer"><input
+                            class="slider" id="zoom_factor"
+                            max="5.0" min="-5.0"
+                            oninput="document.getElementById('zoom_value').innerText = this.value;"
+                            step="0.01" type="range"
+                            value="1.1">
+                    </div>
+                    <div id="zoom_value">1.1</div>
+
+                 </td>
             </tr>
             <tr>
                  <td class="control_td">
@@ -334,12 +345,9 @@
                     <div>
                         <button class="button-9"
                                 id="buttonGo"
-                                onclick="go_video()"
+                                onclick="go('video')"
                                 role="button">
-                            Click
-                            to
-                            send
-                            request
+                            Click to send request
                         </button>
                     </div>
                 </td>

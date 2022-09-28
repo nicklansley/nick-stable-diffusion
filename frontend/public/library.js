@@ -10,7 +10,7 @@ const listLibrary = async () =>
 
     try
     {
-        rawResponse = await fetch('/getlibrary', {
+        rawResponse = await fetch('/get_library', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -85,6 +85,7 @@ const formatLibraryEntries = async () =>
 
     const upscaleQueueImagesList = await getQueueAndListUpscaleRequests();
 
+
     for(const libraryEntryIndex in sortedLibrary)
     {
         const libraryEntry = sortedLibrary[libraryEntryIndex];
@@ -96,9 +97,11 @@ const formatLibraryEntries = async () =>
         {
             // IN this case the library entry already displays on the page, so we just need to update the images
             // Check if there are any new images to add to the library entry - if so, rebuild the library entry
-            // and replace the existing one:
+            // and replace the existing one.
+            // But, don't do this id the library entry includes a vide.mp4 file or it will restart
+            // before it finishes playing:
             const imageList = document.getElementById(divLibraryEntryId).getElementsByClassName("divImage");
-            if (imageList.length < libraryEntry['generated_images'].length)
+            if (imageList.length < libraryEntry['generated_images'].length && !libraryEntry['generated_images'][0].includes('video.mp4'))
             {
                 const divRebuiltLibraryEntry = createNewDivLibraryEntry(libraryEntry, upscaleQueueImagesList);
                 output.replaceChild(divRebuiltLibraryEntry, document.getElementById(divLibraryEntryId));
@@ -349,10 +352,28 @@ const createNewDivLibraryEntry = (libraryEntry, upscaleQueueImagesList) =>
 
     // These three functions create and append their various sections to divLibraryEntry
     libraryEntry_authorHeader(divLibraryEntry, libraryEntry);
-    libraryEntry_authorMasterImagePlaceHolder(divLibraryEntry, libraryEntry);
-    libraryEntry_authorImageDivs(divLibraryEntry, libraryEntry, imageCount, upscaleQueueImagesList);
+    if(libraryEntry['generated_images'][0].includes('video.mp4'))
+    {
+        libraryEntry_authorVideo(divLibraryEntry, libraryEntry);
+    }
+    else
+    {
+        libraryEntry_authorMasterImagePlaceHolder(divLibraryEntry, libraryEntry);
+        libraryEntry_authorImageDivs(divLibraryEntry, libraryEntry, imageCount, upscaleQueueImagesList);
+    }
 
     return divLibraryEntry;
+}
+
+const libraryEntry_authorVideo = (divLibraryEntry, libraryEntry) =>
+{
+    const video = document.createElement('video');
+    video.src = libraryEntry['generated_images'][0];
+    video.controls = true;
+    video.loop = true;
+    video.style.width = 'auto';
+    video.style.height = '512px';
+    divLibraryEntry.appendChild(video);
 }
 
 // Check if there exists an image path in the imageList for the given (non-upscaled) image that includes '_upscaled.'

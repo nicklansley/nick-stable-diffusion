@@ -119,7 +119,8 @@ def update_library_catalogue(queue_id):
                 library_entry["generated_images"] = []
 
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
-            add_image_list_entries_to_library_entry(files, library_entry, root)
+            if library_entry["queue_id"] in root:
+                add_image_list_entries_to_library_entry(library_entry, root, files)
 
         # check if the queue_id is already in the library catalogue and replace the entry if it is
         new_library = []
@@ -238,20 +239,26 @@ def process_auto_upscale(queue_id):
         print('\nSCHEDULER: Processing auto-upscale for queue_id {} failed'.format(queue_id), e)
 
 
-def add_image_list_entries_to_library_entry(files, library_entry, root):
+def add_image_list_entries_to_library_entry(library_entry, current_library_folder, files_list):
     # Used by update_library_catalogue() and rebuild_library_catalogue() to add the generated images to library entry
-    for image_name in files:
-        if image_name.endswith('.jpg') or image_name.endswith('.png'):
-            image_file_path = os.path.join(root, image_name)
+    video_found_flag = False
+    video_name = ''
+    for file_name in files_list:
+        if file_name.endswith('video.mp4'):
+            video_name = file_name
+            video_found_flag = True
+            break
 
-            # if the image has a metadata section then add it to the
-            # end of the image file if ADD_METADATA_TO_FILES is enabled
-            if ADD_METADATA_TO_FILES:
-                update_file_metadata(image_file_path, library_entry)
+    if video_found_flag:
+        # add the video file path to the library entry
+        video_file_path = os.path.join(current_library_folder, video_name).replace('/app/', '')
+        library_entry["generated_images"] = [video_file_path]
 
-            # add the image file path to the library entry
-            if library_entry["queue_id"] in root:
-                image_file_path = image_file_path.replace('/app/', '')
+    else:
+        # create a list of the generated images
+        for file_name in files_list:
+            if file_name.endswith('.jpg') or file_name.endswith('.png'):
+                image_file_path = os.path.join(current_library_folder, file_name).replace('/app/', '')
 
                 if image_file_path not in library_entry["generated_images"]:
                     library_entry["generated_images"].append(image_file_path)
@@ -346,9 +353,12 @@ if __name__ == "__main__":
             if queue_item['command'] == 'video':
                 request_data = send_video_request_to_sd_engine(queue_item)
 
+                if request_data['queue_id'] == queue_item['queue_id']:
+                    update_library_catalogue(queue_item['queue_id'])
+
             delete_request_from_redis_queue(queue_item)
 
-            if request_data['success']:
+            if 'success' in request_data and request_data['success']:
                 print("SCHEDULER: Processing complete - library updated\n\n")
             else:
                 print("SCHEDULER: Request failed")
