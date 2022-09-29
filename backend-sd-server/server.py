@@ -69,9 +69,10 @@ WATERMARK_FLAG = False  # set to True to enable watermarking
 SAFETY_FLAG = False  # set to True to enable safety checking - a 'NSFW' image will be returned if the safety check fails
 
 # IMAGE QUALITY SETTINGS
-IMAGE_QUALITY = "MAX"  #  Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
-# IMAGE_QUALITY = "MED"  # Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
-# IMAGE_QUALITY = "LOW"  # Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
+IMAGE_QUALITY = "HIGH"
+# "MAX" - maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB
+# "HIGH" - high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB
+# "LOW" - lower/medium quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb
 
 # GLOBAL VARS
 global_device = None
@@ -466,7 +467,7 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
                 first_image_path = os.path.join(library_dir_name, image_name + ".png")
             img.save(os.path.join(library_dir_name, image_name + ".png"), optimize=True, progressive=True)
 
-        elif IMAGE_QUALITY == "MED":
+        elif IMAGE_QUALITY == "HIGH":
             if first_image_path == '':
                 first_image_path = os.path.join(library_dir_name, image_name + ".jpg")
             img.save(os.path.join(library_dir_name, image_name + ".jpg"), quality='web_maximum')
@@ -511,7 +512,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         # save the resized original image
         if IMAGE_QUALITY == "MAX":
             resized_image.save(os.path.join(library_dir_name, '00-original.png'))
-        elif IMAGE_QUALITY == "MED":
+        elif IMAGE_QUALITY == "HIGH":
             resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), quality='web_high')
         elif IMAGE_QUALITY == "LOW":
             resized_image.save(os.path.join(library_dir_name, '00-original.jpg'), quality='web_low')
@@ -953,7 +954,7 @@ if __name__ == "__main__":
 
     if IMAGE_QUALITY == "MAX":
         print("Note: Image output will be at maximum quality with PNG format - 420-500 Kb per image, upscale 4MB-5MB")
-    elif IMAGE_QUALITY == "MED":
+    elif IMAGE_QUALITY == "HIGH":
         print("Note: Image output will be in high quality with JPG format - 120-200 Kb per image, upscale 1-2 MB")
     elif IMAGE_QUALITY == "LOW":
         print("Note: Image output will be of lower quality with JPG format - 15-30 Kb per image, upscale 400-800 Kb")
