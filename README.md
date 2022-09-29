@@ -64,7 +64,7 @@ This project is being improved throughout September 2022, so check back often fo
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
-* WEW: Create a video from evolving frames!
+* NEW: Create a video from evolving frames!
 * NEW: Added new 'auto-upscale' option in Advanced page, which will automatically upscale all images just created.
 * Improved: 'Smarter' JavaScript in Library page only gets new images rather than the whole library every time you click the 'Refresh' button.
 Indeed, the 'Refresh' button is now removed as the library is updated automatically every 5 seconds.
