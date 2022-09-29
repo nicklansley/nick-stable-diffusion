@@ -678,8 +678,14 @@ const startCountDown = async (requestedImageCount, imageOrVideoFrameText) =>
             console.log("All images are ready - stopping countdown - global_countdownTimerIntervalId = " + global_countdownTimerIntervalId);
             clearInterval(global_countdownTimerIntervalId);
             global_countdownTimerIntervalId = null;
-
-            document.getElementById("status").innerText = "Processing completed";
+            if (document.getElementById("frames_per_second"))
+            {
+                document.getElementById("status").innerText = "Processing completed! If video does not load on this page, you will find it in the Library";
+            }
+            else
+            {
+                document.getElementById("status").innerText = "Processing completed! If not all images appear on this page, you will find them all in the Library";
+            }
             if (document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
             {
                 document.getElementById("status").innerText += " - upscaled versions will appear automatically with 'gold' border";
