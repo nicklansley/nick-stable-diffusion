@@ -233,6 +233,49 @@ const getImageList = async () =>
 
 }
 
+/**
+ * Creates an OrderList HTML element with all the items for the queue in it
+ * @param queueList
+ * @param imageCount
+ * @param queueUI
+ * @param backendProcessingRequestNow
+ * @returns {HTMLOListElement}
+ */
+function createQueueOrderedList(queueList, imageCount, queueUI, backendProcessingRequestNow)
+{
+    const orderedList = document.createElement("ol");
+    for(let queueIndex = 1; queueIndex < queueList.length; queueIndex += 1)
+    {
+        let queueItem = queueList[queueIndex];
+        const listItem = document.createElement("li");
+        if (queueItem['command'] === "prompt")
+        {
+            listItem.innerText = `Image prompt request with prompt '${queueItem.prompt}' (${queueItem.num_images} image${queueItem.num_images > 1 ? "s" : ""})`;
+            imageCount += queueItem.num_images;
+        }
+        else if (queueItem['command'] === "upscale")
+        {
+            listItem.innerText = `Upscale/Enhance request for ${queueItem['image_list'].length} image${queueItem['image_list'].length > 1 ? "s" : ""}`;
+        }
+        else if (queueItem['command'] === 'video')
+        {
+            listItem.innerText = `Create video request with prompt '${queueItem['prompt']}' (${queueItem['num_video_frames']} frames)`;
+        }
+        // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
+        if (queueItem.queue_id === global_currentQueueId)
+        {
+            listItem.style.fontWeight = "bold";
+            listItem.style.backgroundColor = "green";
+            backendProcessingRequestNow = true;
+
+            // Mention this in the status message:
+            document.getElementById('status').innerText = `Request queued - position: ${queueIndex + 1}`;
+            imageCount += queueItem.num_images;
+        }
+        orderedList.appendChild(listItem);
+    }
+    return orderedList;
+}
 
 /**
  * Display the queue.
@@ -250,71 +293,43 @@ const displayQueue = async (queueList) =>
     }
     else
     {
+        const topQueueItem = queueList[0];
         // Is my request being currently processed? If it's first in the queue, then yes.
         backendProcessingRequestNow = queueList[0].queue_id === global_currentQueueId
 
-        const maxDDIMSteps = queueList[0].max_ddim_steps ? queueList[0].max_ddim_steps : 0;
-        const minDDIMSteps = queueList[0].min_ddim_steps ? queueList[0].min_ddim_steps : 0;
+        const maxDDIMSteps = topQueueItem.max_ddim_steps ? topQueueItem.max_ddim_steps : 0;
+        const minDDIMSteps = topQueueItem.min_ddim_steps ? topQueueItem.min_ddim_steps : 0;
 
-        const imageRequestCount = queueList[0].num_images * (maxDDIMSteps - minDDIMSteps + 1);
+        const imageRequestCount = topQueueItem.num_images * (maxDDIMSteps - minDDIMSteps + 1);
 
         // The first item in the queue is the one that the AI is currently processing, so display the info
         // separately from the queue list
         const processingDiv = document.createElement("div");
         let showText = '';
-        if (queueList[0]['command'] === 'prompt')
+
+        // Text varies whether it is a prompt, video or upscale command
+        if (topQueueItem['command'] === 'prompt')
         {
-            showText = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${queueList[0].prompt}'...</b>`;
+            showText = `<b>Now creating ${imageRequestCount} image${imageRequestCount > 1 ? "s" : ""} for${backendProcessingRequestNow ? " your request" : " "}:<br>'${topQueueItem.prompt}'...</b>`;
         }
-        else if (queueList[0]['command'] === 'upscale')
+        else if (topQueueItem['command'] === 'upscale')
         {
-            showText = `<b>Upscale/Enhance request for ${queueList[0]['image_list'].length} image${queueList[0]['image_list'].length > 1 ? "s" : ""}</b>`;
+            showText = `<b>Upscale/Enhance request for ${topQueueItem['image_list'].length} image${topQueueItem['image_list'].length > 1 ? "s" : ""}</b>`;
         }
-        else if (queueList[0]['command'] === 'video')
+        else if (topQueueItem['command'] === 'video')
         {
-            showText = `<b>Creating video with prompt '${queueList[0]['prompt']}' (${queueList[0]['num_video_frames']} frames)</b>`;
+            showText = `<b>Creating video with prompt '${topQueueItem['prompt']}' (${topQueueItem['num_video_frames']} frames)</b>`;
         }
+
         queueUI.innerHTML = `${showText}<br>Current queue:<br>`;
-        processingDiv.innerHTML = showText
+        processingDiv.innerHTML = showText;
 
         // Now display the rest of the queue list:
-        let queuePosition = 1;
         let imageCount = 0;
         if (queueList.length > 1)
         {
-            const orderedList = document.createElement("ol");
-            for(let queueIndex = 1; queueIndex < queueList.length; queueIndex += 1)
-            {
-                let queueItem = queueList[queueIndex];
-                const listItem = document.createElement("li");
-                if (queueItem['command'] === "prompt")
-                {
-                    listItem.innerText = `${queueItem.prompt} - (${queueItem.num_images} image${queueItem.num_images > 1 ? "s" : ""})`;
-                    imageCount += queueItem.num_images;
-                }
-                else if (queueItem['command'] === "upscale")
-                {
-                    listItem.innerText = `Upscale/Enhance request for ${queueItem['image_list'].length} image${queueItem['image_list'].length > 1 ? "s" : ""}`;
-                }
-                else if (queueList['command'] === 'video')
-                {
-                    queueUI.innerHTML = `<b>Creating video with prompt '${queueList['prompt']}' (${queueList['num_video_frames']} frames)</b>`;
-                }
-                // If the queue_id matches the one returned to use by the AI, this is our request, so highlight it:
-                if (queueItem.queue_id === global_currentQueueId)
-                {
-                    listItem.style.fontWeight = "bold";
-                    listItem.style.backgroundColor = "green";
-                    backendProcessingRequestNow = true;
-
-                    // Mention this in the status message:
-                    document.getElementById('status').innerText = `Request queued - position: ${queuePosition}`;
-                    imageCount += queueItem.num_images;
-                }
-                orderedList.appendChild(listItem);
-                queuePosition += 1;
-            }
-            queueUI.appendChild(orderedList);
+            // Create an OrderList HTML element with all the items for the queue in it, and append it to the queueUI section@
+            queueUI.appendChild(createQueueOrderedList(queueList, imageCount, queueUI, backendProcessingRequestNow));
         }
         else
         {

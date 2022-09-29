@@ -50,7 +50,7 @@
         width: 98.5%;
     }
 
-    .button-9 {
+    .control-button {
         appearance: auto;
         backface-visibility: hidden;
         background-color: #888888;
@@ -79,11 +79,11 @@
         width: 100%;
     }
 
-    .button-9:disabled {
+    .control-button:disabled {
         cursor: default;
     }
 
-    .button-9:focus {
+    .control-button:focus {
         box-shadow: rgba(50, 50, 93, .1) 0 0 0 1px inset, rgba(50, 50, 93, .2) 0 6px 15px 0, rgba(0, 0, 0, .1) 0 2px 2px 0, rgba(50, 151, 211, .3) 0 0 0 4px;
     }
 
@@ -138,11 +138,10 @@
 <h1>Stable Diffusion Web Playground</h1>
 <div class="input_div">
     <p>
-        <button class="button-9" onclick="window.open('library.html', '_blank')">Library of images created so far</button>
-        <button class="button-9" onclick="window.open('advanced.html', '_blank')">Prompt with advanced controls</button>
-        <button class="button-9" onclick="window.open('makevideo.html', '_blank')">Create a video</button>
-        <button class="button-9" onclick="window.open('inspiration.html', '_blank')">Get inspired for your prompts</button>
-        <button class="button-9" onclick="toggleDarkMode()">Toggle dark mode</button>
+        <button class="control-button" style="width: 24%;" onclick="window.open('library.html', '_blank')">Library </button>
+        <button class="control-button" style="width: 24%;" onclick="window.open('advanced.html', '_blank')">Advanced controls</button>
+        <button class="control-button" style="width: 24%;" onclick="window.open('makevideo.html', '_blank')">Create a video</button>
+        <button class="control-button" style="width: 24%;" onclick="toggleDarkMode()">Toggle dark mode</button>
     </p>
 </div>
 
@@ -169,7 +168,7 @@
                 </div>
             </div>
             <div>
-                <button class="button-9"
+                <button class="control-button"
                         id="buttonGo"
                         onclick="go('image')"
                         role="button">
