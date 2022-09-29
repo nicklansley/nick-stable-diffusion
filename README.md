@@ -285,10 +285,10 @@ Images created by this application will appear in the library, where they can be
 ![The Library page](nsd-library-page.png)
 
 Images are grouped by prompt and date/time with the latest at the top of the page.
-The group header also displays the various settings that either the AI used, or you set manually if you prompted vi the advanced
+The group header also displays the various settings that either the AI used, or you set manually if you prompted via the advanced
 page.
 
-Check a box at the top of the page to allow it to refresh itself every 10 seconds.
+The page auto updates every 10 seconds with completed requests and upscaled images - no need to manually refresh.
 
 The library page has been updated to improve the user experience with images:
 
@@ -300,7 +300,7 @@ The library page has been updated to improve the user experience with images:
   This is done using the GFPGAN AI. The image will be upscaled and the faces enhanced, and the result will be saved in the
   library alongside the original image. The original image will not be changed.
 * When you click to upscale, your request actually joins the queue of requests waiting for the SD engine to process them. 
-   This is because the SD engine processes one request at a time. You will need to refresh the Library page (or set the 'refresh every 10 seconds' checkbox) to see the result.
+   This is because the SD engine processes one request at a time. Once upscaling has completed, the library page will auto-update with the upscaled image after a few seconds.
    
 
 Queued for upscaling - click 'View Original' and 'View Upscaled' to see the results in a new browser window.
@@ -334,7 +334,7 @@ If you specify an image, it will be included as the first image '00-original.png
 are 'substantially' different to the original. The only exception is of course if the original image was itself substantially created by this AI!</i>
 
 ## NEW! Video Page
-See example in this project at <a href="https://github.com/nicklansley/nick-stable-diffusion/blob/master/nsd-example-video.mp4" target="_blank"> (download only)
+See example in this project at https://github.com/nicklansley/nick-stable-diffusion/blob/master/nsd-example-video.mp4 (download only)
 Create a video from a series of evolving images - each newly created image acts as the input to the next image in the series.
 * Use a Zoom function to create a 'journey' through the images. 
 * Decide how many images to create, and the frames per second that the video should playback at.
