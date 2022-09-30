@@ -113,7 +113,7 @@ const prepareRequestData = () =>
         }
     }
 
-    if (document.getElementById("upscale_factor"))
+    if (document.getElementById("auto_upscale"))
     {
         data['auto_upscale'] = document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false;
     }
