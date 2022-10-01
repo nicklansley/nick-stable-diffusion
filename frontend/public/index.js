@@ -539,16 +539,18 @@ const createImagePlaceHolders = () =>
     const maxDDIMSteps = document.getElementById("max_ddim_steps") ? parseInt(document.getElementById("max_ddim_steps").value) : 0;
     const minDDIMSteps = document.getElementById("min_ddim_steps") ? parseInt(document.getElementById("min_ddim_steps").value) : 0;
     let imageElementsToCreate = global_imagesRequested + (maxDDIMSteps - minDDIMSteps);
+    const upscaleFlag = document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false;
+
     if (document.getElementById("frames_per_second"))
     {
         // This is the video page
         imageElementsToCreate = 1;
     }
-    else if (document.getElementById("auto_upscale") ? document.getElementById("auto_upscale").checked : false)
+    else if (upscaleFlag)
     {
-        imageElementsToCreate = imageElementsToCreate * 2
+        imageElementsToCreate = (imageElementsToCreate * 2);
     }
-    imageElementsToCreate = includesOriginalImage ? imageElementsToCreate + 1 : imageElementsToCreate;
+    imageElementsToCreate = includesOriginalImage ? imageElementsToCreate + (upscaleFlag ? 2 : 1) : imageElementsToCreate;
 
 
     for(let imageIndex = 0; imageIndex < imageElementsToCreate; imageIndex += 1)
