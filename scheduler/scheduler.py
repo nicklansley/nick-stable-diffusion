@@ -187,7 +187,7 @@ def rebuild_library_catalogue():
             for image_name in files:
                 image_path = os.path.join(root, image_name)
                 if 'drag_and_drop_images' not in image_path and (
-                        image_name.endswith('.jpg') or image_name.endswith('.png')):
+                        image_name.endswith('.jpg') or image_name.endswith('.png') or image_name.endswith('video.mp4')):
 
                     # if the image has a metadata section then add it to the
                     # end of the image file if ADD_METADATA_TO_FILES is enabled
@@ -201,6 +201,16 @@ def rebuild_library_catalogue():
 
                             if image_file_path not in library_entry["generated_images"]:
                                 library_entry["generated_images"].append(image_file_path)
+
+                    # Remove image files if a video file is found in the same folder
+                    for library_entry in library:
+                        if library_entry["queue_id"] in root:
+                            for image_file_path in library_entry["generated_images"]:
+                                if image_file_path.endswith('.mp4'):
+                                    video_file = image_file_path
+                                    library_entry["generated_images"] = []
+                                    library_entry["generated_images"].append(video_file)
+
 
         # write the library catalogue
         with open("/app/library/library.json", "w", encoding="utf8") as outfile:
