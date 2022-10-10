@@ -60,7 +60,7 @@ DALL-E and CrAIyon did, but we are where we are. I'm not changing the name of th
 
 
 ## Frequent updates!
-This project is being improved throughout September 2022, so check back often for new features and bug fixes, plus improved help for getting 
+This project is being improved throughout September/October 2022, so check back often for new features and bug fixes, plus improved help for getting 
 the project working on your machine. Check the commits list for the latest changes at https://github.com/nicklansley/nick-stable-diffusion/commits
 
 ### Latest:
@@ -206,10 +206,10 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
 3. Copy the downloaded file to the 'model' folder you have setup in step 1. 
    You will need to place the .ckpt file there and rename it from <b>sd-v1-4.ckpt</b> to <b>model.ckpt</b> - so in my case I now have:<pre>S:\nick-stable-diffusion-data\model\model.ckpt</pre> 
 4. To use the GFPGAN AI to upscale your images and enhance the faces of any people featured, you will need to download these models which detect faces and enhance them as well as upscale the whole image. Follow these links to download:
-- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/detection_Resnet50_Final.pth (104 MB)
-- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/RealESRGAN_x4plus.pth (64 MB)
-- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/parsing_parsenet.pth (82 MB)
-- https://github.com/nicklansley/nick-stable-diffusion/releases/download/untagged-2dbe8c6c907347f4a117/GFPGANv1.4.pth (332 MB)
+- https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/detection_Resnet50_Final.pth (104 MB)
+- https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/RealESRGAN_x4plus.pth (64 MB)
+- https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/parsing_parsenet.pth (82 MB)
+- https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/GFPGANv1.4.pth (332 MB)
 
 - ... and save these files to the 'model' external folder you set up in step 1, alongside the Stable Diffusion model you downloaded in step 2 and copied in step 3. So now your model folder looks like this:
  ![](nsd-model-folder.png)
