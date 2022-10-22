@@ -980,4 +980,4 @@ const retrieveAndDisplayCurrentQueue = async () =>
     }
 }
 
-setInterval(retrieveAndDisplayCurrentQueue, 2000);
+setInterval(retrieveAndDisplayCurrentQueue, 4000);
