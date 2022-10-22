@@ -18,7 +18,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
-- <b>UPDATE: Compatible with new v1.5 Stable-Diffusion model! </b>Which model to choose? In early tests of v1.5 I am finding that the overall quality, and particularly faces, are better with the larger model. It's subjective but I think v1.4 still has the edge on faces. Usefully, if you fix the seed number
+- <b>UPDATE: Compatible with new v1.5 Stable-Diffusion model! </b>Which model to choose? In early tests of v1.5 I am finding that the overall quality, and particularly faces, are better with the larger model but there are plenty of exceptions as it is so subjective! I think v1.4 and 1.5 full model are tied on faces. Usefully, if you fix the seed number
    you can generate the same group of images in all three models, so you can compare them side by side. To do this, place all three model files in the 'model' folder, then take turns to rename each one to 'model.ckpt' and restart the backend server in Docker Desktop once the application is up and running.
    See step 2 in 'Installation Playbook' below. 
 - NEW: Create a video from evolving frames, each image frame created acts as the input to the next image frame.
@@ -211,8 +211,7 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
    For v1.5, the model is at https://huggingface.co/runwayml/stable-diffusion-v1-5 and you can choose the 7.7GB model here: https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt
    or go for the smaller 4.27GB model here: https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
 
-   Which model to choose? In early tests of v1.5 I am finding that the overall quality, and particularly faces, are better with the larger model. It's subjective but I think v1.4 still has the edge on faces. Usefully, if you fix the seed number
-   you can generate the same group of images in all three models, so you can compare them side by side. To do this, place all three model files in the 'model' folder, then take turns to rename each one to 'model.ckpt' and restart the backend server in Docker Desktop once the application is up and running.
+   
 3. Copy the downloaded file to the 'model' folder you have setup in step 1. 
    You will need to place the .ckpt file there and rename it to <b>model.ckpt</b> - so in my case I now have:<pre>S:\nick-stable-diffusion-data\model\model.ckpt</pre> 
 4. To use the GFPGAN AI to upscale your images and enhance the faces of any people featured, you will need to download these models which detect faces and enhance them as well as upscale the whole image. Follow these links to download:
