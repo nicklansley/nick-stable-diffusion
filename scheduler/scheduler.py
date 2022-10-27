@@ -358,7 +358,8 @@ if __name__ == "__main__":
 
             elif queue_item['command'] == 'upscale':
                 request_data = send_upscale_request_to_sd_engine(queue_item)
-                rebuild_library_catalogue()  # temporary fix for library not updating after upscale
+                for image_path in queue_item['image_list']:
+                    update_library_catalogue(image_path.split('/')[1])
 
             if queue_item['command'] == 'video':
                 request_data = send_video_request_to_sd_engine(queue_item)
