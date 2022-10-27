@@ -1,4 +1,5 @@
 const SECS_PER_IMAGE = 4; // depends on GPU image creation speed - 4 works well for me
+const REFRESH_INTERVAL_SECS = 2;
 let global_currentQueueId = '';
 let global_imagesRequested = 0;
 let global_countdownValue = 0;
@@ -980,4 +981,4 @@ const retrieveAndDisplayCurrentQueue = async () =>
     }
 }
 
-setInterval(retrieveAndDisplayCurrentQueue, 4000);
+setInterval(retrieveAndDisplayCurrentQueue, REFRESH_INTERVAL_SECS * 1000);

@@ -1,5 +1,5 @@
+const REFRESH_INTERVAL_SECS = 2
 let library = [];
-let autoRefreshId;
 let defaultUpscaleFactor = 4;
 
 // Get the library index file and return the list of library entries
@@ -501,7 +501,7 @@ const deleteImage = async (img) =>
     }
 }
 
-// Refresh the library index every 5 seconds
-setInterval(function ()  { formatLibraryEntries().then(); }, 5000);
+// Refresh the library index every REFRESH_INTERVAL_SECS seconds
+setInterval(function ()  { formatLibraryEntries().then(); }, REFRESH_INTERVAL_SECS * 1000);
 
 
