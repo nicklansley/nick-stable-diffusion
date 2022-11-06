@@ -324,7 +324,7 @@ Example of upscale / face-enhancement processing:
 
 ![Before and after Upscaling and Face fnhancement processing](nsd_before_and_after.png)
 
-If you want to empty the library, simply go to the 'library' folder you created in 'fast start' step 4 and delete
+If you want to empty the library, simply go to the 'library' folder you created in 'Installation PLaybook' step 4 and delete
 everything in it.
 
 
@@ -381,13 +381,12 @@ It is documented here (Postman compatible): https://documenter.getpostman.com/vi
 
 Note that I have disabled the safety catch and allow this project to create any image it desires. But doing so comes
 with great responsibility and you must
-not forget what you agreed to when downloading the model in <i>Fast Start</i>> above. 
+not forget what you agreed to when downloading the model in <i>Installation Playbook</i>> above. 
 
 If you prefer to avoid the possibility of NSFW content (for example, you are allowing minors to use the application or you are demonstrating this as a show & tell at 
 work), re-enable the safety catch by setting SAFETY_FLAG to True in the backend-sd-server/server.py file.
 
-I only disabled the safety catch because Rick Astley (the NSFW
-replacement image) was appearing too often on innocent prompts, notwithstanding the fact that my definition of 'innocent'
+I only disabled the safety catch because the NSFW replacement image was appearing too often on innocent prompts, notwithstanding the fact that my definition of 'innocent'
 may be different to the developers of the safety catch...!
 
 But have no illusion: Without the safety catch enabled, the AI will create any image it desires even on apparently 

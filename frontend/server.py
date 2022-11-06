@@ -47,12 +47,14 @@ class RelayServer(BaseHTTPRequestHandler):
         data = json.loads(body)
         print("\nFRONTEND:", data)
 
-        if api_command == '/image' or api_command == '/video' or api_command == '/upscale':
+        if api_command == '/image' or api_command == '/video' or api_command == '/upscale' or api_command == '/inpaint':
             result = 'X'
             ok_flag, message, data = self.quality_assure(data)
             if ok_flag:
                 if api_command == '/image':
                     result = self.queue_prompt_request_to_redis(data)
+                elif api_command == '/inpaint':
+                    result = self.queue_inpaint_request_to_redis(data)
                 elif api_command == '/video':
                     result = self.queue_video_request_to_redis(data)
                 else:
@@ -163,6 +165,21 @@ class RelayServer(BaseHTTPRequestHandler):
             return data['queue_id']
         except Exception as e:
             print("\nFRONTEND: queue_prompt_request_to_redis Error:", e)
+            return 'X'
+
+    def queue_inpaint_request_to_redis(self, data):
+        try:
+            r = redis.Redis(host='scheduler', port=6379, db=0, password='hellothere')
+            data['command'] = 'inpaint'
+            data['queue_id'] = str(uuid.uuid4())
+            data['num_images'] = int(data['num_images'])
+            data['seed'] = int(data['seed'])
+
+            r.lpush('queue', json.dumps(data))
+            print("\nFRONTEND: Inpaint request queued to redis with queue_id:", data['queue_id'])
+            return data['queue_id']
+        except Exception as e:
+            print("\nFRONTEND: queue_inpaint_request_to_redis Error:", e)
             return 'X'
 
     def queue_video_request_to_redis(self, data):

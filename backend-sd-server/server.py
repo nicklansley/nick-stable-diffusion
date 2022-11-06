@@ -36,6 +36,9 @@ import signal
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import unquote
 
+from main import instantiate_from_config
+from ldm.models.diffusion.ddim import DDIMSampler
+
 # load safety model
 safety_model_id = "CompVis/stable-diffusion-safety-checker"
 safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id)
@@ -56,7 +59,8 @@ HEIGHT = 512
 WIDTH = 512
 DOWNSAMPLING_FACTOR = 8  # was opt.F
 SAMPLE_THIS_OFTEN = 1  # was opt.n_iter
-MODEL_PATH = 'models/ldm/stable-diffusion-v1/model.ckpt'
+SD_MODEL_PATH = 'models/ldm/stable-diffusion-v1/model.ckpt'
+INPAINTING_MODEL_PATH = 'models/ldm/stable-diffusion-v1/last.ckpt'
 SCALE = 7.5  # was opt.scale#
 DDIM_STEPS = 40  # was opt.ddim_steps (number of ddim sampling steps)
 DDIM_ETA = 0.0  # was opt.ddim_eta  (ddim eta (eta=0.0 corresponds to deterministic sampling)
@@ -303,7 +307,8 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                             image_counter += 1
 
                     if action == "prompt":
-                        save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '', '')
+                        save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, '',
+                                           '')
 
         return {'success': True, 'queue_id': queue_id, 'first_image_path': first_image_path}
 
@@ -377,7 +382,7 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
                 model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
                 bg_upsampler = RealESRGANer(
                     scale=2,
-                    model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
+                    model_path='/usr/local/lib/python3.10/dist-packages/realesrgan/weights/RealESRGAN_x2plus.pth',
                     model=model,
                     tile=bg_tile,
                     tile_pad=10,
@@ -447,7 +452,8 @@ def upscale_image(image_list, queue_id, upscale_factor=2):
     return response
 
 
-def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale, video_frame_number=0):
+def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, x_samples, seed_value, scale,
+                       video_frame_number=0):
     # Saves the image samples in format: <image_counter>_D<ddim_steps>_S<scale>_R<seed_value>-<random 8 characters>.png/.jpg
     first_image_path = ''
     for x_sample in x_samples:
@@ -484,7 +490,8 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
         return video_frame_number, first_image_path
 
 
-def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options, video_frame_number=0, zoom_factor=1.0):
+def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options,
+                  video_frame_number=0, zoom_factor=1.0):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
 
@@ -628,7 +635,6 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
                                original_image_path=original_image_path,
                                format='image')
 
-
         return {'success': False, 'error: ': 'error: ' + str(e), 'queue_id': queue_id}
 
 
@@ -696,14 +702,33 @@ def check_api_request_properties(data, command):
     if 'original_image_path' in data:
         original_image_path = data['original_image_path'].strip()
 
-        # only image paths which are either URLs or are sourced from the library are allowed.
-        if not (original_image_path.startswith('http') or original_image_path.startswith('library/')):
+        if original_image_path.startswith('library/'):
+            original_image_path = original_image_path.replace('library/', '/library/')
+
+        if not (original_image_path.startswith('http') or original_image_path.startswith('/library/')):
             if original_image_path != '':
-                print('Warning: "{}" is not a valid URL - processing continues as if no file present'.format(
+                print('Warning: "{}" is not a valid IMAGE URL - processing continues as if no file present'.format(
                     original_image_path))
             original_image_path = ''
 
-    return options, original_image_path
+    options['original_image_path'] = original_image_path
+
+    original_mask_path = ''
+    if 'original_mask_path' in data:
+        original_mask_path = data['original_mask_path'].strip()
+
+        if original_mask_path.startswith('library/'):
+            original_mask_path = original_mask_path.replace('library/', '/library/')
+
+        if not (original_mask_path.startswith('http') or original_mask_path.startswith('/library/')):
+            if original_mask_path != '':
+                print('Warning: "{}" is not a valid MASK URL - processing continues as if no file present'.format(
+                    original_mask_path))
+            original_mask_path = ''
+
+    options['original_mask_path'] = original_mask_path
+
+    return options
 
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
@@ -754,6 +779,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.process_upscale(data)
         elif api_command == '/video':
             self.process_video(data)
+        elif api_command == "/inpaint":
+            self.process_inpaint(data)
 
     def process_upscale(self, data):
         image_list = data['image_list']
@@ -771,6 +798,124 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         response_body = json.dumps(response)
         self.wfile.write(response_body.encode())
 
+    def inpaint_make_batch(self, image, mask, device):
+        image = np.array(Image.open(image).convert("RGB"))
+        image = image.astype(np.float32) / 255.0
+        image = image[None].transpose(0, 3, 1, 2)
+        image = torch.from_numpy(image)
+
+        mask = np.array(Image.open(mask).convert("L"))
+        mask = mask.astype(np.float32) / 255.0
+        mask = mask[None, None]
+        mask[mask < 0.5] = 0
+        mask[mask >= 0.5] = 1
+        mask = torch.from_numpy(mask)
+
+        masked_image = (1 - mask) * image
+
+        batch = {"image": image, "mask": mask, "masked_image": masked_image}
+        for k in batch:
+            batch[k] = batch[k].to(device=device)
+            batch[k] = batch[k] * 2.0 - 1.0
+        return batch
+
+    def process_inpaint(self, data):
+        print('Running Inpaint Processing')
+
+        try:
+            prompt = data['prompt'].strip()
+            queue_id = data['queue_id']
+            num_images = data['num_images']
+        except KeyError as e:
+            print(e)
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Bad request: missing prompt, image_list, queue_id or num_images"}')
+            return
+
+        options = check_api_request_properties(data, "prompt")
+
+        if options['original_image_path'] == '':
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Bad request: missing original_image_path", "queue_id": []}')
+            return
+
+        if options['original_mask_path'] == '':
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Bad request: missing original_mask_path", "queue_id": []}')
+            return
+
+        images = [options['original_image_path']]
+        masks = [options['original_mask_path']]
+        print(f"Found {len(masks)} inputs.")
+
+        chosen_seed = data['seed']
+        if chosen_seed == 0:
+            chosen_seed = random.randint(1, 2147483647)
+        else:
+            # we push the seed back by 1 as it will be incremented as we start the looping
+            chosen_seed -= 1
+
+        start = time.time()
+        library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
+        os.makedirs(library_dir_name, exist_ok=True)
+        image_counter = 0
+
+        config = OmegaConf.load("models/ldm/inpainting_big/config.yaml")
+        model = instantiate_from_config(config.model)
+        # model.load_state_dict(torch.load("models/ldm/inpainting_big/last.ckpt")["state_dict"], strict=False)
+        model.load_state_dict(torch.load(INPAINTING_MODEL_PATH)["state_dict"], strict=False)
+
+        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        model = model.to(device)
+        sampler = DDIMSampler(model)
+
+        ddim_steps = options['max_ddim_steps']
+
+        try:
+            with torch.no_grad():
+                with model.ema_scope():
+                    for image, mask in tqdm(zip(images, masks)):
+                        output_path = os.path.join(library_dir_name, os.path.split(image)[1])
+                        batch = self.inpaint_make_batch(image, mask, device=device)
+
+                        # encode masked image and concat downsampled mask
+                        c = model.cond_stage_model.encode(batch["masked_image"])
+                        cc = torch.nn.functional.interpolate(batch["mask"], size=c.shape[-2:])
+                        c = torch.cat((c, cc), dim=1)
+
+                        shape = (c.shape[1] - 1,) + c.shape[2:]
+                        samples_ddim, _ = sampler.sample(S=ddim_steps,
+                                                         conditioning=c,
+                                                         batch_size=c.shape[0],
+                                                         shape=shape,
+                                                         verbose=False)
+
+                        x_samples_ddim = model.decode_first_stage(samples_ddim)
+
+                        image = torch.clamp((batch["image"] + 1.0) / 2.0, min=0.0, max=1.0)
+                        mask = torch.clamp((batch["mask"] + 1.0) / 2.0, min=0.0, max=1.0)
+                        predicted_image = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+
+                        inpainted = (1 - mask) * image + mask * predicted_image
+                        inpainted = inpainted.cpu().numpy().transpose(0, 2, 3, 1)[0] * 255
+                        Image.fromarray(inpainted.astype(np.uint8)).save(output_path)
+
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            response_body = json.dumps({'success': False, 'queue_id': queue_id, 'error': e})
+            self.wfile.write(response_body.encode())
+
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        response_body = json.dumps(
+            {'success': True, 'queue_id': queue_id, 'first_image_path': options['original_image_path']})
+        self.wfile.write(response_body.encode())
+
     def process_prompt(self, data):
         # Get the mandatory prompt data from the request
         try:
@@ -784,11 +929,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"error": "Bad request: missing prompt, queue_id or num_images"}')
             return
 
-        options, original_image_path = check_api_request_properties(data, "prompt")
+        options = check_api_request_properties(data, "prompt")
 
         # process!
-        if original_image_path != '':
-            result = process_image(original_image_path, prompt, global_device, global_model,
+        if options['original_image_path'] != '':
+            result = process_image(options['original_image_path'], prompt, global_device, global_model,
                                    global_wm_encoder, queue_id,
                                    num_images, options)
         else:
@@ -823,15 +968,15 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 b'{"error": "Bad request: missing prompt, queue_id, num_video_frames, or num_frames_per_second"}')
             return
 
-        options, original_image_path = check_api_request_properties(data, "video")
+        options = check_api_request_properties(data, "video")
 
         video_frame_paths_list = []
         video_frame_count = 0
         start = time.time()
 
         # First run with or without an original image to get the first frame
-        if original_image_path != '':
-            result = process_image(original_image_path=original_image_path,
+        if options['original_image_path'] != '':
+            result = process_image(original_image_path=options['original_image_path'],
                                    text_prompt=prompt,
                                    device=global_device,
                                    model=global_model,
@@ -886,7 +1031,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                            text_prompt=prompt,
                            time_taken=time_taken,
                            error='',
-                           original_image_path=original_image_path,
+                           original_image_path=options['original_image_path'],
                            zoom_factor=zoom_factor,
                            format='video')
 
@@ -918,6 +1063,7 @@ def create_video_from_frames(video_frame_paths_list, queue_id, num_frames_per_se
     subprocess.run(ffmpeg_command)
     print("COMPLETED:", len(video_frame_paths_list), "with", num_frames_per_second, "fps -> ", video_path)
     return video_path
+
 
 def exit_signal_handler(self, sig):
     # Shutdown the server gracefully when Docker requests it

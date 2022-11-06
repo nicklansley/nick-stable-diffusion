@@ -60,6 +60,19 @@ def send_prompt_request_to_sd_engine(prompt_info):
         print("SCHEDULER: send_prompt_request_to_sd_engine - Error:", e)
         return {'queue_id': 'X', 'success': False}
 
+def send_inpaint_request_to_sd_engine(prompt_info):
+    try:
+        prompt_json = json.dumps(prompt_info)
+        print('\nSCHEDULER: Sending inpaint request to SD Engine:', prompt_json)
+        r = requests.post('http://sd-backend:8080/inpaint', json=prompt_json)
+        response = r.json()
+        print('\nSCHEDULER: send_inpaint_request_to_sd_engine - Response from SD Engine:', response)
+        return response
+    except Exception as e:
+        print("SCHEDULER: send_inpaint_request_to_sd_engine - Error:", e)
+        return {'queue_id': 'X', 'success': False}
+
+
 
 def send_video_request_to_sd_engine(prompt_info):
     try:
@@ -347,25 +360,36 @@ if __name__ == "__main__":
         time.sleep(1)
         queue_item = get_next_queue_request()
         if queue_item['queue_id'] != 'X':
-            if queue_item['command'] == 'prompt':
-                request_data = send_prompt_request_to_sd_engine(queue_item)
 
-                if 'auto_upscale' in queue_item and queue_item['auto_upscale']:
-                    process_auto_upscale(queue_item['queue_id'])
+            try:
+                if queue_item['command'] == 'prompt':
+                    request_data = send_prompt_request_to_sd_engine(queue_item)
 
-                if request_data['queue_id'] == queue_item['queue_id']:
-                    update_library_catalogue(queue_item['queue_id'])
+                    if 'auto_upscale' in queue_item and queue_item['auto_upscale']:
+                        process_auto_upscale(queue_item['queue_id'])
 
-            elif queue_item['command'] == 'upscale':
-                request_data = send_upscale_request_to_sd_engine(queue_item)
-                for image_path in queue_item['image_list']:
-                    update_library_catalogue(image_path.split('/')[1])
+                    if request_data['queue_id'] == queue_item['queue_id']:
+                        update_library_catalogue(queue_item['queue_id'])
 
-            if queue_item['command'] == 'video':
-                request_data = send_video_request_to_sd_engine(queue_item)
+                elif queue_item['command'] == 'upscale':
+                    request_data = send_upscale_request_to_sd_engine(queue_item)
+                    for image_path in queue_item['image_list']:
+                        update_library_catalogue(image_path.split('/')[1])
 
-                if request_data['queue_id'] == queue_item['queue_id']:
-                    update_library_catalogue(queue_item['queue_id'])
+                elif queue_item['command'] == 'inpaint':
+                    request_data = send_inpaint_request_to_sd_engine(queue_item)
+                    if request_data['queue_id'] == queue_item['queue_id']:
+                        update_library_catalogue(queue_item['queue_id'])
+
+                elif queue_item['command'] == 'video':
+                    request_data = send_video_request_to_sd_engine(queue_item)
+                    if request_data['queue_id'] == queue_item['queue_id']:
+                        update_library_catalogue(queue_item['queue_id'])
+
+            except KeyError as ke:
+                print('\nSCHEDULER: Processing queue_id {} failed'.format(queue_item['queue_id']))
+                print(ke)
+                pass
 
             delete_request_from_redis_queue(queue_item)
 
