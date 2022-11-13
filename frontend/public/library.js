@@ -332,13 +332,13 @@ const libraryEntry_authorHeader = (divLibraryEntry, libraryEntry) =>
     divLibraryEntry.appendChild(hr);
 
     const h3 = document.createElement("h3");
-    if(divLibraryEntry['negative_prompt'] !== '')
+    if(libraryEntry['negative_prompt'] !== '')
     {
         h3.innerHTML = `<i>${libraryEntry['text_prompt']} [${libraryEntry['negative_prompt']}]</i>`;
     }
     else
     {
-        h3.innerHTML = `<i>${libraryEntry['text_prompt']}</i>;`;
+        h3.innerHTML = `<i>${libraryEntry['text_prompt']}</i>`;
     }
 
     h3.classList.add('h3TextPrompt')
