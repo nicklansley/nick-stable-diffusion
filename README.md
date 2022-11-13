@@ -21,7 +21,8 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 - <b>UPDATE: Compatible with new v1.5 Stable-Diffusion model! </b>Which model to choose? In early tests of v1.5 I am finding that the overall quality, and particularly faces, are better with the larger model but there are plenty of exceptions as it is so subjective! I think v1.4 and 1.5 full model are tied on faces. Usefully, if you fix the seed number
    you can generate the same group of images in all three models, so you can compare them side by side. To do this, place all three model files in the 'model' folder, then take turns to rename each one to 'model.ckpt' and restart the backend server in Docker Desktop once the application is up and running.
    See step 2 in 'Installation Playbook' below. 
-- NEW: Create a video from evolving frames, each image frame created acts as the input to the next image frame.
+- <b>NEW! Now includes negative prompting. Simply put any negative words or phrases inside square [] brackets anywhere within your prompt.</b> For example "english market town [people]" will generate images of an English market town with no people in it.
+- Create a video from evolving frames, each image frame created acts as the input to the next image frame.
 - Upscaling and face enhancements built-in! Just click 'Upscale' on any image in the application's Library page, or use 'auto-upscale' option in Advanced page
 - Designed as a multi-user web application - get your family trying it on your home network, or set up your workstation
   as a internet-accessible server using ngrok or similar tunneling tool for your friends to try.
@@ -266,6 +267,11 @@ Type in a prompt, set the number of images (from 1 to 30) and 'click to send req
 The request will be queued and the scheduler will pick it up and process it. The scheduler will then send the results
 back to the frontend web server which will then send the results back to the web page.
 
+If you wish to include words or phrases in your prompt that you don't want the AI to use, you can surround them with
+square brackets. For example, if you type in the prompt: "english market town [people]" then the AI will try to
+generate images of an English market town with no people. There can be more than one word or phrase in square brackets,
+and several groups of square brackets can be used in a prompt.
+
 Once the images appear, hover over them with your mouse to make them much bigger. You can drag them onto your desktop
 with your mouse to save them outside the library.
 
@@ -338,9 +344,16 @@ Add an input prompt then fiddle with the controls! Drag and drop an image into t
 Choose a min and max range of DDIM steps to create a series of images with different DDIM steps. The DDIM step number will be added to each image's filename.
 Alter the classifier scale, and even choose your own starting seed for image creation consistency.
 
+You can use negative prompting to exclude words or phrases from the AI's consideration. Surround the words or phrases you wish to ask the AI to exclude with square brackets.
+For example, if you type in the prompt: "english market town [people dogs]" then the AI will try to generate images of an English market town with no people nor any dogs.
+There can be more than one word or phrase in square brackets, and several groups of square brackets can be used in a prompt. You'll need to experiment to gain an understanding
+of how negative prompting works.
+
 If you specify an image, it will be included as the first image '00-original.png' in the output.
 <i>Note that you do not have copyright over the original image, only the AI-created images as long as they 
 are 'substantially' different to the original. The only exception is of course if the original image was itself substantially created by this AI!</i>
+
+Auto-upscale will cause Stable Diffusion to first generate the required number of images, and then upscale them using the GFPGAN AI, with facial correction included.
 
 ## NEW! Video Page
 See example in this project at https://github.com/nicklansley/nick-stable-diffusion/blob/master/nsd-example-video.mp4 (download only)

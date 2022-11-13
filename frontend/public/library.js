@@ -1,6 +1,7 @@
 const REFRESH_INTERVAL_SECS = 2
 let library = [];
-let defaultUpscaleFactor = 4;
+let global_upscaleImageList = [];
+let DEFAULT_UPSCALE_FACTOR = 4;
 
 // Get the library index file and return the list of library entries
 const listLibrary = async () =>
@@ -184,6 +185,8 @@ const libraryEntry_authorMasterImagePlaceHolder = (div, thisLibraryEntry) =>
         // Master image for group
         masterImage.id = `master_image_${thisLibraryEntry['queue_id']}`;
         masterImage.alt = thisLibraryEntry['text_prompt'];
+        if(thisLibraryEntry['negative_prompt'] !== '')
+            masterImage.alt += ` [${thisLibraryEntry['negative_prompt']}];`;
         masterImage.height = thisLibraryEntry['height'];
         masterImage.width = thisLibraryEntry['width'];
         masterImage.style.zIndex = "0";
@@ -205,6 +208,9 @@ const libraryEntry_addSingleImage = (imageName, image_entry, libraryItem) =>
     image.id = imageName.split('.')[0];
     image.src = image_entry;
     image.alt = libraryItem['text_prompt'];
+    if(libraryItem['negative_prompt'] !== '')
+        image.alt += ` [${libraryItem['negative_prompt']}];`;
+
     image.height = 150;
     image.width = Math.ceil(150 * (libraryItem['width'] / libraryItem['height']));
     image.style.zIndex = "0";
@@ -282,10 +288,8 @@ const  libraryEntry_authorImageAndControls = (imageName, image_entry, libraryIte
             {
                 imageUpscaleOrViewButton.innerText = 'Queued';
                 imageUpscaleOrViewButton.disabled = true;
-                const imageList = [];
                 const imageRelativePath = image.src.split("/").slice(3).join("/");
-                imageList.push(imageRelativePath);
-                upscale(imageList);
+                global_upscaleImageList.push(imageRelativePath);
             }
             else
             {
@@ -328,7 +332,15 @@ const libraryEntry_authorHeader = (divLibraryEntry, libraryEntry) =>
     divLibraryEntry.appendChild(hr);
 
     const h3 = document.createElement("h3");
-    h3.innerHTML = `<i>${libraryEntry['text_prompt']}</i>`;
+    if(divLibraryEntry['negative_prompt'] !== '')
+    {
+        h3.innerHTML = `<i>${libraryEntry['text_prompt']} [${libraryEntry['negative_prompt']}]</i>`;
+    }
+    else
+    {
+        h3.innerHTML = `<i>${libraryEntry['text_prompt']}</i>;`;
+    }
+
     h3.classList.add('h3TextPrompt')
     h3.style.float = 'inline-start';
     divLibraryEntry.appendChild(h3);
@@ -454,8 +466,14 @@ const authorParametersListForWeb = (libraryItem) =>
 // Create link to the Advanced page with the parameters from the library entry
 const createLinkToAdvancedPage = (image_src, libraryItem) =>
 {
+    let textPrompt = libraryItem['text_prompt'];
+    if(libraryItem['negative_prompt']!== '')
+    {
+        textPrompt += ` [${libraryItem['negative_prompt']}]`;
+    }
     const urlencoded_image_src = encodeURIComponent(image_src);
-    const urlEncodedPrompt = encodeURIComponent(libraryItem['text_prompt']);
+    const urlEncodedPrompt = encodeURIComponent(textPrompt);
+
     let seedValue = getSeedValueFromImageFileName(image_src);
     if (seedValue === '')
     {
@@ -500,6 +518,31 @@ const deleteImage = async (img) =>
         }
     }
 }
+
+const processUpscaleQueue = async () =>
+{
+    if (global_upscaleImageList.length > 0)
+    {
+        const temp_global_upscaleImageList = JSON.parse(JSON.stringify(global_upscaleImageList));
+
+        // Note: Don't wait for upscale to complete before updating global_upscaleImageList in case
+        // this takes longer than the interval (5000ms) between calls to this function.
+        upscale(temp_global_upscaleImageList).then();
+
+        // Remove processed images from the list (thus keeping any new requests to be queued)
+        global_upscaleImageList.forEach((image, index) =>
+        {
+            if(temp_global_upscaleImageList.includes(image))
+            {
+                global_upscaleImageList[index] = ""; // set to empty string to remove
+            }
+        });
+        // Remove empty strings from the list
+        global_upscaleImageList = global_upscaleImageList.filter(image => image.length > 0);
+    }
+}
+
+setInterval(async () => {await processUpscaleQueue()}, 5000);
 
 // Refresh the library index every REFRESH_INTERVAL_SECS seconds
 setInterval(function ()  { formatLibraryEntries().then(); }, REFRESH_INTERVAL_SECS * 1000);

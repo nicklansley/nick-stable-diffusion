@@ -240,6 +240,14 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
         # we push the seed back by 1 as it will be incremented as we start the looping
         chosen_seed -= 1
 
+    # NEW! Ability to process negative prompts
+    if 'negative_prompt' in options:
+        print("DEBUG: negative prompt found")
+        negative_prompt = options['negative_prompt']
+    else:
+        print("DEBUG: NO negative prompt found")
+        negative_prompt = ""
+
     sampler = PLMSSampler(model)  # Uses PLMS model
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
@@ -265,7 +273,7 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                         for prompts in tqdm(data, desc="data"):
                             unconditional_conditioning = None
                             if SCALE != 1.0:
-                                unconditional_conditioning = model.get_learned_conditioning(N_SAMPLES * [""])
+                                unconditional_conditioning = model.get_learned_conditioning(N_SAMPLES * [negative_prompt])
                             if isinstance(prompts, tuple):
                                 prompts = list(prompts)
                             conditioning = model.get_learned_conditioning(prompts)
@@ -502,6 +510,12 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
         # we push the seed back by 1 as it will be incremented as we start the looping
         chosen_seed -= 1
 
+    # NEW! Negative prompting
+    if 'negative_prompt' in options:
+        negative_prompt = options['negative_prompt']
+    else:
+        negative_prompt = ''
+
     start = time.time()
     library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
     os.makedirs(library_dir_name, exist_ok=True)
@@ -561,7 +575,7 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
 
                                     uc = None
                                     if SCALE != 1.0:
-                                        uc = model.get_learned_conditioning(N_SAMPLES * [""])
+                                        uc = model.get_learned_conditioning(N_SAMPLES * [negative_prompt])
                                     if isinstance(prompts, tuple):
                                         prompts = list(prompts)
 
@@ -648,7 +662,8 @@ def check_api_request_properties(data, command):
         'ddim_eta': DDIM_ETA,
         'scale': SCALE,
         'downsampling_factor': DOWNSAMPLING_FACTOR,
-        'strength': STRENGTH
+        'strength': STRENGTH,
+        'negative_prompt': ''
     }
 
     # Override the default options with any in the request:
@@ -690,6 +705,9 @@ def check_api_request_properties(data, command):
 
     if options['min_ddim_steps'] > options['max_ddim_steps'] or command == 'video':
         options['min_ddim_steps'] = options['max_ddim_steps']
+
+    if 'negative_prompt' in data:
+        options['negative_prompt'] = data['negative_prompt']
 
     if 'strength' in data:
         options['strength'] = float(data['strength'])
@@ -733,9 +751,11 @@ def check_api_request_properties(data, command):
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
                        original_image_path, zoom_factor=0.0, format="image"):
+
     with open(library_dir_name + '/index.json', 'w', encoding="utf8") as outfile:
         metadata = {
             "text_prompt": text_prompt,
+            "negative_prompt": options['negative_prompt'],
             "num_images": num_images,
             "queue_id": queue_id,
             "time_taken": round(time_taken, 2),

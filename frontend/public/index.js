@@ -45,10 +45,48 @@ const go = async (format) =>
 }
 
 
+const parsePositiveAndNegativePrompts = (prompt) =>
+{
+    // We need to split the prompt into positive and negative prompts.
+    // Negative prompts are inside square [] brackets in the prompt string.
+    // Positive prompts are outside the square brackets.
+
+    let positivePrompts = '';
+    let negativePrompts = '';
+
+    let positivePrompt = true;
+    for (let i = 0; i < prompt.length; i++)
+    {
+        if (prompt[i] === '[')
+        {
+            positivePrompt = false;
+        }
+        else if (prompt[i] === ']')
+        {
+            positivePrompt = true;
+            negativePrompts += ' ';
+        }
+        else if (positivePrompt)
+        {
+            positivePrompts += prompt[i];
+        }
+        else
+        {
+            negativePrompts += prompt[i];
+        }
+    }
+    // Trim the prompts and remove any double consecutive spaces
+    positivePrompts = positivePrompts.trim().replaceAll('  ', ' ');
+    negativePrompts = negativePrompts.trim().replaceAll('  ', ' ');
+
+    return {positivePrompts, negativePrompts};
+}
+
 const prepareRequestData = () =>
 {
     const data = {
-        prompt: document.getElementById("prompt").value,
+        prompt: parsePositiveAndNegativePrompts(document.getElementById("prompt").value).positivePrompts,
+        negative_prompt: parsePositiveAndNegativePrompts(document.getElementById("prompt").value).negativePrompts,
         num_images: global_imagesRequested,
         seed: 0
     }
@@ -463,7 +501,7 @@ const displayImages = async (imageList) =>
         while (global_imageLoading)
         {
             // We wait for this image's onload event to complete and set global_imageLoading to false before moving on to the next image:
-            await sleep(100);
+            await sleep(10);
         }
         if (image.src.includes('_upscaled.'))
         {

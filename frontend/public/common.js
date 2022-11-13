@@ -15,12 +15,17 @@ const toggleDarkMode = () =>
     localStorage.setItem("dark-mode", element.classList.contains('dark-mode') ? "Y" : "N");
 }
 
+
 // Upscale an image
-const upscale = async (image_list) =>
+const upscale = async (upscaleImageList) =>
 {
+    if(global_upscaleImageList.length === 0)
+    {
+        return;
+    }
     const upscaleObj = {
-        "image_list": image_list,
-        "upscale_factor": defaultUpscaleFactor
+        "image_list": upscaleImageList.filter(image => image.length > 0),
+        "upscale_factor": DEFAULT_UPSCALE_FACTOR
     }
 
     let rawResponse;
@@ -54,3 +59,5 @@ const upscale = async (image_list) =>
         return [];
     }
 }
+
+
