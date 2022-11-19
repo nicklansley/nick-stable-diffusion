@@ -365,7 +365,7 @@ def run_sampling(image_counter, conditioning, ddim_steps, library_dir_name, mode
 def upscale_image(image_list, queue_id, upscale_factor=2):
     # replacements for default arguments
     bg_upsampler = "realesrgan"
-    bg_tile = 400
+    bg_tile = 200
     version = '1.4'  # I've included "1.3" model in this repo as well
     upscale = upscale_factor
     file_suffix = "upscaled"  # The new image will sit alongside the original in the library with a '_upscaled' suffix
