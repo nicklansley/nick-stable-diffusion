@@ -1,3 +1,5 @@
+from typing import Any
+
 import base64
 import gzip
 import random
@@ -9,6 +11,7 @@ from omegaconf import OmegaConf
 import numpy as np
 import os
 from basicsr.utils import imwrite
+import traceback
 
 from PIL import Image
 from tqdm import tqdm, trange
@@ -83,6 +86,19 @@ global_device = None
 global_model = None
 global_wm_encoder = None
 
+
+def format_exception(e):
+    exception_list = traceback.format_stack()
+    exception_list = exception_list[:-2]
+    exception_list.extend(traceback.format_tb(sys.exc_info()[2]))
+    exception_list.extend(traceback.format_exception_only(sys.exc_info()[0], sys.exc_info()[1]))
+
+    exception_str = "Traceback (most recent call last):\n"
+    exception_str += "".join(exception_list)
+    # Removing the last \n
+    exception_str = exception_str[:-1]
+
+    return exception_str
 
 def chunk(it, size):
     it = iter(it)
@@ -273,7 +289,8 @@ def process(text_prompt, device, model, wm_encoder, queue_id, num_images, option
                         for prompts in tqdm(data, desc="data"):
                             unconditional_conditioning = None
                             if SCALE != 1.0:
-                                unconditional_conditioning = model.get_learned_conditioning(N_SAMPLES * [negative_prompt])
+                                unconditional_conditioning = model.get_learned_conditioning(
+                                    N_SAMPLES * [negative_prompt])
                             if isinstance(prompts, tuple):
                                 prompts = list(prompts)
                             conditioning = model.get_learned_conditioning(prompts)
@@ -751,7 +768,6 @@ def check_api_request_properties(data, command):
 
 def save_metadata_file(num_images, library_dir_name, options, queue_id, text_prompt, time_taken, error,
                        original_image_path, zoom_factor=0.0, format="image"):
-
     with open(library_dir_name + '/index.json', 'w', encoding="utf8") as outfile:
         metadata = {
             "text_prompt": text_prompt,
@@ -841,6 +857,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def process_inpaint(self, data):
         print('Running Inpaint Processing')
+        image_path = ''
+        mask_path = ''
 
         try:
             prompt = data['prompt'].strip()
@@ -860,16 +878,18 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"error": "Bad request: missing original_image_path", "queue_id": []}')
             return
+        else:
+            image_path = options['original_image_path']
+            print('image_path', image_path)
 
         if options['original_mask_path'] == '':
             self.send_response(400)
             self.end_headers()
             self.wfile.write(b'{"error": "Bad request: missing original_mask_path", "queue_id": []}')
             return
-
-        images = [options['original_image_path']]
-        masks = [options['original_mask_path']]
-        print(f"Found {len(masks)} inputs.")
+        else:
+            mask_path = options['original_mask_path']
+            print('mask_path', mask_path)
 
         chosen_seed = data['seed']
         if chosen_seed == 0:
@@ -894,12 +914,25 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
         ddim_steps = options['max_ddim_steps']
 
+        # create the path if it does not already exist
+        library_dir_name = os.path.join(OUTPUT_PATH, queue_id)
+        os.makedirs(library_dir_name, exist_ok=True)
+
+        # Resize the image to the correct size for internal processing
+        resized_image, init_image = load_and_format_image(image_path, options['width'], options['height'])
+        resized_image.save(image_path)
+
+        # Resize the mask to the correct size for internal processing
+        resized_mask, init_mask = load_and_format_image(mask_path, options['width'], options['height'])
+        resized_mask.save(mask_path)
+
+        # Now make an inpaint natch from the image and mask
+        batch = self.inpaint_make_batch(image_path, mask_path, device=device)
+
         try:
             with torch.no_grad():
                 with model.ema_scope():
-                    for image, mask in tqdm(zip(images, masks)):
-                        output_path = os.path.join(library_dir_name, os.path.split(image)[1])
-                        batch = self.inpaint_make_batch(image, mask, device=device)
+                    for image_number in range(num_images):
 
                         # encode masked image and concat downsampled mask
                         c = model.cond_stage_model.encode(batch["masked_image"])
@@ -920,21 +953,41 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         predicted_image = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
 
                         inpainted = (1 - mask) * image + mask * predicted_image
-                        inpainted = inpainted.cpu().numpy().transpose(0, 2, 3, 1)[0] * 255
-                        Image.fromarray(inpainted.astype(np.uint8)).save(output_path)
+                        inpainted_transposed = inpainted.cpu().numpy().transpose(0, 2, 3, 1)[0] * 255
 
-        except Exception as e:
-            self.send_response(500)
+                        # Generate output filename
+                        out_filename = "{}/inpainted_{}".format(library_dir_name, image_number)
+                        if IMAGE_QUALITY == "MAX":
+                            out_filename += ".png"
+                        else:
+                            out_filename += ".jpg"
+
+                        print("Saving image to {}".format(out_filename))
+                        Image.fromarray(inpainted_transposed.astype(np.uint8)).save(out_filename)
+
+            end = time.time()
+            time_taken = end - start
+            save_metadata_file(num_images, library_dir_name, options, queue_id, "INPAINTED: " + prompt, original_image_path=image_path, time_taken=time_taken, error='')
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            response_body = json.dumps({'success': False, 'queue_id': queue_id, 'error': e})
+            response_body = json.dumps({'success': True, 'queue_id': queue_id})
             self.wfile.write(response_body.encode())
 
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        response_body = json.dumps(
-            {'success': True, 'queue_id': queue_id, 'first_image_path': options['original_image_path']})
-        self.wfile.write(response_body.encode())
+        except ValueError as ve:
+            print('process_inpaint ValueError:', ve, format_exception(ve))
+            self.send_response(500)
+            self.end_headers()
+            response_body = json.dumps({'success': False, 'queue_id': queue_id, 'error': repr(ve)})
+            self.wfile.write(response_body.encode())
+
+        except Exception as e:
+            print('process_inpaint Exception:', e,format_exception(e))
+            self.send_response(500)
+            self.end_headers()
+            response_body = json.dumps({'success': False, 'queue_id': queue_id, 'error': repr(e)})
+            self.wfile.write(response_body.encode())
 
     def process_prompt(self, data):
         # Get the mandatory prompt data from the request

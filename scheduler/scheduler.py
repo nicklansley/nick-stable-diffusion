@@ -65,11 +65,16 @@ def send_inpaint_request_to_sd_engine(prompt_info):
         prompt_json = json.dumps(prompt_info)
         print('\nSCHEDULER: Sending inpaint request to SD Engine:', prompt_json)
         r = requests.post('http://sd-backend:8080/inpaint', json=prompt_json)
+        print(1)
+        print(r.text)
+        print(2)
         response = r.json()
+        print(3)
         print('\nSCHEDULER: send_inpaint_request_to_sd_engine - Response from SD Engine:', response)
         return response
     except Exception as e:
         print("SCHEDULER: send_inpaint_request_to_sd_engine - Error:", e)
+        print(type(e))
         return {'queue_id': 'X', 'success': False}
 
 
