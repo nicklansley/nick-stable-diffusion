@@ -918,10 +918,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         os.makedirs(library_dir_name, exist_ok=True)
 
         # Resize the image to the correct size for internal processing
+        print('Resizing image to {}px width x {}px height'.format(options['width'], options['height']))
         resized_image, init_image = load_and_format_image(image_path, options['width'], options['height'])
         resized_image.save(image_path)
 
         # Resize the mask to the correct size for internal processing
+        print('Resizing mask to {}px width x {}px height'.format(options['width'], options['height']))
         resized_mask, init_mask = load_and_format_image(mask_path, options['width'], options['height'])
         resized_mask.save(mask_path)
 

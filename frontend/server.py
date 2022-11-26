@@ -152,13 +152,11 @@ class RelayServer(BaseHTTPRequestHandler):
 
         if 'original_mask_path' in data and data['original_mask_path'] != '' and 'data:image' in data[
             'original_mask_path']:
-            image_path = self.convert_base64_to_mask_binary_and_save_file(data['original_mask_path'])
+            image_path = self.convert_base64_to_image_binary_and_save_file(data['original_mask_path'])
             if image_path.startswith('ERROR'):
                 return False, image_path, data
             else:
                 data['original_mask_path'] = image_path
-
-
 
         return True, 'OK', data
 

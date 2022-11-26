@@ -201,6 +201,8 @@ const inpaintGo = async () =>
         delete data['prompt']
         delete data['negative_prompt']
         data['format'] = 'inpaint';
+        data['original_image_path'] = global_imageCanvas.toDataURL();
+        data['original_mask_path'] = global_maskCanvas.toDataURL();
         const rawResponse = await sendPromptRequest(data);
         await processPromptRequestResponse(rawResponse);
 }

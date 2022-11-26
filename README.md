@@ -18,7 +18,7 @@ you are running Docker Desktop over WSL2 on Windows 10/11.
 
 - Model-Always-Loaded backend server means that incoming requests go straight to creating images rather than
   model-loading.
-- <b>UPDATE: Inpainting/Outpainting-capable API now working (see 'Inpainting / outpainting' below)</b>
+- <b>UPDATE: Inpainting!</b> - You can now use the inpainting feature of Stable Diffusion to remove unwanted objects from your images.
 - <b>UPDATE: Compatible with new v1.5 Stable-Diffusion model! </b>Which model to choose? In early tests of v1.5 I am finding that the overall quality, and particularly faces, are better with the larger model but there are plenty of exceptions as it is so subjective! I think v1.4 and 1.5 full model are tied on faces. Usefully, if you fix the seed number
    you can generate the same group of images in all three models, so you can compare them side by side. To do this, place all three model files in the 'model' folder, then take turns to rename each one to 'model.ckpt' and restart the backend server in Docker Desktop once the application is up and running.
    See step 2 in 'Installation Playbook' below. 
@@ -352,7 +352,27 @@ are 'substantially' different to the original. The only exception is of course i
 
 Auto-upscale will cause Stable Diffusion to first generate the required number of images, and then upscale them using the GFPGAN AI, with facial correction included.
 
-## NEW! Video Page
+
+## NEW! Inpainting page
+Inpainting is a technique for removing unwanted objects from an image. It is a very useful technique for removing unwanted objects from images, such as people, cars, buildings, etc.
+This page allows you to upload an image, and then use the AI to remove the unwanted object from the image. The AI will then generate a series of images with the object removed, and you can choose the one you like best.
+This process does not use a prompt; instead the AI assesses the image and replaces the masked out (white) area with what it 'thinks' should be there..
+
+NB: when used, this loads another AI model on top of the SD model, so it will use up more GPU memory. It also means the Inpaint process takes longer on first use in any session as it is not loaded at startup.
+Second and subsequent uses will be faster as the model will already be loaded.
+
+
+To do this:
+1. Drag an image into the left 'Image' box.
+2. Using your mouse or pointer, draw over the object you wish to remove. Hold down the left mouse button to activate the drawing 'pen'. The AI will use this as a mask to remove the object. You will see this mask appearing in the second 'Mask' box as you draw.
+3. You can switch from the default 'stroke' to 'Fill' mode which will fill larger areas as you draw.
+4. You can adjust the en 'dot' size from 1 to 20 pixels by sliding the range slider.
+5. If you make a mistake, you can use the 'Undo' button to remove the last stroke. Indeed, you can 'undo' all the way back to the untouched image.
+6. Finally, choose the number of images you wish to generate, and 'Click ro send request' to start the process. The AI will generate the images, and then you can choose the one you like best.
+7. As with other pages, the results will appear in the library page, and you can upscale them using the GFPGAN AI.
+
+
+## Video Page
 See example in this project at https://github.com/nicklansley/nick-stable-diffusion/blob/master/nsd-example-video.mp4 (download only)
 Create a video from a series of evolving images - each newly created image acts as the input to the next image in the series.
 * Use a Zoom function to create a 'journey' through the images. 
@@ -383,43 +403,13 @@ may get weird art effects, such as a bizarre merging of two people into one. But
 
 ## API
 
-The API is a simple RESTful API that can be used by the UI to send requests into the application.
+The API is a simple RESTful API that is used by the UI to send requests into the application.
 It is documented here (Postman compatible): https://documenter.getpostman.com/view/10078469/2s7Z7Zou9h
 
-## Inpainting / Outpainting
-I've add a new API call to allow inpainting / outpainting of images. This is a very experimental feature and is not yet integrated into the UI.
-However, you can use the command-line tool 'curl' to send requests to the API, like this:
-<pre>
-ncurl --location --request POST 'http://localhost:8000/inpaintpage' \
---data-raw '{
-    "prompt": "man wearing red rugby jersey",
-    "num_images": 3,
-    "seed": 0,
-    "original_image_path": "library/inpainting/test.png",
-    "original_mask_path": "library/inpainting/test_mask.png",
-    "ddim_steps": 40
-}'</pre>
+This means you can build alternative client applications to use all aspects of this application.
+Indeed, the provided UI is just a simple client application that uses the API.
 
-The two input image files in this example are in the 'library/inpainting' folder. The 'test.png' file is the image to be inpainted, and the 'test_mask.png' file is the mask to be used to define the area to be inpainted.
-The 'ddim_steps' parameter is the number of DDIM steps to use when generating the inpainted image. The higher the value, the more detail will be added to the inpainted area.
 
-Take this example image:
-
-![](nsd-inpainting1.png)
-
-Let's give him a hairy chest! To do this:
-1. Load the image into an image manipulation application such as GIMP, Serif Affinity Photo or Photoshop. Importantly, these three applications are examples where you can create image <i>layers</i>
-2. Click 'Add Pixel Layer' - this should be created above the original layer, usually called 'Background', Click this new layer to select it.
-![](nsd-inpainting2.jpg)
-3. Now select the colour black and use the 'bucket' to pur black all over the image! This is the first step in creating the mask - and black tells stale diffusion 'do not touch!'.
-4. With the imag lst to blackness, go to the layers panel and adjust the 'Opacity' of the new layer to 50%. This causes it to fade a little, revealing the original image underneath.
-5. Now select the brush tool and colour white. Paint part of the man's chest. This will tell stable diffusion 'Change this area'. Your image should now look like this:
-![](nsd-inpainting3.jpg)
-6. Great! Now go back to the layers panel and push the opacity of the white layer to 100%. This will make the black/white layer completely opaque, hiding the original image. This is our mask.
-7. Now export (don't save) the image to a PNG file. I called mine 'test_mask.png'. Save them both to the 'library/inpainting' folder (create this fodler under 'library' if it's not there.
-8. Go back to the opacity control and push it to 0% - or delete the new image layer. This will restore the original image.
-9. Now export (don't save) the image to a PNG file. I called mine 'test.png'.  Save them to the 'library/inpainting' folder alongside the mask image.
-10. Now go to the command line and run the curl command above changing the prompt to 'man with hairy chest'. This will generate three inpainted images. The first one will be the original image with the inpainted area, the second will be the inpainted area only, and the third will be the original image with the inpainted area and the original image merged together. The result will automatically appear in library page once processing completes.
 ## Safety Catch / NSFW images
 
 Note that I have disabled the safety catch and allow this project to create any image it desires. But doing so comes

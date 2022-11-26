@@ -473,8 +473,14 @@ const authorDescriptionFromImageFileName = (imageFileName) =>
 
     const srcElements = imageFileName.split("/");
     const imageNameSections = srcElements[5].split("-");
-    const imageNumber = imageNameSections[0]
-    const ddimSteps = imageNameSections[1].replace('D', '')
+
+    if (imageNameSections.length === 1)
+    {
+        return `New Image - click to edit in Advanced page - #${imageNameSections[0]}`;
+    }
+
+    const imageNumber = imageNameSections[0];
+    const ddimSteps = imageNameSections[1].replace('D', '');
     const scale = imageNameSections[2].replace('S', '');
     const seedValue = imageNameSections[3].replace('R', '');
     return `New Image - click to edit in Advanced page - #${imageNumber}, DDIM steps: ${ddimSteps}, Scale: ${scale}, Seed: ${seedValue}`;
