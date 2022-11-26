@@ -49,7 +49,7 @@ class RelayServer(BaseHTTPRequestHandler):
 
         if api_command == '/image' or api_command == '/video' or api_command == '/upscale' or api_command == '/inpaint':
             result = 'X'
-            ok_flag, message, data = self.quality_assure(data)
+            ok_flag, message, data = self.check_and_save_images_to_input_folder(data)
             if ok_flag:
                 if api_command == '/image':
                     result = self.queue_prompt_request_to_redis(data)
@@ -141,7 +141,7 @@ class RelayServer(BaseHTTPRequestHandler):
             print("\nFRONTEND: process_saveimage Error:", e)
             return 'ERROR: Could not process image string'
 
-    def quality_assure(self, data):
+    def check_and_save_images_to_input_folder(self, data):
         if 'original_image_path' in data and data['original_image_path'] != '' and 'data:image' in data[
             'original_image_path']:
             image_path = self.convert_base64_to_image_binary_and_save_file(data['original_image_path'])
@@ -149,6 +149,16 @@ class RelayServer(BaseHTTPRequestHandler):
                 return False, image_path, data
             else:
                 data['original_image_path'] = image_path
+
+        if 'original_mask_path' in data and data['original_mask_path'] != '' and 'data:image' in data[
+            'original_mask_path']:
+            image_path = self.convert_base64_to_mask_binary_and_save_file(data['original_mask_path'])
+            if image_path.startswith('ERROR'):
+                return False, image_path, data
+            else:
+                data['original_mask_path'] = image_path
+
+
 
         return True, 'OK', data
 

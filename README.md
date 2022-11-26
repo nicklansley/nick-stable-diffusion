@@ -390,7 +390,7 @@ It is documented here (Postman compatible): https://documenter.getpostman.com/vi
 I've add a new API call to allow inpainting / outpainting of images. This is a very experimental feature and is not yet integrated into the UI.
 However, you can use the command-line tool 'curl' to send requests to the API, like this:
 <pre>
-ncurl --location --request POST 'http://localhost:8000/inpaint' \
+ncurl --location --request POST 'http://localhost:8000/inpaintpage' \
 --data-raw '{
     "prompt": "man wearing red rugby jersey",
     "num_images": 3,

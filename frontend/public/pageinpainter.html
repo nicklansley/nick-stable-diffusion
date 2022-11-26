@@ -1,39 +1,48 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-
-    <title>Stable Diffusion Web Playground</title>
+    <title>Images on Canvas</title>
+    <script src="pageinpainter.js"></script>
     <script src="common.js"></script>
     <script src="index.js"></script>
     <link rel="stylesheet" href="nsdstyle.css">
 </head>
-<!-- load style from nsdstyle.css -->
-<body onload="setDarkModeFromLocalStorage()">
-<h1>Stable Diffusion Web Playground</h1>
+<body onload="inPaintSetup()">
+<h2>Stable Diffusion Web Playground - Inpainting</h2>
+<h3>Drag and drop an image to inpaint it</h3>
+
 <div class="input_div">
     <p>
         <button class="control-button" style="width: 24%;" onclick="window.open('library.html', '_blank')">Library </button>
+        <button class="control-button" style="width: 24%;" onclick="window.open('index.html', '_blank')">Simple controls</button>
         <button class="control-button" style="width: 24%;" onclick="window.open('advanced.html', '_blank')">Advanced controls</button>
-        <button class="control-button" style="width: 24%;" onclick="window.open('pageinpainter.html', '_blank')">Inpaint an image</button>
         <button class="control-button" style="width: 24%;" onclick="window.open('makevideo.html', '_blank')">Create a video</button>
         <button class="control-button" style="width: 24%;" onclick="toggleDarkMode()">Toggle dark mode</button>
     </p>
 </div>
-
 <div class="input_div">
-
-    <div>
-        <div>Enter a prompt (include negative phrases inside square [] brackets):</div>
-        <div><textarea cols="88" id="prompt" rows="6" type="text"/></textarea></div>
-    </div>
-
+    <hr>
+    <table>
+        <tr>
+            <td>
+                <canvas id="imagecanvas" width="512" height="512"></canvas>
+                <p style="text-align: center">Image</p>
+            </td>
+            <td>
+                <canvas id="maskcanvas" width="512" height="512"></canvas>
+                <p style="text-align: center">Mask</p>
+            </td>
+        </tr>
+    </table>
+    <hr>
+    <label for="line_width">Line Width</label>
+    <input type="range" id="line_width" min="1" max="20" value="5" onchange="inPaintChangeLineWidth()">
+    <div id="display_line_width">5px</div>
+    <br />
+    <button class="control-button" style="width: 24%;" onclick="inPaintModeStrokeFill(this)">Stroke mode - switch to Fill mode</button>
+    <button class="control-button" style="width: 24%;" onclick="inPaintUndo()">Undo Last Draw</button>
+    <button class="control-button" style="width: 24%;" onclick="inpaintGo()">Click to send request</button>
     <div>
         <div>
             <hr>
@@ -52,7 +61,7 @@
             <div>
                 <button class="control-button"
                         id="buttonGo"
-                        onclick="go('image')"
+                        onclick="inpaintpage()"
                         role="button">
                     Click to send request
                 </button>
@@ -75,7 +84,5 @@
         </div>
     </div>
 </div>
-
-
 </body>
 </html>

@@ -861,7 +861,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         mask_path = ''
 
         try:
-            prompt = data['prompt'].strip()
             queue_id = data['queue_id']
             num_images = data['num_images']
         except KeyError as e:
@@ -967,7 +966,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
             end = time.time()
             time_taken = end - start
-            save_metadata_file(num_images, library_dir_name, options, queue_id, "INPAINTED: " + prompt, original_image_path=image_path, time_taken=time_taken, error='')
+            save_metadata_file(num_images, library_dir_name, options, queue_id, "INPAINTED", original_image_path=image_path, time_taken=time_taken, error='')
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

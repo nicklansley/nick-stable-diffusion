@@ -85,8 +85,8 @@ const parsePositiveAndNegativePrompts = (prompt) =>
 const prepareRequestData = () =>
 {
     const data = {
-        prompt: parsePositiveAndNegativePrompts(document.getElementById("prompt").value).positivePrompts,
-        negative_prompt: parsePositiveAndNegativePrompts(document.getElementById("prompt").value).negativePrompts,
+        prompt: document.getElementById("prompt") ? parsePositiveAndNegativePrompts(document.getElementById("prompt").value).positivePrompts : '',
+        negative_prompt: document.getElementById("prompt") ? parsePositiveAndNegativePrompts(document.getElementById("prompt").value).negativePrompts: '',
         num_images: global_imagesRequested,
         seed: 0
     }
@@ -160,6 +160,11 @@ const prepareRequestData = () =>
     if (document.getElementById("original_image_path"))
     {
         data['original_image_path'] = document.getElementById("original_image_path").value;
+    }
+
+    if (document.getElementById("original_mask_path"))
+    {
+        data['original_mask_path'] = document.getElementById("original_image_path").value;
     }
 
     if (document.getElementById("zoom_factor"))
