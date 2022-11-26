@@ -116,6 +116,8 @@ const addEventListenersToImageCanvas = () =>
 
 const inPaintSetup = () =>
 {
+    setDarkModeFromLocalStorage();
+
     global_imageCanvas = document.getElementById("imagecanvas");
     global_imageCtx = global_imageCanvas.getContext("2d");
 
