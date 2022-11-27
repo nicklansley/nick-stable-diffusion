@@ -212,8 +212,9 @@ If not, head to https://docs.nvidia.com/cuda/wsl-user-guide/index.html and follo
    
 3. Copy the downloaded file to the 'model' folder you have setup in step 1. 
    You will need to place the .ckpt file there and rename it to <b>model.ckpt</b> - so in my case I now have:<pre>S:\nick-stable-diffusion-data\model\model.ckpt</pre> 
-4. To use the GFPGAN AI to upscale your images and enhance the faces of any people featured, you will need to download these models which detect faces and enhance them as well as upscale the whole image. Follow these links to download:
+4. To use RealESRGAN AI for inpainting and the GFPGAN AI to upscale your images and enhance the faces of any people featured, you will need to download these models which detect faces and enhance them as well as upscale the whole image. Follow these links to download:
 - https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/detection_Resnet50_Final.pth (104 MB)
+- https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/RealESRGAN_x2plus.pth (64 MB)
 - https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/RealESRGAN_x4plus.pth (64 MB)
 - https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/parsing_parsenet.pth (82 MB)
 - https://lansleycom.blob.core.windows.net/cdn-lansley-com/nsd_models/GFPGANv1.4.pth (332 MB)
