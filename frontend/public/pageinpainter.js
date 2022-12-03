@@ -2,8 +2,11 @@ let global_imageCanvas = null;
 let global_imageCtx = null;
 let global_maskCanvas = null;
 let global_maskCtx = null;
+let global_inpaintCanvas = null;
+let global_inpaintCtx = null;
 let global_imageBackupsList = [];
 let global_maskBackupsList = [];
+let global_inpaintBackupsList = [];
 let global_lineWidth = 5;
 let global_inStrokeMode = true;
 
@@ -42,9 +45,13 @@ const addEventListenersToImageCanvas = () =>
                     const width = img.width * ratio;
                     const height = img.height * ratio;
                     global_imageCtx.drawImage(img, 0, 0, width, height);
+                    global_inpaintCtx.drawImage(img, 0, 0, width, height);
 
                     // Save the canvas state as our initial 'backup' state
                     global_imageBackupsList = [global_imageCanvas.toDataURL()]
+
+                    // Save the inpaint canvas state as our initial 'backup' state
+                    global_inpaintBackupsList = [global_inpaintCanvas.toDataURL()]
 
                     // Now load the 512px black square into the mask canvas to initialise it
                     const maskImg = new Image();
@@ -81,7 +88,7 @@ const addEventListenersToImageCanvas = () =>
             // Set the line width and color
             global_imageCtx.lineWidth = global_lineWidth;
             global_imageCtx.lineCap = 'round';
-            global_imageCtx.strokeStyle = 'black';
+            global_imageCtx.strokeStyle = 'red';
 
             global_maskCtx.lineWidth = global_lineWidth;
             global_maskCtx.lineCap = 'round';
@@ -111,7 +118,52 @@ const addEventListenersToImageCanvas = () =>
         // Push the current canvas state to the list of backups
         global_imageBackupsList.push(global_imageCanvas.toDataURL());
         global_maskBackupsList.push(global_maskCanvas.toDataURL());
+        global_inpaintBackupsList.push(global_inpaintCanvas.toDataURL());
     });
+}
+
+
+const inPaintChangeZoom = () =>
+{
+    // First backup the current canvas state
+    global_imageBackupsList.push(global_imageCanvas.toDataURL());
+    global_maskBackupsList.push(global_maskCanvas.toDataURL());
+    global_inpaintBackupsList.push(global_inpaintCanvas.toDataURL());
+
+    zoomTheCanvas(global_imageCanvas, global_imageCtx);
+    zoomTheCanvas(global_inpaintCanvas, global_inpaintCtx);
+    zoomTheCanvas(global_maskCanvas, global_maskCtx);
+}
+
+
+const zoomTheCanvas = (canvas, ctx) =>
+{
+    const zoomControl = document.getElementById("zoom");
+    const zoom = zoomControl.value;
+    const zoomFactor = zoom / 100;
+
+    document.getElementById("display_zoom").innerHTML = zoom + "%";
+
+    // Now zoom out the image within the canvas, recalculating its size
+    loadImageURLIntoCanvas(canvas, ctx, canvas.toDataURL(), zoomFactor);
+}
+
+
+const loadImageURLIntoCanvas = (canvas, ctx, url, zoomFactor) =>
+{
+    const imgCanvas = new Image();
+    imgCanvas.onload = () =>
+    {
+        const ratio = Math.min(canvas.width / imgCanvas.width, canvas.height / imgCanvas.height);
+        const width = imgCanvas.width * ratio * zoomFactor;
+        const height = imgCanvas.height * ratio * zoomFactor;
+        // blank out the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // draw the image in the centre of the canvas
+        ctx.drawImage(imgCanvas, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+    }
+    // Trigger the onload event above
+    imgCanvas.src = url;
 }
 
 const inPaintSetup = () =>
@@ -123,6 +175,10 @@ const inPaintSetup = () =>
 
     global_maskCanvas = document.getElementById("maskcanvas");
     global_maskCtx = global_maskCanvas.getContext("2d");
+
+    global_inpaintCanvas = document.getElementById("inpaintcanvas");
+    global_inpaintCtx = global_inpaintCanvas.getContext("2d");
+
 
     addEventListenersToImageCanvas();
 }
@@ -142,42 +198,14 @@ const inPaintModeStrokeFill = (button) =>
 }
 
 
-const _undoImage = () =>
+
+const _undoCanvasChange = (canvas, ctx, backupsList) =>
 {
-    //Restore the last saved canvas state
-    const img = new Image();
-    img.onload = () =>
-    {
-        global_imageCtx.drawImage(img, 0, 0);
-    }
+    // Remove the last backup from the list
+    backupsList.pop();
 
-    // Remove the last saved canvas state
-    if (global_imageBackupsList.length > 1)
-    {
-        img.src = global_imageBackupsList[global_imageBackupsList.length - 2];
-        // Remove the last saved canvas state
-        global_imageBackupsList.pop();
-    }
-
-}
-
-const _undoMask = () =>
-{
-    //Restore the last saved canvas state
-    const img = new Image();
-    img.onload = () =>
-    {
-        global_maskCtx.drawImage(img, 0, 0);
-    }
-
-    // Remove the last saved canvas state
-    if (global_maskBackupsList.length > 1)
-    {
-        img.src = global_maskBackupsList[global_maskBackupsList.length - 2];
-        // Remove the last saved canvas state
-        global_maskBackupsList.pop();
-    }
-
+    // Now restore the canvas to the previous state
+    loadImageURLIntoCanvas(canvas, ctx, backupsList[backupsList.length - 1], 1);
 }
 
 
@@ -203,16 +231,17 @@ const inpaintGo = async () =>
         delete data['prompt']
         delete data['negative_prompt']
         data['format'] = 'inpaint';
-        data['original_image_path'] = global_imageCanvas.toDataURL();
+        data['original_image_path'] = global_inpaintCanvas.toDataURL();
         data['original_mask_path'] = global_maskCanvas.toDataURL();
         const rawResponse = await sendPromptRequest(data);
         await processPromptRequestResponse(rawResponse);
 }
 
-// add a function called 'undo' that revreses the last mouse movement drawing
+// add a function called 'undo' that reverses the last mouse movement drawing
 const inPaintUndo = () =>
 {
-    _undoImage();
-    _undoMask();
+    _undoCanvasChange(global_imageCanvas, global_imageCtx, global_imageBackupsList);
+    _undoCanvasChange(global_maskCanvas, global_maskCtx, global_maskBackupsList);
+    _undoCanvasChange(global_inpaintCanvas, global_inpaintCtx, global_inpaintBackupsList);
 }
 
