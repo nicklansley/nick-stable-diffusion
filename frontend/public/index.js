@@ -301,6 +301,10 @@ function createQueueOrderedList(queueList, imageCount, queueUI, backendProcessin
         {
             listItem.innerText = `Upscale/Enhance request for ${queueItem['image_list'].length} image${queueItem['image_list'].length > 1 ? "s" : ""}`;
         }
+        else if (queueItem['command'] === "inpaint")
+        {
+            listItem.innerText = `Inpaint request for ${queueItem['num_images']} image${queueItem['num_images'] > 1 ? "s" : ""}`;
+        }
         else if (queueItem['command'] === 'video')
         {
             listItem.innerText = `Create video request with prompt '${queueItem['prompt']}' (${queueItem['num_video_frames']} frames)`;
@@ -359,6 +363,10 @@ const displayQueue = async (queueList) =>
         else if (topQueueItem['command'] === 'upscale')
         {
             showText = `<b>Upscale/Enhance request for ${topQueueItem['image_list'].length} image${topQueueItem['image_list'].length > 1 ? "s" : ""}</b>`;
+        }
+        else if (topQueueItem['command'] === 'inpaint')
+        {
+            showText = `<b>Inpaint request for ${topQueueItem['num_images']} image${topQueueItem['num_images'] > 1 ? "s" : ""}</b>`;
         }
         else if (topQueueItem['command'] === 'video')
         {
