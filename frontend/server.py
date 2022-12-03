@@ -227,9 +227,14 @@ class RelayServer(BaseHTTPRequestHandler):
         }
         for root, dirs, files in os.walk("/app/library/" + queue_id, topdown=False):
             for image_name in files:
-                if image_name.endswith('.png') or image_name.endswith('.jpg') or image_name.endswith('.mp4'):
+                if image_name.endswith('.png') or image_name.endswith('.jpg'):
                     image_data['images'].append('/library/' + queue_id + '/' + image_name)
-                elif image_name == 'index.json':
+
+                elif image_name == 'video.mp4':
+                    image_data['images'].append('/library/' + queue_id + '/' + image_name)
+                    image_data['completed'] = True
+
+                elif image_name.endswith('image_index.json'):
                     image_data['completed'] = True
 
         print('\nFRONTEND: Image list for queue_id', queue_id, 'is', image_data)

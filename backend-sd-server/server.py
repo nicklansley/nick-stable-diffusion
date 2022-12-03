@@ -516,7 +516,7 @@ def save_image_samples(ddim_steps, image_counter, library_dir_name, wm_encoder, 
 
 
 def process_image(original_image_path, text_prompt, device, model, wm_encoder, queue_id, num_images, options,
-                  video_frame_number=0, zoom_factor=1.0):
+                  video_frame_number=0, zoom_factor=1.0, format="image"):
     print('Running Image Processing')
     sampler = DDIMSampler(model)  # Uses DDIM model
 
@@ -625,8 +625,9 @@ def process_image(original_image_path, text_prompt, device, model, wm_encoder, q
             except Exception as e:
                 print('Error in process_image: ' + str(e))
 
-        if video_frame_number == 0:
-            # We are saving a conventional image metadate index file
+        if format == "image":
+            # Don't save if format is not image - if this is part of video creation, thet index.json file
+            # will be saved at the end of the video creation process
             save_metadata_file(num_images=image_counter,
                                library_dir_name=library_dir_name,
                                options=options,
@@ -1058,7 +1059,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                                    queue_id=queue_id,
                                    num_images=1,
                                    options=options,
-                                   zoom_factor=1.0)
+                                   zoom_factor=1.0,
+                                   format="image")
         else:
             result = process(text_prompt=prompt,
                              device=global_device,
@@ -1083,7 +1085,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                                    num_images=1,
                                    options=options,
                                    video_frame_number=video_frame_count,
-                                   zoom_factor=zoom_factor)
+                                   zoom_factor=zoom_factor,
+                                   format="video")
 
             print("### Video frame result", result)
             video_frame_paths_list.append(result['first_image_path'])
