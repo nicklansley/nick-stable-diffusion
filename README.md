@@ -12,17 +12,18 @@ This project is formed from:
 
 I place these links here so that nobody forgets that I have simply stood on the shoulders of giants in making this interactive web version of Stable Diffusion.
 
-## Commentary on launch of Stable Diffusion 2.0 
-I am currently evaluating  Stable Diffusion 2.0 on my workstation, and I have made the following observations:
-1. There does not seem to be a significant difference in the quality of the images produced by Stable Diffusion 2.0 compared to Stable Diffusion 1.0 used in this project, especially given that this web playground has upscaling and inpainting built right in.
-2. The removal of so-called 'NSFW' imagery and artist-labelled work by Stability AI when creating the new model seems to have impacted the creativity of image output.
-On the surface removing pornographic images from the model training sounds like a good idea, but in practice it seems to have removed a lot of the more interesting and creative imagery that was being produced by Stable Diffusion 1.0. I am not sure if this is a result of the removal of the NSFW images, or the removal of the artist-labelled work, or both. 
-3. I certainly think that skin tones (beyond the face) are bland and uninteresting. We may not all agree with porn but this source of imagery adds to the AI's ability to understand human skin tones better, simply because there is more imagery to train on! 
-4. At 5GB the model file is lot smaller than the 7.5GB model file for Stable Diffusion 1.0 and this web playground. So something has been cut out of the model training process, but I am not sure what. Do NSFW and artist-labelled images take up a lot of space? I don't know.
+<hr>
 
-For now I am going to stick with Stable Diffusion 1.0 in this project, but I will be keeping an eye on the development of Stable Diffusion 2.0 and will update this project if I see any significant improvements in the quality of the images produced by the new model.
-For example, if a third party trains an SD2-compatible  7 GB+ model on 'everything' and makes it available for download, I will be happy to test it out and see if it is worth including in this project. 
-I always want the latest version so believe me when I say that I am as keen as anyone to see what Stable Diffusion 2.0 can do with a decent model file. I will make a new release of this project in the background using SD 2 and make it public when I am happy with the results.
+# Further work on this repo is now concluded
+Well that was fun! I've had a great time working on this project, and I hope you've enjoyed using it. I've now moved on to other projects, and I'm not planning to do any further work on this repo. I'll leave it here for anyone who wants to use it, but I won't be updating it any more. I'll leave the instructions below for anyone who wants to try it out.
+
+All good: Others with more time than me are continuing to develop Stable Diffusion and GFPGAN, and I'm sure they'll be making great progress. I'll be watching their work with interest, and I'll be sure to try out any new versions of Stable Diffusion and GFPGAN that they release. I'll also be keeping an eye on the issues raised on this repo, and I'll try to help out where I can.
+
+### My recommendation? Use this excellent repo: https://github.com/AUTOMATIC1111/stable-diffusion-webui
+It has a fantastic and comprehensive UI, is very easy to install (compared to mine - no Docker needed, for example!) and works just as fast as it, too, has a 'Model always loaded' approach.
+It uses a web interface, too, although I think only one user at a time can operate it (I'm not sure about that, though). It's also a lot more polished than mine, and just as user-friendly but with many more options. I'd recommend it to anyone who wants to use Stable Diffusion.
+
+<hr>
 
 ## Project Overview
 <hr>
